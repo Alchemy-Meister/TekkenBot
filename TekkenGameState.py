@@ -21,11 +21,11 @@ import struct
 import math
 
 import ModuleEnumerator
-import PIDSearcher
 from MoveInfoEnums import *
 from ConfigReader import ConfigReader, ReloadableConfig
 from MoveDataReport import MoveDataReport
 import MovelistParser
+import pid_searcher
 
 k32 = c.windll.kernel32
 
@@ -159,7 +159,9 @@ class TekkenGameReader:
         gameSnapshot = None
 
         if not self.HasWorkingPID():
-            self.pid = PIDSearcher.GetPIDByName(b'TekkenGame-Win64-Shipping.exe')
+            self.pid = pid_searcher.get_pid_by_unique_process_name(
+                'TekkenGame-Win64-Shipping.exe'
+            )
             if self.HasWorkingPID():
                 print("Tekken pid acquired: " + str(self.pid))
             else:
