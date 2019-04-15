@@ -1,16 +1,18 @@
 """
-This module's classes are responsible for reading and interpreting the memory of a Tekken7.exe proecess.
+This module's classes are responsible for reading and interpreting the memory
+of a Tekken7.exe proecess.
 
-TekkenGameReader reads the memory of Tekken7.exe, extracts information about the state of the game, then saves a
-'snapshot' of each frame.
+TekkenGameReader reads the memory of Tekken7.exe, extracts information about
+the state of the game, then saves a 'snapshot' of each frame.
 
-Each GameSnapshot has 2 BotSnapshots, together encapsulating the information of both players and shared data for a single game frame.
+Each GameSnapshot has 2 BotSnapshots, together encapsulating the information
+of both players and shared data for a single game frame.
 
-TekkenGameState saves these snapshots and provides an api that abstracts away the difference
-between questions that query one player (is player 1 currently attacking?), both players (what is the expected frame
-advantage when player 2 emerges from block), or multiple game states over time (did player 1 just begin to block this
-frame?, what was the last move player 2 did?).
-
+TekkenGameState saves these snapshots and provides an api that abstracts away
+the difference between questions that query one player (is player 1 currently
+attacking?), both players (what is the expected frame advantage when player 2
+emerges from block), or multiple game states over time (did player 1 just begin
+to block this frame?, what was the last move player 2 did?).
 """
 
 from collections import Counter
@@ -20,18 +22,16 @@ from ctypes import wintypes as w
 import struct
 import math
 
-import ModuleEnumerator
 from MoveInfoEnums import *
 from ConfigReader import ConfigReader, ReloadableConfig
 from MoveDataReport import MoveDataReport
 import MovelistParser
+
+import module_enumerator
 import pid_searcher
+import win32.kernel32 as kernel32
 
 k32 = c.windll.kernel32
-
-OpenProcess = k32.OpenProcess
-OpenProcess.argtypes = [w.DWORD,w.BOOL,w.DWORD]
-OpenProcess.restype = w.HANDLE
 
 ReadProcessMemory = k32.ReadProcessMemory
 ReadProcessMemory.argtypes = [w.HANDLE,w.LPCVOID,w.LPVOID,c.c_size_t,c.POINTER(c.c_size_t)]
@@ -47,6 +47,9 @@ CloseHandle.restype = w.BOOL
 
 
 class TekkenGameReader:
+    
+    PROCESS_NAME = 'TekkenGame-Win64-Shipping.exe'
+
     def __init__(self):
         self.pid = -1
         self.needReaquireGameState = True
@@ -155,23 +158,26 @@ class TekkenGameReader:
         return data in ('x', 'y', 'z', 'activebox_x', 'activebox_y', 'activebox_z')
 
 
-    def GetUpdatedState(self, rollback_frame = 0):
+    def GetUpdatedState(self, rollback_frame=0):
         gameSnapshot = None
 
         if not self.HasWorkingPID():
             self.pid = pid_searcher.get_pid_by_unique_process_name(
-                'TekkenGame-Win64-Shipping.exe'
+                TekkenGameReader.PROCESS_NAME
             )
             if self.HasWorkingPID():
-                print("Tekken pid acquired: " + str(self.pid))
+                print('Tekken pid acquired: {}'.format(self.pid))
             else:
-                print("Tekken pid not acquired. Trying to acquire...")
-
+                print('Tekken pid not acquired. Trying to acquire...')
             return gameSnapshot
 
-        if (self.needReacquireModule):
-            print("Trying to acquire Tekken library in pid: " + str(self.pid))
-            self.module_address = ModuleEnumerator.GetModuleAddressByPIDandName(self.pid, 'TekkenGame-Win64-Shipping.exe')
+        if(self.needReacquireModule):
+            print(
+                'Trying to acquire Tekken library in pid: {}'.format(self.pid)
+            )
+            self.module_address = module_enumerator.get_module_base_address(
+                self.pid, TekkenGameReader.PROCESS_NAME
+            )
             if self.module_address == None:
                 print("TekkenGame-Win64-Shipping.exe not found. Likely wrong process id. Reacquiring pid.")
                 self.ReacquireEverything()
@@ -182,9 +188,11 @@ class TekkenGameReader:
                 self.needReacquireModule = False
 
         if self.module_address != None:
-            processHandle = OpenProcess(0x10, False, self.pid)
+            process_handle = process_handle = kernel32.open_process(
+                kernel32.PROCESS_VM_READ, False, self.pid
+            )
             try:
-                player_data_base_address = self.GetValueFromAddress(processHandle, self.module_address + self.player_data_pointer_offset, is64bit = True)
+                player_data_base_address = self.GetValueFromAddress(process_handle, self.module_address + self.player_data_pointer_offset, is64bit = True)
                 if player_data_base_address == 0:
                     if not self.needReaquireGameState:
                         print("No fight detected. Gamestate not updated.")
@@ -195,10 +203,10 @@ class TekkenGameReader:
 
                     last_eight_frames = []
 
-                    second_address_base = self.GetValueFromAddress(processHandle, player_data_base_address, is64bit = True)
+                    second_address_base = self.GetValueFromAddress(process_handle, player_data_base_address, is64bit = True)
                     for i in range(8):  # for rollback purposes, there are 8 copies of the game state, each one updatating once every 8 frames
                         potential_second_address = second_address_base + (i * self.c['MemoryAddressOffsets']['rollback_frame_offset'])
-                        potential_frame_count = self.GetValueFromAddress(processHandle, potential_second_address +  self.c['GameDataAddress']['frame_count'])
+                        potential_frame_count = self.GetValueFromAddress(process_handle, potential_second_address +  self.c['GameDataAddress']['frame_count'])
                         last_eight_frames.append((potential_frame_count, potential_second_address))
 
                     if rollback_frame >= len(last_eight_frames):
@@ -210,7 +218,7 @@ class TekkenGameReader:
                     p1_bot = BotSnapshot()
                     p2_bot = BotSnapshot()
 
-                    player_data_frame = self.GetBlockOfData(processHandle, player_data_second_address, self.c['MemoryAddressOffsets']['rollback_frame_offset'])
+                    player_data_frame = self.GetBlockOfData(process_handle, player_data_second_address, self.c['MemoryAddressOffsets']['rollback_frame_offset'])
 
                     for data_type, value in self.c['PlayerDataAddress'].items():
                         p1_value = self.GetValueFromDataBlock(player_data_frame, value, 0, self.IsDataAFloat(data_type))
@@ -264,8 +272,8 @@ class TekkenGameReader:
 
                     if self.flagToReacquireNames:
                         if p1_bot.character_name != CharacterCodes.NOT_YET_LOADED.name and p2_bot.character_name != CharacterCodes.NOT_YET_LOADED.name:
-                            self.opponent_name = self.GetValueAtEndOfPointerTrail(processHandle, "OPPONENT_NAME", True)
-                            self.opponent_side = self.GetValueAtEndOfPointerTrail(processHandle, "OPPONENT_SIDE", False)
+                            self.opponent_name = self.GetValueAtEndOfPointerTrail(process_handle, "OPPONENT_NAME", True)
+                            self.opponent_side = self.GetValueAtEndOfPointerTrail(process_handle, "OPPONENT_SIDE", False)
                             self.is_player_player_one = (self.opponent_side == 1)
                             #print(self.opponent_char_id)
                             #print(self.is_player_player_one)
@@ -273,8 +281,8 @@ class TekkenGameReader:
                             self.p1_movelist_to_use = p1_bot.player_data_dict['PlayerDataAddress.movelist_to_use']
                             self.p2_movelist_to_use = p2_bot.player_data_dict['PlayerDataAddress.movelist_to_use']
 
-                            self.p1_movelist_block, p1_movelist_address = self.PopulateMovelists(processHandle, "P1_Movelist")
-                            self.p2_movelist_block, p2_movelist_address = self.PopulateMovelists(processHandle, "P2_Movelist")
+                            self.p1_movelist_block, p1_movelist_address = self.PopulateMovelists(process_handle, "P1_Movelist")
+                            self.p2_movelist_block, p2_movelist_address = self.PopulateMovelists(process_handle, "P2_Movelist")
 
                             self.p1_movelist_parser = MovelistParser.MovelistParser(self.p1_movelist_block, p1_movelist_address)
                             self.p2_movelist_parser = MovelistParser.MovelistParser(self.p2_movelist_block, p2_movelist_address)
@@ -291,7 +299,7 @@ class TekkenGameReader:
                     gameSnapshot = GameSnapshot(p1_bot, p2_bot, best_frame_count, timer_in_frames, bot_facing, self.opponent_name, self.is_player_player_one)
 
             finally:
-                CloseHandle(processHandle)
+                CloseHandle(process_handle)
 
         return gameSnapshot
 
