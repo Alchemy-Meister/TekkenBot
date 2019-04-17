@@ -279,7 +279,7 @@ class TekkenEncyclopedia:
             #print("p1: NOW:0")
             #print("p2: NOW:0")
             if self.isPlayerOne:
-                if gameState.gameReader.flagToReacquireNames == False and self.was_fight_being_reacquired:
+                if gameState.game_reader.reacquire_names == False and self.was_fight_being_reacquired:
                     self.is_match_recorded = False
 
                     for entry in self.get_matchup_record(gameState):
@@ -323,7 +323,7 @@ class TekkenEncyclopedia:
 
             self.GameEvents = []
 
-        self.was_fight_being_reacquired = gameState.gameReader.flagToReacquireNames
+        self.was_fight_being_reacquired = gameState.game_reader.reacquire_names
 
     def get_matchup_record(self, gameState):
         if gameState.stateLog[-1].is_player_player_one:

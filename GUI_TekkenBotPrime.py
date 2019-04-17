@@ -42,7 +42,8 @@ class GUI_TekkenBotPrime(Tk):
         try:
             with open("TekkenData/tekken_bot_readme.txt") as fr:
                 lines = fr.readlines()
-            for line in lines: print(line)
+            for line in lines:
+                print(line)
         except:
             print("Error reading readme file.")
 
@@ -218,7 +219,7 @@ class GUI_TekkenBotPrime(Tk):
         #self.graph.update_state()
         time2 = time.time()
         elapsed_time = 1000 * (time2 - time1)
-        if self.launcher.gameState.gameReader.HasWorkingPID():
+        if self.launcher.gameState.game_reader.is_pid_valid():
             self.after(max(2, 8 - int(round(elapsed_time))), self.update_launcher)
         else:
             self.after(1000, self.update_launcher)

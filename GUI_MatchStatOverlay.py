@@ -35,7 +35,7 @@ class GUI_MatchStatOverlay(GUI_Overlay.Overlay):
 
         self.redirector = TextRedirector(self.text)
 
-        if not self.launcher.gameState.gameReader.flagToReacquireNames:
+        if not self.launcher.gameState.game_reader.reacquire_names:
             for record in self.launcher.cyclopedia_p1.get_matchup_record(self.launcher.gameState):
                 self.redirector.write(record)
 

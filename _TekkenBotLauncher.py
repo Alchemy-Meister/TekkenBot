@@ -35,7 +35,7 @@ class TekkenBotLauncher:
             if not self.isPlayerOne:
                 self.gameState.FlipMirror()
 
-            self.gameController.Update(self.gameState.IsForegroundPID(), self.gameState.IsBotOnLeft())
+            self.gameController.Update(self.gameState.is_tekken_foreground_wnd(), self.gameState.IsBotOnLeft())
             self.botCommands.Update(self.gameState)
             self.botBrain.Update(self.gameState)
 
@@ -59,7 +59,7 @@ class TekkenBotLauncher:
         return self.botBrain
 
     def MashAccept(self): #Useful for Treasure Mode
-        if self.gameState.IsForegroundPID():
+        if self.gameState.is_tekken_foreground_wnd():
             if (random.randint(0, 1) == 0):
                 ArtificalKeyboard.PressKey(GameInputter.Keys_P2.A)
             else:

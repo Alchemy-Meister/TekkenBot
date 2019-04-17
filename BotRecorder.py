@@ -50,8 +50,8 @@ class BotRecorder():
                 self.recorder.Update(self.game_state)
 
             if self.playback_going and self.is_playback_mode:
-                self.p1_controller.Update(self.game_state.IsForegroundPID(), self.game_state.IsBotOnLeft())
-                self.p2_controller.Update(self.game_state.IsForegroundPID(), not self.game_state.IsBotOnLeft())
+                self.p1_controller.Update(self.game_state.is_tekken_foreground_wnd(), self.game_state.IsBotOnLeft())
+                self.p2_controller.Update(self.game_state.is_tekken_foreground_wnd(), not self.game_state.IsBotOnLeft())
 
                 self.p1_bot.Update(self.game_state)
                 self.p2_bot.Update(self.game_state)

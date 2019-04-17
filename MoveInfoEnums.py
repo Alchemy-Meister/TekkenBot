@@ -195,7 +195,7 @@ class CharacterCodes(Enum):
     LAW = 1
     KING = 2
     YOSHIMITSU = 3
-    HWOARANG  = 4
+    HWOARANG = 4
     XIAOYU = 5
     JIN = 6
     BRYAN = 7
@@ -211,7 +211,7 @@ class CharacterCodes(Enum):
     LEO = 17
     LARS = 18
     ALISA = 19
-    CLAUDIO  = 20
+    CLAUDIO = 20
     KATARINA = 21
     LUCKY_CHLOE = 22
     SHAHEEN = 23
