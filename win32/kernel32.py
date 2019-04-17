@@ -489,7 +489,7 @@ def read_process_memory(h_process, lp_base_address, n_size):
     )
     if not success and get_last_error() != ERROR_PARTIAL_COPY:
         raise ctypes.WinError()
-    return str(lp_buffer.raw)[:lp_number_of_bytes_read.value]
+    return bytes(lp_buffer.raw)[:lp_number_of_bytes_read.value]
 
 # -----------------------------------------------------------------------------
 # Process API

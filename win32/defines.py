@@ -168,6 +168,8 @@ LPWSTR = ctypes.c_wchar_p
 LPVOID = ctypes.c_void_p
 QWORD = ctypes.c_uint64
 UINT = ctypes.c_uint32
+ULONG = ctypes.c_uint32
+ULONGLONG = ctypes.c_uint64  # c_ulonglong
 WCHAR = ctypes.c_wchar
 WORD = ctypes.c_uint16
 
