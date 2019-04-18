@@ -69,19 +69,19 @@ class GUI_CommandInputOverlay(GUI_Overlay.Overlay):
 
     def update_state(self):
         GUI_Overlay.Overlay.update_state(self)
-        if self.launcher.gameState.stateLog[-1].is_player_player_one:
-            input = self.launcher.gameState.stateLog[-1].bot.GetInputState()
-            cancelable = self.launcher.gameState.stateLog[-1].bot.is_cancelable
-            bufferable = self.launcher.gameState.stateLog[-1].bot.is_bufferable
-            parry1 = self.launcher.gameState.stateLog[-1].bot.is_parry_1
-            parry2 = self.launcher.gameState.stateLog[-1].bot.is_parry_2
+        if self.launcher.gameState.state_log[-1].is_player_player_one:
+            input = self.launcher.gameState.state_log[-1].bot.get_input_state()
+            cancelable = self.launcher.gameState.state_log[-1].bot.is_cancelable
+            bufferable = self.launcher.gameState.state_log[-1].bot.is_bufferable
+            parry1 = self.launcher.gameState.state_log[-1].bot.is_parry1
+            parry2 = self.launcher.gameState.state_log[-1].bot.is_parry2
         else:
-            input = self.launcher.gameState.stateLog[-1].opp.GetInputState()
-            cancelable = self.launcher.gameState.stateLog[-1].opp.is_cancelable
-            bufferable = self.launcher.gameState.stateLog[-1].opp.is_bufferable
-            parry1 = self.launcher.gameState.stateLog[-1].opp.is_parry_1
-            parry2 = self.launcher.gameState.stateLog[-1].opp.is_parry_2
-        frame_count = self.launcher.gameState.stateLog[-1].frame_count
+            input = self.launcher.gameState.state_log[-1].opp.get_input_state()
+            cancelable = self.launcher.gameState.state_log[-1].opp.is_cancelable
+            bufferable = self.launcher.gameState.state_log[-1].opp.is_bufferable
+            parry1 = self.launcher.gameState.state_log[-1].opp.is_parry1
+            parry2 = self.launcher.gameState.state_log[-1].opp.is_parry2
+        frame_count = self.launcher.gameState.state_log[-1].frame_count
         #print(input)
         self.update_input(input, self.color_from_cancel_booleans(cancelable, bufferable, parry1, parry2))
 

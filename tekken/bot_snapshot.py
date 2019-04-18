@@ -84,15 +84,15 @@ class BotSnapshot:
             (CancelStatesBitmask.CANCELABLE.value & cancel_window_bitmask)
             == CancelStatesBitmask.CANCELABLE.value
         )
-        self.is_bufferable = (
+        self.bufferable = (
             (CancelStatesBitmask.BUFFERABLE.value & cancel_window_bitmask)
             == CancelStatesBitmask.BUFFERABLE.value
         )
-        self.is_parry_1 = (
+        self.is_parry1 = (
             (CancelStatesBitmask.PARRYABLE_1.value & cancel_window_bitmask)
             == CancelStatesBitmask.PARRYABLE_1.value
         )
-        self.is_parry_2 = (
+        self.is_parry2 = (
             (CancelStatesBitmask.PARRYABLE_2.value & cancel_window_bitmask)
             == CancelStatesBitmask.PARRYABLE_2.value
         )
@@ -120,8 +120,8 @@ class BotSnapshot:
         )
 
         self.is_jump = (
-            data_dict['PlayerDataAddress.jump_flags'] & 
-            JumpFlagBitmask.JUMP.value == JumpFlagBitmask.JUMP.value
+            data_dict['PlayerDataAddress.jump_flags']
+            & JumpFlagBitmask.JUMP.value == JumpFlagBitmask.JUMP.value
         )
         self.hit_outcome = HitOutcome(
             data_dict['PlayerDataAddress.hit_outcome']
@@ -151,7 +151,7 @@ class BotSnapshot:
         except KeyError:
             self.character_name = "UNKNOWN"
 
-    # def PrintYInfo(self):
+    # def print_y_info(self):
     #     print('{:.4f}, {:.4f}, {:.4f}'.format(
     #         self.highest_y, self.lowest_y, self.highest_y - self.lowest_y)
     #     )
@@ -162,35 +162,56 @@ class BotSnapshot:
         """
         return self.character_name != CharacterCodes.NOT_YET_LOADED.name
 
-    def GetInputState(self):
+    def get_input_state(self):
+        """
+
+        """
         return (self.input_direction, self.input_button, self.rage_button_flag)
 
-    def GetTrackingType(self):
+    def get_traicking_type(self):
+        """
+
+        """
         # if self.complex_state.value < 8:
         return self.complex_state
         # else:
         #    return ComplexMoveStates.UNKN
 
-    def IsBlocking(self):
+    def is_blocking(self):
+        """
+
+        """
         return self.complex_state == ComplexMoveStates.BLOCK
 
-    def IsGettingCounterHit(self):
+    def is_getting_counter_hit(self):
+        """
+
+        """
         return self.hit_outcome in (
             HitOutcome.COUNTER_HIT_CROUCHING,
             HitOutcome.COUNTER_HIT_STANDING
         )
 
-    def IsGettingGroundHit(self):
+    def is_getting_ground_hit(self):
+        """
+
+        """
         return self.hit_outcome in (
             HitOutcome.GROUNDED_FACE_DOWN, HitOutcome.GROUNDED_FACE_UP
         )
 
-    def IsGettingWallSplatted(self):
+    def is_getting_wall_splatted(self):
+        """
+
+        """
         return self.simple_state in (
             SimpleMoveStates.WALL_SPLAT_18, SimpleMoveStates.WALL_SPLAT_19
         )
 
-    def IsGettingHit(self):
+    def is_getting_hit(self):
+        """
+
+        """
         return self.stun_state in (
             StunStates.BEING_PUNISHED, StunStates.GETTING_HIT
         )
@@ -203,38 +224,68 @@ class BotSnapshot:
         #    and self.startup == 0
         # )
 
-    def IsHitting(self):
+    def is_hitting(self):
+        """
+
+        """
         return self.stun_state == StunStates.DOING_THE_HITTING
 
-    def IsPunish(self):
+    def is_punish(self):
+        """
+
+        """
         return self.stun_state == StunStates.BEING_PUNISHED
 
-    def IsAttackMid(self):
+    def is_attack_mid(self):
+        """
+
+        """
         return self.attack_type == AttackType.MID
 
-    def IsAttackUnblockable(self):
+    def is_attack_unblockable(self):
+        """
+
+        """
         return self.attack_type in {
             AttackType.HIGH_UNBLOCKABLE,
             AttackType.LOW_UNBLOCKABLE,
             AttackType.MID_UNBLOCKABLE
         }
 
-    def IsAttackAntiair(self):
+    def is_attack_antiair(self):
+        """
+
+        """
         return self.attack_type == AttackType.ANTIAIR_ONLY
 
-    def IsAttackThrow(self):
+    def is_attack_throw(self):
+        """
+
+        """
         return self.throw_flag == 1
 
-    def IsAttackLow(self):
+    def is_attack_low(self):
+        """
+
+        """
         return self.attack_type == AttackType.LOW
 
-    def IsInThrowing(self):
+    def is_in_throwing(self):
+        """
+
+        """
         return self.attack_type == AttackType.THROW
 
-    def GetActiveFrames(self):
+    def get_active_frames(self):
+        """
+
+        """
         return self.startup_end - self.startup + 1
 
-    def IsAttackWhiffing(self):
+    def is_attack_whiffing(self):
+        """
+
+        """
         return self.complex_state in {
             ComplexMoveStates.END1,
             ComplexMoveStates.F_MINUS,
@@ -244,32 +295,53 @@ class BotSnapshot:
             ComplexMoveStates.WALK
         }
 
-    def IsOnGround(self):
+    def is_on_ground(self):
+        """
+
+        """
         return self.simple_state in {
             SimpleMoveStates.GROUND_FACEDOWN,
             SimpleMoveStates.GROUND_FACEUP
         }
 
-    def IsBeingJuggled(self):
+    def is_being_juggled(self):
+        """
+
+        """
         return self.simple_state == SimpleMoveStates.JUGGLED
 
-    def IsAirborne(self):
+    def is_airborne(self):
+        """
+
+        """
         return self.simple_state == SimpleMoveStates.AIRBORNE
 
-    def IsHoldingUp(self):
+    def is_holding_up(self):
+        """
+
+        """
         return self.input_direction == InputDirectionCodes.u
 
-    def IsHoldingUpBack(self):
+    def is_holding_up_back(self):
+        """
+
+        """
         return self.input_direction == InputDirectionCodes.ub
 
-    def IsTechnicalCrouch(self):
+    def is_technical_crouch(self):
+        """
+
+        """
         return self.simple_state in (
             SimpleMoveStates.CROUCH,
             SimpleMoveStates.CROUCH_BACK,
             SimpleMoveStates.CROUCH_FORWARD
         )
 
-    def IsTechnicalJump(self):
+    def is_technical_jump(self):
+        """
+
+        """
         return self.is_jump
         # return self.simple_state in (
         #     SimpleMoveStates.AIRBORNE,
@@ -277,25 +349,43 @@ class BotSnapshot:
         #     SimpleMoveStates.AIRBORNE_24
         # )
 
-    def IsHoming1(self):
+    def is_homing1(self):
+        """
+
+        """
         return self.complex_state == ComplexMoveStates.S_PLUS
 
-    def IsHoming2(self):
+    def is_homing2(self):
+        """
+
+        """
         return self.complex_state == ComplexMoveStates.S
 
-    def IsPowerCrush(self):
+    def is_power_crush(self):
+        """
+
+        """
         return self.power_crush_flag
 
-    def IsBeingKnockedDown(self):
+    def is_being_knocked_down(self):
+        """
+
+        """
         return self.simple_state == SimpleMoveStates.KNOCKDOWN
 
-    def IsWhileStanding(self):
+    def is_while_standing(self):
+        """
+
+        """
         return self.simple_state in {
             SimpleMoveStates.CROUCH, SimpleMoveStates.CROUCH_BACK,
             SimpleMoveStates.CROUCH_FORWARD
         }
 
-    def IsWallSplat(self):
+    def is_wall_splat(self):
+        """
+
+        """
         # TODO: use the wall splat states in ComplexMoveStates move ids may
         # be different for 'big' characters
         return (
@@ -303,23 +393,41 @@ class BotSnapshot:
             or self.move_id == 2380 or self.move_id == 2382
         )
 
-    def IsInRage(self):
+    def is_in_rage(self):
+        """
+
+        """
         return self.rage_flag > 0
 
-    def IsAbleToAct(self):
+    def is_able_to_act(self):
+        """
+
+        """
         # print(self.cwb)
         return self.is_cancelable
 
-    def IsParryable1(self):
-        return self.is_parry_1
+    def is_parryable1(self):
+        """
 
-    def IsParryable2(self):
-        return self.is_parry_2
+        """
+        return self.is_parry1
 
-    def IsBufferable(self):
-        return self.is_bufferable
+    def is_parryable2(self):
+        """
 
-    def IsAttackStarting(self):
+        """
+        return self.is_parry2
+
+    def is_bufferable(self):
+        """
+
+        """
+        return self.bufferable
+
+    def is_attack_starting(self):
+        """
+
+        """
         # return self.complex_state in {
         #     ComplexMoveStates.ATTACK_STARTING_1,
         #     ComplexMoveStates.ATTACK_STARTING_2,

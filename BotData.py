@@ -1,4 +1,4 @@
-from TekkenGameState import TekkenGameState
+from tekken_game_state import TekkenGameState
 from BasicCommands import BotCommands
 
 class BotBehaviors:

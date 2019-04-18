@@ -3,7 +3,7 @@ from tkinter.ttk import *
 import time
 from datetime import date
 from MatchRecorder import MatchRecorder
-from TekkenGameState import TekkenGameState
+from tekken_game_state import TekkenGameState
 
 from GameInputter import *
 from BasicCommands import *

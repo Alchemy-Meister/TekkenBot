@@ -4,7 +4,7 @@ A simple bot that presses buttons when emerging from block or hit stun.
 """
 
 from Bot import Bot
-from TekkenGameState import TekkenGameState
+from tekken_game_state import TekkenGameState
 from BotData import BotBehaviors
 from NotationParser import ParseMoveList
 from MatchRecorder import MatchRecorder

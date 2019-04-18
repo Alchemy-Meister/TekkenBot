@@ -40,7 +40,7 @@ class GUI_PunishCoachOverlay(GUI_Overlay.Overlay):
 
     def update_state(self):
         GUI_Overlay.Overlay.update_state(self)
-        if self.launcher.gameState.stateLog[-1].is_player_player_one:
+        if self.launcher.gameState.state_log[-1].is_player_player_one:
             cyclopedia = self.launcher.cyclopedia_p2
         else:
             cyclopedia = self.launcher.cyclopedia_p1

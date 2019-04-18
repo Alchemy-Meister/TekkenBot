@@ -1,5 +1,5 @@
 
-from TekkenGameState import TekkenGameState
+from tekken_game_state import TekkenGameState
 from ButtonCommandEnum import Command
 from MoveInfoEnums import InputDirectionCodes
 from MoveInfoEnums import InputAttackCodes

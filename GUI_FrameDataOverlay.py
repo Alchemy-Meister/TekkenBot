@@ -28,6 +28,7 @@ class DataColumns(Enum):
     opp = 13
     notes = 14
 
+    @staticmethod
     def config_name():
         return "DataColumns"
 
@@ -265,9 +266,9 @@ class GUI_FrameDataOverlay(GUI_Overlay.Overlay):
     def update_state(self):
         #GUI_Overlay.Overlay.update_state(self)
         if self.show_live_framedata:
-            if len(self.launcher.gameState.stateLog) > 1:
-                l_recovery = str(self.launcher.gameState.GetOppFramesTillNextMove() - self.launcher.gameState.GetBotFramesTillNextMove())
-                r_recovery = str(self.launcher.gameState.GetBotFramesTillNextMove() - self.launcher.gameState.GetOppFramesTillNextMove())
+            if len(self.launcher.gameState.state_log) > 1:
+                l_recovery = str(self.launcher.gameState.get_opp_frames_till_next_move() - self.launcher.gameState.get_bot_frames_till_next_move())
+                r_recovery = str(self.launcher.gameState.get_bot_frames_till_next_move() - self.launcher.gameState.get_opp_frames_till_next_move())
                 if not '-' in l_recovery:
                     l_recovery = '+' + l_recovery
                 

@@ -1,5 +1,5 @@
 """
-Collects information from TekkenGameState over time in hopes of synthesizing it and presenting it in a more useful way.
+Collects information from tekken_game_state over time in hopes of synthesizing it and presenting it in a more useful way.
 
 """
 
@@ -10,7 +10,7 @@ import artificial_keyboard
 from MoveInfoEnums import AttackType
 from MoveInfoEnums import ComplexMoveStates
 from MoveInfoEnums import ThrowTechs
-from TekkenGameState import TekkenGameState
+from tekken_game_state import TekkenGameState
 
 
 class TekkenEncyclopedia:

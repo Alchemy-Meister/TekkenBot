@@ -11,7 +11,7 @@ or read from a file.
 
 import random
 from ButtonCommandEnum import Command
-from TekkenGameState import TekkenGameState
+from tekken_game_state import TekkenGameState
 from MoveInfoEnums import InputAttackCodes, InputDirectionCodes
 
 class UniversalCommands:

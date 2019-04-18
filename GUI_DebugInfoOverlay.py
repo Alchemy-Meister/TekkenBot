@@ -83,17 +83,17 @@ class GUI_DebugInfoOverlay(GUI_Overlay.Overlay):
         gameState = self.launcher.gameState
 
         self.canvas.delete("debug")
-        if len(gameState.stateLog) > 1:
-            self.draw_debug_info_for_bot(gameState.stateLog[-1].bot, gameState.GetCurrentBotMoveName(), 10, W, True)
-            self.draw_debug_info_for_bot(gameState.stateLog[-1].opp, gameState.GetCurrentOppMoveName(), self.w - 10, E, False)
+        if len(gameState.state_log) > 1:
+            self.draw_debug_info_for_bot(gameState.state_log[-1].bot, gameState.get_current_bot_move_name(), 10, W, True)
+            self.draw_debug_info_for_bot(gameState.state_log[-1].opp, gameState.get_current_opp_move_name(), self.w - 10, E, False)
 
-        move_id = gameState.stateLog[-1].opp.move_id
+        move_id = gameState.state_log[-1].opp.move_id
         if self.prev_move_id != move_id:
             self.prev_move_id = move_id
-            #gameState.stateLog[-1].opp.movelist_parser.print_can_be_done_from_neutral(move_id)
-            #gameState.stateLog[-1].opp.movelist_parser.print_input_for_move(move_id)
+            #gameState.state_log[-1].opp.movelist_parser.print_can_be_done_from_neutral(move_id)
+            #gameState.state_log[-1].opp.movelist_parser.print_input_for_move(move_id)
             #if move_id < 30000:
-                #gameState.stateLog[-1].opp.movelist_parser.print_nodes(move_id)
+                #gameState.state_log[-1].opp.movelist_parser.print_nodes(move_id)
 
 
     def draw_debug_info_for_bot(self, bot, move_name, x, anchor, left_or_right):

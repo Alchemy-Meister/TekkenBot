@@ -1,4 +1,4 @@
-from TekkenGameState import TekkenGameState
+from tekken_game_state import TekkenGameState
 from TekkenEncyclopedia import TekkenEncyclopedia
 import time
 
@@ -10,7 +10,7 @@ class FrameDataLauncher:
 
 
     def Update(self):
-        successfulUpdate = self.gameState.Update()
+        successfulUpdate = self.gameState.update()
         if successfulUpdate:
             self.cyclopedia_p1.Update(self.gameState)
             self.cyclopedia_p2.Update(self.gameState)
