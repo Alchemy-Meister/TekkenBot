@@ -240,7 +240,7 @@ class CharacterCodes(Enum):
     JIN = 6
     BRYAN = 7
     HEIHACHI = 8
-    KAZUYA = 9
+    KAZUYA = 9 # Also True Devil Kayuza
     STEVE = 10
     JACK_7 = 11
     ASUKA = 12
@@ -273,11 +273,14 @@ class CharacterCodes(Enum):
     KID_KAZUYA = 39 # Not selectable
     JACK_4 = 40 # Not selectable
     YOUNG_HEIHACHI = 41 # Not selectable
-    GEESE = 43 # DLC
     TRAINING_DUMMY = 42 # Not selectable
+    GEESE = 43 # DLC
     NOCTIS = 44 # DLC
+    ANNA = 45 # DLC
     LEI = 46 # DLC
     MARDUK = 47 # DLC
+    ARMOR_KING = 48 # DLC
+    JULIA = 49 # DLC
     NEGAN = 50 # DLC
 
     # Value when a match starts for (??) frames until char_id loads
