@@ -31,6 +31,7 @@
 Helper to obtain the base adress of a module
 """
 
+from win32.defines import ERROR_BAD_LENGTH
 import win32.kernel32 as kernel32
 
 def get_module_base_address(pid, module_name):
@@ -47,6 +48,16 @@ def get_module_base_address(pid, module_name):
         h_module_snap = kernel32.create_tool_help32snapshot(
             kernel32.TH32CS_SNAPMODULE, pid
         )
+    except OSError:
+        while kernel32.get_last_error() == ERROR_BAD_LENGTH:
+            try:
+                h_module_snap = kernel32.create_tool_help32snapshot(
+                    kernel32.TH32CS_SNAPMODULE, pid
+                )
+            except OSError:
+                pass
+
+    if h_module_snap:
         try:
             me32 = kernel32.module32first(h_module_snap)
             while me32:
@@ -58,8 +69,4 @@ def get_module_base_address(pid, module_name):
             return address_to_return
         except OSError:
             kernel32.close_handle(h_module_snap)
-    except:
-        print(
-            'This error is for using 32-bit Python. Try the 64-bit version.'
-        )
-        raise
+    return None
