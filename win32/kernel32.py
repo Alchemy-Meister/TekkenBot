@@ -56,6 +56,7 @@ STANDARD_RIGHTS_REQUIRED = 0x000F0000
 # Process access rights for OpenProcess
 PROCESS_QUERY_INFORMATION = 0x0400
 PROCESS_VM_READ = 0x0010
+PROCESS_VM_WRITE = 0x0020
 
 # The values of PROCESS_ALL_ACCESS and THREAD_ALL_ACCESS were changed in
 # Vista/2008
@@ -65,8 +66,10 @@ THREAD_ALL_ACCESS_NT = (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x3FF)
 THREAD_ALL_ACCESS_VISTA = (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0xFFFF)
 if NTDDI_VERSION < NTDDI_VISTA:
     PROCESS_ALL_ACCESS = PROCESS_ALL_ACCESS_NT
+    THREAD_ALL_ACCESS = THREAD_ALL_ACCESS_NT
 else:
     PROCESS_ALL_ACCESS = PROCESS_ALL_ACCESS_VISTA
+    THREAD_ALL_ACCESS = THREAD_ALL_ACCESS_VISTA
 
 # DuplicateHandle constants
 DUPLICATE_SAME_ACCESS = 0x00000002
@@ -490,6 +493,33 @@ def read_process_memory(h_process, lp_base_address, n_size):
     if not success and get_last_error() != ERROR_PARTIAL_COPY:
         raise ctypes.WinError()
     return bytes(lp_buffer.raw)[:lp_number_of_bytes_read.value]
+
+def write_process_memory(h_process, lp_base_address, lp_buffer):
+    """
+    BOOL WINAPI WriteProcessMemory(
+        __in   HANDLE hProcess,
+        __in   LPCVOID lpBaseAddress,
+        __in   LPVOID lpBuffer,
+        __in   SIZE_T nSize,
+        __out  SIZE_T* lpNumberOfBytesWritten
+    );
+    """
+    _write_process_memory = WINDLL.kernel32.WriteProcessMemory
+    _write_process_memory.argtypes = [
+        HANDLE, LPVOID, LPVOID, SIZE_T, POINTER(SIZE_T)
+    ]
+    _write_process_memory.restype = bool
+
+    n_size = len(lp_buffer)
+    lp_buffer = ctypes.create_string_buffer(lp_buffer)
+    lp_number_of_bytes_written = SIZE_T(0)
+    success = _write_process_memory(
+        h_process, lp_base_address, lp_buffer, n_size,
+        BY_REF(lp_number_of_bytes_written)
+    )
+    if not success and get_last_error() != ERROR_PARTIAL_COPY:
+        raise ctypes.WinError()
+    return lp_number_of_bytes_written.value
 
 # -----------------------------------------------------------------------------
 # Process API

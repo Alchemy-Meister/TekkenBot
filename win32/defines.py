@@ -214,6 +214,7 @@ MAX_PATH = 260
 # Error codes
 ERROR_SUCCESS = 0
 ERROR_NO_MORE_FILES = 18
+ERROR_BAD_LENGTH = 24
 ERROR_PARTIAL_COPY = 299
 
 # =============================================================================
