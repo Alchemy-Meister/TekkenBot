@@ -1,46 +1,47 @@
 """
-Collects information from tekken_game_state over time in hopes of synthesizing it and presenting it in a more useful way.
+Collects information from tekken_game_state over time in hopes of synthesizing
+it and presenting it in a more useful way.
 
 """
-
+from enum import Enum
+import sys
+import time
 from MoveInfoEnums import AttackType
 from MoveInfoEnums import ThrowTechs
 from MoveInfoEnums import ComplexMoveStates
 from tekken_game_state import TekkenGameState
-import time
-from enum import Enum
 
 class TekkenEncyclopedia:
-    def __init__(self, isPlayerOne = False, print_extended_frame_data = False):
-        self.FrameData = {}
-        self.GameEvents = []
+    def __init__(self, is_player_one=False, print_extended_frame_data=False):
+        self.frame_data = {}
+        self.game_events = []
         self.current_game_event = None
-        self.isPlayerOne = isPlayerOne
+        self.is_player_one = is_player_one
         self.print_extended_frame_data = print_extended_frame_data
 
         self.active_frame_wait = 1
+        self.punish_window_counter = 0
 
         self.was_fight_being_reacquired = True
         self.is_match_recorded = False
 
         self.stat_filename = "TekkenData/matches.txt"
-        if self.isPlayerOne:
-            self.LoadStats()
+        if self.is_player_one:
+            self.load_stats()
 
         self.current_punish_window = None
-        self.PunishWindows = []
+        self.punish_windows = []
         self.current_frame_data_entry = None
         self.previous_frame_data_entry = None
 
-
-    def LoadStats(self):
+    def load_stats(self):
         self.stat_dict = {}
         self.stat_dict['char_stats'] = {}
         self.stat_dict['matchup_stats'] = {}
         self.stat_dict['opponent_stats'] = {}
         try:
-            with open(self.stat_filename, 'r', encoding='utf-8') as fr:
-                lines = fr.readlines()
+            with open(self.stat_filename, 'r') as r_file:
+                lines = r_file.readlines()
             for line in lines:
                 if '|' in line:
                     args = line.split('|')
@@ -48,12 +49,13 @@ class TekkenEncyclopedia:
                     player_char = args[2].strip()
                     opponent_name = args[4].strip()
                     opponent_char = args[5].strip()
-                    self.AddStat(result, player_char, opponent_name, opponent_char)
+                    self.add_stat(
+                        result, player_char, opponent_name, opponent_char
+                    )
         except FileNotFoundError:
             pass
 
-    def AddStat(self, result, player_char, opponent_name, opponent_char):
-
+    def add_stat(self, result, player_char, opponent_name, opponent_char):
         if not opponent_char in self.stat_dict['char_stats']:
             self.stat_dict['char_stats'][opponent_char] = [0, 0, 0]
         if not opponent_name in self.stat_dict['opponent_stats']:
@@ -73,223 +75,277 @@ class TekkenEncyclopedia:
         self.stat_dict['opponent_stats'][opponent_name][index] += 1
         self.stat_dict['matchup_stats'][matchup_string][index] += 1
 
-    def RecordFromStat(self, catagory, lookup):
+    def record_from_stat(self, catagory, lookup):
         try:
-
             stats = self.stat_dict[catagory][lookup]
             wins = stats[0]
             losses = stats[1]
-            draws= stats[2]
-
-        except:
+            draws = stats[2]
+        except KeyError:
             wins = 0
             losses = 0
             draws = 0
 
         if draws <= 0:
-            return "{} - {}".format(wins, losses)
-        else:
-            return "{} - {} - {}".format(wins, losses, draws)
+            return '{} - {}'.format(wins, losses)
+        return '{} - {} - {}'.format(wins, losses, draws)
 
-    def GetPlayerString(self, reverse = False):
-        if (self.isPlayerOne and not reverse) or (not self.isPlayerOne and reverse):
+    def get_player_string(self, reverse=False):
+        if (
+                (self.is_player_one and not reverse)
+                or (not self.is_player_one and reverse)
+        ):
             return "p1: "
-        else:
-            return "p2: "
+        return "p2: "
 
+    def get_frame_advantage(self, move_id, is_on_block=True):
+        if move_id in self.frame_data:
+            if is_on_block:
+                return self.frame_data[move_id].onBlock
+            return self.frame_data[move_id].onNormalHit
+        return None
 
-    def GetFrameAdvantage(self, moveId, isOnBlock = True):
-        if moveId in self.FrameData:
-            if isOnBlock:
-                return self.FrameData[moveId].onBlock
-            else:
-                return self.FrameData[moveId].onNormalHit
-        else:
-            return None
-
-
-    #Set the dummy to jump and hold up and this prints the frame difference.
-    def CheckJumpFrameDataFallback(self, game_state):
-        if not self.isPlayerOne:
+    def check_jumpframe_data_fallback(self, game_state: TekkenGameState):
+        #Set the dummy to jump and hold up and this prints the frame difference.
+        if not self.is_player_one:
             if game_state.is_fulfill_jump_fallback_conditions():
-                print("p1 jump frame diff: " + str(game_state.get_bot_move_timer() - game_state.get_opp_move_timer()))
+                sys.stdout.write(
+                    'p1 jump frame diff: {}'.format(
+                        game_state.get_bot_move_timer()
+                        - game_state.get_opp_move_timer()
+                    )
+                )
 
-    def Update(self, game_state: TekkenGameState):
-        if self.isPlayerOne:
+    def update(self, game_state: TekkenGameState):
+        if self.is_player_one:
             game_state.flip_mirror()
 
-        #self.CheckJumpFrameDataFallback(game_state)
+        # self.check_jumpframe_data_fallback(game_state)
+        self.determine_frame_data(game_state)
+        self.determine_game_stats(game_state)
+        self.determine_coaching_tips(game_state)
 
-        self.DetermineFrameData(game_state)
-
-        self.DetermineGameStats(game_state)
-
-        self.DetermineCoachingTips(game_state)
-
-
-
-        if self.isPlayerOne:
+        if self.is_player_one:
             game_state.flip_mirror()
 
-    def DetermineCoachingTips(self, game_state: TekkenGameState):
-
+    def determine_coaching_tips(self, game_state: TekkenGameState):
         if self.previous_frame_data_entry != self.current_frame_data_entry:
             self.previous_frame_data_entry = self.current_frame_data_entry
 
-            if self.current_punish_window != None:
-                self.ClosePunishWindow(PunishWindow.Result.NO_WINDOW, do_close_frame_data_entries=False)
+            if self.current_punish_window is not None:
+                self.close_punish_window(
+                    PunishWindow.Result.NO_WINDOW,
+                    do_close_frame_data_entries=False
+                )
 
-            # if int(self.current_frame_data_entry.currentFrameAdvantage) <= 999999:
-            self.current_punish_window = PunishWindow(self.current_frame_data_entry.prefix,
-                                                      self.current_frame_data_entry.move_id,
-                                                      self.current_frame_data_entry.input,
-                                                      int(self.current_frame_data_entry.hitRecovery),
-                                                      int(self.current_frame_data_entry.blockRecovery),
-                                                      int(self.current_frame_data_entry.activeFrames))
-            self.PunishWindows.append(self.current_punish_window)
+            # if(
+            #       int(self.current_frame_data_entry.currentFrameAdvantage)
+            #       <= 999999
+            # ):
+            self.current_punish_window = (
+                PunishWindow(
+                    self.current_frame_data_entry.prefix,
+                    self.current_frame_data_entry.move_id,
+                    self.current_frame_data_entry.input,
+                    int(self.current_frame_data_entry.hitRecovery),
+                    int(self.current_frame_data_entry.blockRecovery),
+                    int(self.current_frame_data_entry.activeFrames)
+                )
+            )
+            self.punish_windows.append(self.current_punish_window)
             self.punish_window_counter = 0
 
-
-
-        if self.current_punish_window != None:
+        if self.current_punish_window is not None:
             self.punish_window_counter += 1
             #if self.punish_window_counter > self.current_punish_window.size:
 
-            was_block_punish = game_state.did_opp_start_getting_punished_x_frames_ago(1) or game_state.did_opp_start_getting_hit_x_frames_ago(1)
+            was_block_punish = (
+                game_state.did_opp_start_getting_punished_x_frames_ago(1)
+                or game_state.did_opp_start_getting_hit_x_frames_ago(1)
+            )
 
             if was_block_punish:
-                leeway = (game_state.opp_frames_until_recovery_x_frames_ago(2) - 1)
+                leeway = (
+                    game_state.opp_frames_until_recovery_x_frames_ago(2) - 1
+                )
+                # TODO these constants should go to a Enum
                 LAUNCH_PUNISHIBLE = 15
                 BAD_PUNISH_THRESHOLD = 13
-                #if leeway == 0:
-                    #self.ClosePunishWindow(PunishWindow.Result.PERFECT_PUNISH)
-                #else:
-                fa = (-1 * self.current_punish_window.get_frame_advantage())
-                startup = fa - leeway
-                if fa >= LAUNCH_PUNISHIBLE and startup <= BAD_PUNISH_THRESHOLD:
-                    self.ClosePunishWindow(PunishWindow.Result.NO_LAUNCH_ON_LAUNCHABLE)
-                elif fa >= LAUNCH_PUNISHIBLE:
-                    self.ClosePunishWindow(PunishWindow.Result.LAUNCH_ON_LAUNCHABLE)
+                # if leeway == 0:
+                    # self.close_punish_window(
+                    #   PunishWindow.Result.PERFECT_PUNISH
+                    # )
+                # else:
+                frame_advantage = (
+                    -1 * self.current_punish_window.get_frame_advantage()
+                )
+                startup = frame_advantage - leeway
+                if(
+                        frame_advantage >= LAUNCH_PUNISHIBLE
+                        and startup <= BAD_PUNISH_THRESHOLD
+                ):
+                    self.close_punish_window(
+                        PunishWindow.Result.NO_LAUNCH_ON_LAUNCHABLE
+                    )
+                elif frame_advantage >= LAUNCH_PUNISHIBLE:
+                    self.close_punish_window(
+                        PunishWindow.Result.LAUNCH_ON_LAUNCHABLE
+                    )
                 else:
-                    self.ClosePunishWindow(PunishWindow.Result.JAB_ON_NOT_LAUNCHABLE)
-
-            elif game_state.has_opp_returned_to_neutral_from_move_id(self.current_punish_window.move_id) and self.punish_window_counter >= self.current_punish_window.hit_recovery:
+                    self.close_punish_window(
+                        PunishWindow.Result.JAB_ON_NOT_LAUNCHABLE
+                    )
+            elif(
+                    game_state.has_opp_returned_to_neutral_from_move_id(
+                        self.current_punish_window.move_id
+                    ) and self.punish_window_counter
+                    >= self.current_punish_window.hit_recovery
+                ):
                 if self.current_punish_window.get_frame_advantage() <= -10:
-                    self.ClosePunishWindow(PunishWindow.Result.NO_PUNISH)
+                    self.close_punish_window(PunishWindow.Result.NO_PUNISH)
                 else:
-                    self.ClosePunishWindow(PunishWindow.Result.NO_WINDOW)
-            if self.current_punish_window != None:
-                self.current_punish_window.adjust_window(game_state.get_opp_frames_till_next_move(), game_state.get_bot_frames_till_next_move())
+                    self.close_punish_window(PunishWindow.Result.NO_WINDOW)
+            if self.current_punish_window is not None:
+                self.current_punish_window.adjust_window(
+                    game_state.get_opp_frames_till_next_move(),
+                    game_state.get_bot_frames_till_next_move()
+                )
 
-            #perfect_punish = False
-            #if was_block_punish:
-                #perfect_punish = game_state.was_bot_move_on_last_frame_x_frames_ago(2)
+            # perfect_punish = False
+            # if was_block_punish:
+                # perfect_punish = (
+                #   game_state.was_bot_move_on_last_frame_x_frames_ago(2)
+                # )
 
-
-
-
-
-    def ClosePunishWindow(self, result, do_close_frame_data_entries = True):
+    def close_punish_window(self, result, do_close_frame_data_entries=True):
         self.current_punish_window.close_window(result)
         self.current_punish_window = None
         if do_close_frame_data_entries:
             self.previous_frame_data_entry = None
             self.current_frame_data_entry = None
 
-    def DetermineGameStats(self, game_state: TekkenGameState):
+    def determine_game_stats(self, game_state: TekkenGameState):
         frames_ago = 4
-        if self.current_game_event == None:
-            if game_state.did_opp_combo_counter_just_start_x_frames_ago(frames_ago):
+        if self.current_game_event is None:
+            if(
+                    game_state.did_opp_combo_counter_just_start_x_frames_ago(
+                        frames_ago
+                    )
+            ):
                 game_state.back_to_the_future(frames_ago)
 
-                combo_counter_damage = game_state.get_opp_combo_damage_x_frames_ago(1)
+                combo_counter_damage = (
+                    game_state.get_opp_combo_damage_x_frames_ago(1)
+                )
 
-                was_unblockable = game_state.is_opp_attack_unblockable()
-                was_antiair = game_state.is_opp_attack_antiair()
-                was_block_punish = game_state.did_bot_start_getting_punished_x_frames_ago(1)
-                perfect_punish = False
-                if was_block_punish:
-                    perfect_punish = game_state.bot_frames_until_recovery_x_frames_ago(2) == 1
-                was_counter_hit = game_state.is_bot_getting_counter_hit()
-                was_ground_hit = game_state.is_bot_getting_hit_on_ground()
-
-                was_whiff_punish = game_state.get_bot_startup_x_frames_ago(2) > 0
-
-                was_low_hit = game_state.is_opp_attack_low()
-                was_mid_hit_on_crouching = game_state.is_opp_attack_mid() and game_state.is_bot_crouching()
-                was_throw = game_state.is_bot_being_thrown()
-
-                was_damaged_during_attack = game_state.did_opp_take_damage_during_startup()
-
-
-
-                game_state.return_to_present()
-
-                if was_unblockable:
+                if game_state.is_opp_attack_unblockable():
                     hit = GameStatEventEntry.EntryType.UNBLOCKABLE
-                elif was_antiair:
+                elif game_state.is_opp_attack_antiair():
                     hit = GameStatEventEntry.EntryType.ANTIAIR
-                elif was_throw:
+                elif game_state.is_bot_being_thrown():
                     hit = GameStatEventEntry.EntryType.THROW
-                elif was_damaged_during_attack:
+                elif game_state.did_opp_take_damage_during_startup():
                     hit = GameStatEventEntry.EntryType.POWER_CRUSHED
-                elif was_block_punish:
+                elif game_state.did_bot_start_getting_punished_x_frames_ago(1):
+                    perfect_punish = (
+                        game_state.bot_frames_until_recovery_x_frames_ago(2)
+                        == 1
+                    )
                     hit = GameStatEventEntry.EntryType.PUNISH
-                elif was_counter_hit:
+                elif game_state.is_bot_getting_counter_hit():
                     hit = GameStatEventEntry.EntryType.COUNTER
-                elif was_ground_hit:
+                elif game_state.is_bot_getting_hit_on_ground():
                     hit = GameStatEventEntry.EntryType.GROUND
-                elif was_whiff_punish:
+                elif game_state.get_bot_startup_x_frames_ago(2) > 0:
                     hit = GameStatEventEntry.EntryType.WHIFF_PUNISH
-                elif was_low_hit:
+                elif game_state.is_opp_attack_low():
                     hit = GameStatEventEntry.EntryType.LOW
-                elif was_mid_hit_on_crouching:
+                elif(
+                        game_state.is_opp_attack_mid()
+                        and game_state.is_bot_crouching()
+                    ):
                     hit = GameStatEventEntry.EntryType.MID
                 else:
                     hit = GameStatEventEntry.EntryType.NO_BLOCK
-                self.current_game_event = GameStatEventEntry(game_state.state_log[-1].timer_frames_remaining, self.GetPlayerString(True), hit, combo_counter_damage)
 
-                #print("event open")
+                game_state.return_to_present()
+                self.current_game_event = (
+                    GameStatEventEntry(
+                        game_state.state_log[-1].timer_frames_remaining,
+                        self.get_player_string(True),
+                        hit,
+                        combo_counter_damage
+                    )
+                )
+                # print("event open")
             else:
-                bot_damage_taken = game_state.did_bot_just_take_damage(frames_ago + 1)
+                bot_damage_taken = (
+                    game_state.did_bot_just_take_damage(frames_ago + 1)
+                )
                 if bot_damage_taken > 0:
                     #print('armored')
-                    # FIXME this is probably gonna break for Yoshimitsu's self damage moves
-                    game_event = GameStatEventEntry(game_state.state_log[-1].timer_frames_remaining, self.GetPlayerString(True), GameStatEventEntry.EntryType.ARMORED, 0)
-                    game_event.close_entry(game_state.state_log[-1].timer_frames_remaining, 1, bot_damage_taken, 0, len(self.GameEvents))
-
-                    self.GameEvents.append(game_event)
-
-
-
+                    # FIXME this is probably gonna break for Yoshimitsu's 
+                    # self damage moves
+                    game_event = GameStatEventEntry(
+                        game_state.state_log[-1].timer_frames_remaining,
+                        self.get_player_string(True),\
+                        GameStatEventEntry.EntryType.ARMORED,
+                        0
+                    )
+                    game_event.close_entry(
+                        game_state.state_log[-1].timer_frames_remaining,
+                        1,
+                        bot_damage_taken,
+                        0,
+                        len(self.game_events)
+                    )
+                    self.game_events.append(game_event)
         else:
-            if game_state.did_opp_combo_counter_just_end_x_frames_ago(frames_ago) or game_state.was_fight_reset():
-                hits = game_state.get_opp_combo_hits_x_frames_ago(frames_ago + 1)
-                damage = game_state.get_opp_combo_damage_x_frames_ago(frames_ago + 1)
-                juggle = game_state.get_opp_juggle_damage_x_frames_ago(frames_ago + 1)
-                self.current_game_event.close_entry(game_state.state_log[-1].timer_frames_remaining, hits, damage, juggle, len(self.GameEvents))
-                self.GameEvents.append(self.current_game_event)
+            if(
+                    game_state.did_opp_combo_counter_just_end_x_frames_ago(
+                        frames_ago
+                    ) or game_state.was_fight_reset()
+            ):
+                hits = game_state.get_opp_combo_hits_x_frames_ago(
+                    frames_ago + 1
+                )
+                damage = game_state.get_opp_combo_damage_x_frames_ago(
+                    frames_ago + 1
+                )
+                juggle = game_state.get_opp_juggle_damage_x_frames_ago(
+                    frames_ago + 1
+                )
+                self.current_game_event.close_entry(
+                    game_state.state_log[-1].timer_frames_remaining,
+                    hits,
+                    damage,
+                    juggle,
+                    len(self.game_events)
+                )
+                self.game_events.append(self.current_game_event)
                 self.current_game_event = None
                 #print("event closed")
-
-
-
-
 
         if game_state.was_fight_reset():
             #print("p1: NOW:0")
             #print("p2: NOW:0")
-            if self.isPlayerOne:
-                if game_state.game_reader.reacquire_names == False and self.was_fight_being_reacquired:
+            if self.is_player_one:
+                if(
+                        not game_state.get_reader().reacquire_names
+                        and self.was_fight_being_reacquired
+                ):
                     self.is_match_recorded = False
-
                     for entry in self.get_matchup_record(game_state):
-                        print(entry)
-
+                        sys.stdout.write(entry)
 
                 round_number = game_state.get_round_number()
-                print("!ROUND | {} | HIT".format(round_number))
-                if (game_state.state_log[-1].bot.wins == 3 or game_state.state_log[-1].opp.wins == 3) and not self.is_match_recorded:
+                sys.stdout.write('!ROUND | {} | HIT'.format(round_number))
+                if(
+                        (
+                            game_state.state_log[-1].bot.wins == 3
+                            or game_state.state_log[-1].opp.wins == 3
+                        ) and not self.is_match_recorded
+                ):
                     self.is_match_recorded = True
 
                     player_name = "You"
@@ -314,17 +370,29 @@ class TekkenEncyclopedia:
                     else:
                         result = "LOSS"
 
-                    match_result = '{} | {} | {} | vs | {} | {} | {}-{} | {}'.format(result, player_name, player_char, opponent_name, opponent_char, player_wins, opponent_wins, time.strftime('%Y_%m_%d_%H.%M'))
-                    print("{}".format(match_result))
-                    self.AddStat(result, player_char, opponent_name, opponent_char)
-                    with open(self.stat_filename, "a", encoding='utf-8') as fa:
-                        fa.write(match_result + '\n')
-            if (game_state.get_timer(frames_ago) < 3600 and len(self.GameEvents) > 0) or True:
-                summary = RoundSummary(self.GameEvents, game_state.get_opp_round_summary(frames_ago))
+                    match_result = (
+                        '{} | {} | {} | vs | {} | {} | {}-{} | {}'.format(
+                            result, player_name, player_char, opponent_name,
+                            opponent_char, player_wins, opponent_wins,
+                            time.strftime('%Y_%m_%d_%H.%M')
+                        )
+                    )
+                    sys.stdout.write('{}'.format(match_result))
+                    self.add_stat(
+                        result, player_char, opponent_name, opponent_char
+                    )
+                    with open(self.stat_filename, 'a') as a_file:
+                        a_file.write(match_result + '\n')
+            if game_state.get_timer(frames_ago) < 3600 and self.game_events:
+                summary = RoundSummary(
+                    self.game_events,
+                    game_state.get_opp_round_summary(frames_ago)
+                )
+            self.game_events = []
 
-            self.GameEvents = []
-
-        self.was_fight_being_reacquired = game_state.game_reader.reacquire_names
+        self.was_fight_being_reacquired = (
+            game_state.get_reader().reacquire_names
+        )
 
     def get_matchup_record(self, game_state):
         if game_state.state_log[-1].is_player_player_one:
@@ -335,100 +403,184 @@ class TekkenEncyclopedia:
             player_char = game_state.state_log[-1].bot.character_name
         opponent_name = game_state.state_log[-1].opponent_name
         return [
-                ("!RECORD | vs {}: {}".format(opponent_char, self.RecordFromStat('char_stats', opponent_char))),
-                ("!RECORD | vs {}: {}".format(opponent_name, self.RecordFromStat('opponent_stats', opponent_name))),
-                ("!RECORD | {} vs {}: {}".format(player_char, opponent_char, self.RecordFromStat("matchup_stats", "{} vs {}".format(player_char, opponent_char))))
-            ]
+            '!RECORD | vs {}: {}'.format(
+                opponent_char,
+                self.record_from_stat('char_stats', opponent_char)
+            ),
+            '!RECORD | vs {}: {}'.format(
+                opponent_name,
+                self.record_from_stat('opponent_stats', opponent_name)
+            ),
+            '!RECORD | {} vs {}: {}'.format(
+                player_char, opponent_char,
+                self.record_from_stat(
+                    'matchup_stats', '{} vs {}'.format(
+                        player_char, opponent_char
+                    )
+                )
+            )
+        ]
 
-    def DetermineFrameData(self, game_state):
-        if (game_state.is_bot_blocking() or game_state.is_bot_getting_hit() or game_state.is_bot_being_thrown() or game_state.is_bot_being_knocked_down() or game_state.is_bot_being_wall_splatted()): #or game_state.is_bot_using_opp_movelist()): #or  game_state.is_bot_started_being_juggled() or game_state.is_bot_just_grounded()):
+    def determine_frame_data(self, game_state):
+        if(
+                game_state.is_bot_blocking()
+                or game_state.is_bot_getting_hit()
+                or game_state.is_bot_being_thrown()
+                or game_state.is_bot_being_knocked_down()
+                or game_state.is_bot_being_wall_splatted()
+                # or game_state.is_bot_using_opp_movelist()
+                # or game_state.is_bot_started_being_juggled()
+                # or game_state.is_bot_just_grounded()
+        ):
             # print(game_state.state_log[-1].bot.move_id)
-            #print(game_state.state_log[-1].bot.move_timer)
-            #print(game_state.state_log[-1].bot.recovery)
-            #print(game_state.did_bot_id_change_x_moves_ago(self.active_frame_wait))
+            # print(game_state.state_log[-1].bot.move_timer)
+            # print(game_state.state_log[-1].bot.recovery)
+            # print(
+            #   game_state.did_bot_id_change_x_moves_ago(
+            #       self.active_frame_wait
+            #   )
+            # )
 
-            if game_state.did_bot_id_change_x_moves_ago(self.active_frame_wait) or game_state.did_bot_timer_interrupt_x_moves_ago(
-                    self.active_frame_wait):  # or game_state.did_opp_id_change_x_moves_ago(self.active_frame_wait):
-
-                is_recovering_before_long_active_frame_move_completes = (game_state.get_bot_recovery() - game_state.get_bot_move_timer() == 0)
+            if(
+                    game_state.did_bot_id_change_x_moves_ago(
+                        self.active_frame_wait
+                    ) or game_state.did_bot_timer_interrupt_x_moves_ago(
+                        self.active_frame_wait
+                    )
+                    # or game_state.did_opp_id_change_x_moves_ago(
+                    #   self.active_frame_wait
+                    # )
+            ):
+                is_recovering_before_long_active_frame_move_completes = (
+                    game_state.get_bot_recovery()
+                    - game_state.get_bot_move_timer() == 0
+                )
                 game_state.back_to_the_future(self.active_frame_wait)
 
                 #print(game_state.get_opp_active_frames())
-                if (not self.active_frame_wait >= game_state.get_opp_active_frames() + 1) and not is_recovering_before_long_active_frame_move_completes:
+                if(
+                        not self.active_frame_wait
+                        >= game_state.get_opp_active_frames() + 1
+                        and not
+                        is_recovering_before_long_active_frame_move_completes
+                ):
                     self.active_frame_wait += 1
                 else:
                     game_state.return_to_present()
-
-                    currentActiveFrame = game_state.get_last_active_frame_hit_was_on(self.active_frame_wait)
-
+                    currentActiveFrame = (
+                        game_state.get_last_active_frame_hit_was_on(
+                            self.active_frame_wait
+                        )
+                    )
                     game_state.back_to_the_future(self.active_frame_wait)
-
-
                     opp_id = game_state.get_opp_move_id()
 
-                    if opp_id in self.FrameData:
-                        frameDataEntry = self.FrameData[opp_id]
+                    if opp_id in self.frame_data:
+                        frame_data_entry = self.frame_data[opp_id]
                     else:
-                        frameDataEntry = FrameDataEntry(self.print_extended_frame_data)
-                        self.FrameData[opp_id] = frameDataEntry
+                        frame_data_entry = FrameDataEntry(
+                            self.print_extended_frame_data
+                        )
+                        self.frame_data[opp_id] = frame_data_entry
 
-                    frameDataEntry.currentActiveFrame = currentActiveFrame
+                    frame_data_entry.currentActiveFrame = currentActiveFrame
 
-                    frameDataEntry.currentFrameAdvantage = '??'
-                    frameDataEntry.move_id = opp_id
-                    # frameDataEntry.damage =
-                    frameDataEntry.damage = game_state.get_opp_damage()
-                    frameDataEntry.startup = game_state.get_opp_startup()
+                    frame_data_entry.currentFrameAdvantage = '??'
+                    frame_data_entry.move_id = opp_id
+                    # frame_data_entry.damage =
+                    frame_data_entry.damage = game_state.get_opp_damage()
+                    frame_data_entry.startup = game_state.get_opp_startup()
 
-                    if frameDataEntry.damage == 0 and frameDataEntry.startup == 0:
-                        frameDataEntry.startup, frameDataEntry.damage = game_state.get_opp_latest_non_zero_startup_and_damage()
+                    if(
+                            frame_data_entry.damage == 0
+                            and frame_data_entry.startup == 0
+                    ):
+                        frame_data_entry.startup, frame_data_entry.damage = (
+                            game_state
+                            .get_opp_latest_non_zero_startup_and_damage()
+                        )
 
-                    frameDataEntry.activeFrames = game_state.get_opp_active_frames()
-                    frameDataEntry.hitType = AttackType(game_state.get_opp_attack_type()).name
+                    frame_data_entry.activeFrames = (
+                        game_state.get_opp_active_frames()
+                    )
+                    frame_data_entry.hitType = AttackType(
+                        game_state.get_opp_attack_type()
+                    ).name
                     if game_state.is_opp_attack_throw():
-                        frameDataEntry.hitType += "_THROW"
+                        frame_data_entry.hitType += "_THROW"
 
-                    frameDataEntry.recovery = game_state.get_opp_recovery()
+                    frame_data_entry.recovery = game_state.get_opp_recovery()
 
-                    #frameDataEntry.input = frameDataEntry.InputTupleToInputString(game_state.get_opp_last_move_input())
+                    # frame_data_entry.input = (
+                    #   frame_data_entry.InputTupleToInputString(
+                    #       game_state.get_opp_last_move_input()
+                    #   )
+                    # )
+                    frame_data_entry.input = (
+                        game_state.get_current_opp_move_string()
+                    )
 
-                    frameDataEntry.input = game_state.get_current_opp_move_string()
-
-                    frameDataEntry.technical_state_reports = game_state.get_opp_technical_states(frameDataEntry.startup - 1)
-
-                    frameDataEntry.tracking = game_state.get_opp_tracking_type(frameDataEntry.startup)
-
-                    #print(game_state.get_range_of_move())
-
+                    frame_data_entry.technical_state_reports = (
+                        game_state.get_opp_technical_states(
+                            frame_data_entry.startup - 1
+                        )
+                    )
+                    frame_data_entry.tracking = (
+                        game_state.get_opp_tracking_type(
+                            frame_data_entry.startup
+                        )
+                    )
+                    # print(game_state.get_range_of_move())
                     game_state.return_to_present()
 
-                    #frameDataEntry.throwTech = game_state.get_bot_throw_tech(frameDataEntry.activeFrames + frameDataEntry.startup)
-                    frameDataEntry.throwTech = game_state.get_bot_throw_tech(1)
+                    # frame_data_entry.throwTech = (
+                    #   game_state.get_bot_throw_tech(
+                    #       frame_data_entry.activeFrames
+                    #       + frame_data_entry.startup
+                    #   )
+                    # )
+                    frame_data_entry.throwTech = game_state.get_bot_throw_tech(
+                        1
+                    )
 
-                    time_till_recovery_opp = game_state.get_opp_frames_till_next_move()
-                    time_till_recovery_bot = game_state.get_bot_frames_till_next_move()
-
-                    new_frame_advantage_calc = time_till_recovery_bot - time_till_recovery_opp
-
-                    frameDataEntry.currentFrameAdvantage = frameDataEntry.WithPlusIfNeeded(new_frame_advantage_calc)
+                    time_till_recovery_opp = (
+                        game_state.get_opp_frames_till_next_move()
+                    )
+                    time_till_recovery_bot = (
+                        game_state.get_bot_frames_till_next_move()
+                    )
+                    new_frame_advantage_calc = (
+                        time_till_recovery_bot - time_till_recovery_opp
+                    )
+                    frame_data_entry.currentFrameAdvantage = (
+                        frame_data_entry.WithPlusIfNeeded(
+                            new_frame_advantage_calc
+                        )
+                    )
 
                     if game_state.is_bot_blocking():
-                        frameDataEntry.onBlock = new_frame_advantage_calc
+                        frame_data_entry.onBlock = new_frame_advantage_calc
                     else:
                         if game_state.is_bot_getting_counter_hit():
-                            frameDataEntry.onCounterHit = new_frame_advantage_calc
+                            frame_data_entry.onCounterHit = (
+                                new_frame_advantage_calc
+                            )
                         else:
-                            frameDataEntry.onNormalHit = new_frame_advantage_calc
+                            frame_data_entry.onNormalHit = (
+                                new_frame_advantage_calc
+                            )
 
-                    frameDataEntry.hitRecovery = time_till_recovery_opp
-                    frameDataEntry.blockRecovery = time_till_recovery_bot
+                    frame_data_entry.hitRecovery = time_till_recovery_opp
+                    frame_data_entry.blockRecovery = time_till_recovery_bot
 
-                    frameDataEntry.move_str = game_state.get_current_opp_move_name()
-                    frameDataEntry.prefix = self.GetPlayerString()
+                    frame_data_entry.move_str = (
+                        game_state.get_current_opp_move_name()
+                    )
+                    frame_data_entry.prefix = self.get_player_string()
 
-                    print(str(frameDataEntry))
+                    print(str(frame_data_entry))
 
-                    self.current_frame_data_entry = frameDataEntry
+                    self.current_frame_data_entry = frame_data_entry
 
                     game_state.back_to_the_future(self.active_frame_wait)
 
@@ -436,7 +588,7 @@ class TekkenEncyclopedia:
                 game_state.return_to_present()
 
 class FrameDataEntry:
-    def __init__(self, print_extended = False):
+    def __init__(self, print_extended=False):
         self.print_extended = print_extended
         self.prefix = '??'
         self.move_id = '??'
@@ -460,13 +612,11 @@ class FrameDataEntry:
         self.throwTech = None
         self.tracking = ComplexMoveStates.F_MINUS
 
-
     def WithPlusIfNeeded(self, value):
         try:
             if value >= 0:
                 return '+' + str(value)
-            else:
-                return str(value)
+            return str(value)
         except:
             return str(value)
 
@@ -531,11 +681,11 @@ class FrameDataEntry:
 
 
         notes_string = "{}".format(notes)
-        now_string = " NOW:{}".format(str(self.currentFrameAdvantage))
+        if notes_string:
+            now_string = 'NOW:{}'.format(self.currentFrameAdvantage)
+        else:
+            now_string = ' NOW:{}'.format(self.currentFrameAdvantage)
         return self.prefix + non_nerd_string + notes_string + now_string
-
-
-
 
 class GameStatEventEntry:
     class EntryType(Enum):
@@ -559,18 +709,13 @@ class GameStatEventEntry:
         LOW_PARRY = 9
         OUT_OF_THE_AIR = 13
 
-
-
     class PunishType(Enum):
         NONE = 0
         PERFECT = 1
         JAB = 2
         JAB_ON_LAUNCH_PUNISHIBLE = 3
 
-
-
-
-    def __init__(self, time_in_frames, player_string, hit_type : EntryType, combo_counter_damage):
+    def __init__(self, time_in_frames, player_string, hit_type: EntryType, combo_counter_damage):
         self.start_time = time_in_frames
         self.player_string = player_string
         self.hit_type = hit_type
@@ -593,16 +738,14 @@ class RoundSummary:
         self.collated_events = self.collate_events(events)
         total_damage = 0
         sources, types = self.collated_events
-        #print('{} combos for {} damage'.format(types[0][0], types[0][1]))
-        #print('{} pokes for {} damage'.format(types[1][0], types[1][1]))
+        # print('{} combos for {} damage'.format(types[0][0], types[0][1]))
+        # print('{} pokes for {} damage'.format(types[1][0], types[1][1]))
         for event, hits, damage in sources:
             if damage > 0:
-                #print('{} {} for {} damage'.format(hits, event.name, damage))
+                # print('{} {} for {} damage'.format(hits, event.name, damage))
                 total_damage += damage
 
-
-        #print('total damage dealt {} ({})'.format(round_variables[1], total_damage))
-
+        # print('total damage dealt {} ({})'.format(round_variables[1], total_damage))
 
     def collate_events(self, events):
         hits_into_juggles = 0
@@ -610,8 +753,6 @@ class RoundSummary:
         damage_from_juggles = 0
         damage_from_pokes = 0
         sources = []
-
-
 
         for entry in GameStatEventEntry.EntryType:
             occurances = 0
@@ -629,18 +770,14 @@ class RoundSummary:
             sources.append((entry, occurances, damage))
 
         sources.sort(key=lambda x: x[2], reverse=True)
-        types = [(hits_into_juggles, damage_from_juggles), (hits_into_pokes, damage_from_pokes)]
+        types = [
+            (hits_into_juggles, damage_from_juggles),
+            (hits_into_pokes, damage_from_pokes)
+        ]
         return sources, types
-
-
-
-
 
     def __repr__(self):
         pass
-
-
-
 
 class PunishWindow:
     class Result(Enum):
@@ -651,9 +788,12 @@ class PunishWindow:
         LAUNCH_ON_LAUNCHABLE = 4
         JAB_ON_NOT_LAUNCHABLE = 5
 
-        NOT_YET_CLOSED =  99
+        NOT_YET_CLOSED = 99
 
-    def __init__(self, prefix, move_id, string_name, hit_recovery, block_recovery, active_frames ):
+    def __init__(
+            self, prefix, move_id, string_name, hit_recovery, block_recovery,
+            active_frames
+        ):
         self.prefix = prefix
         self.move_id = move_id
         self.name = string_name
@@ -669,12 +809,10 @@ class PunishWindow:
     def get_frame_advantage(self):
         if not self.is_window_locked:
             return self.block_recovery - self.hit_recovery
-        else:
-            return 0 - self.hit_recovery - self.frames_locked
+        return 0 - self.hit_recovery - self.frames_locked
 
     def adjust_window(self, hit_recovery, block_recovery):
         #if block_recovery > self.block_recovery:
-
         self.hit_recovery = hit_recovery
 
         if self.upcoming_lock:
@@ -688,11 +826,20 @@ class PunishWindow:
             self.upcoming_lock = True
 
         if self.get_frame_advantage() != self.original_diff:
-            print('{} NOW:{}'.format(self.prefix, FrameDataEntry.WithPlusIfNeeded(None, self.get_frame_advantage())))
+            sys.stdout.write(
+                '{}NOW:{}'.format(
+                    self.prefix,
+                    FrameDataEntry.WithPlusIfNeeded(
+                        None,
+                        self.get_frame_advantage()
+                    )
+                )
+            )
             self.original_diff = self.get_frame_advantage()
 
-
-    def close_window(self, result : Result):
+    def close_window(self, result: Result):
         self.result = result
         if result != PunishWindow.Result.NO_WINDOW:
-            print("Closing punish window, result: {}".format(self.result.name))
+            sys.stdout.write(
+                'Closing punish window, result: {}'.format(self.result.name)
+            )
