@@ -66,7 +66,7 @@ def raise_if_zero(result, _func=None, _arguments=()):
         raise ctypes.WinError()
     return result
 
-class GuessStringType(object):
+class GuessStringType():
     """
     Decorator that guesses the correct version (A or W) to call
     based on the types of the strings passed as parameters.
@@ -154,22 +154,74 @@ class GuessStringType(object):
         # Call the function and return the result
         return function(*argv, **argd)
 
+class DefaultStringType():
+    """
+    Decorator that uses the default version (A or W) to call
+    based on the configuration of the L{GuessStringType} decorator.
+    @see: L{GuessStringType.t_default}
+    @type fn_ansi: function
+    @ivar fn_ansi: ANSI version of the API function to call.
+    @type fn_unicode: function
+    @ivar fn_unicode: Unicode (wide) version of the API function to call.
+    """
+
+    def __init__(self, fn_ansi, fn_unicode):
+        """
+        @type  fn_ansi: function
+        @param fn_ansi: ANSI version of the API function to call.
+        @type  fn_unicode: function
+        @param fn_unicode: Unicode (wide) version of the API function to call.
+        """
+        self.fn_ansi = fn_ansi
+        self.fn_unicode = fn_unicode
+
+        # Copy the wrapped function attributes.
+        try:
+            self.__name__ = self.fn_ansi.__name__[:-1]  # remove the A or W
+        except AttributeError:
+            pass
+        try:
+            self.__module__ = self.fn_ansi.__module__
+        except AttributeError:
+            pass
+        try:
+            self.__doc__ = self.fn_ansi.__doc__
+        except AttributeError:
+            pass
+
+    def __call__(self, *argv, **argd):
+
+        # Get the appropriate function based on the default.
+        if GuessStringType.t_default == GuessStringType.t_ansi:
+            function = self.fn_ansi
+        else:
+            function = self.fn_unicode
+
+        # Call the function and return the result
+        return function(*argv, **argd)
+
 # --- Types -------------------------------------------------------------------
 # http://msdn.microsoft.com/en-us/library/aa383751(v=vs.85).aspx
 
 # Map of basic C types to Win32 types
+BOOL = ctypes.c_int32
 BYTE = ctypes.c_ubyte
 CHAR = ctypes.c_char
+DOUBLE = ctypes.c_double
 DWORD = ctypes.c_uint32
-BOOL = ctypes.c_int32
+FLOAT = ctypes.c_float
 LONG = ctypes.c_int32
+LONGLONG = ctypes.c_int64
 LPSTR = ctypes.c_char_p
 LPWSTR = ctypes.c_wchar_p
 LPVOID = ctypes.c_void_p
 QWORD = ctypes.c_uint64
+SBYTE = ctypes.c_byte
+SHORT = ctypes.c_int16
 UINT = ctypes.c_uint32
 ULONG = ctypes.c_uint32
 ULONGLONG = ctypes.c_uint64  # c_ulonglong
+USHORT = ctypes.c_uint16
 WCHAR = ctypes.c_wchar
 WORD = ctypes.c_uint16
 
@@ -182,6 +234,7 @@ except AttributeError:
     SIZE_T = {1:BYTE, 2:WORD, 4:DWORD, 8:QWORD}[SIZE_OF(LPVOID)]
 
 # Other Win32 types, more may be added as needed
+PVOID = LPVOID
 HANDLE = LPVOID
 HMODULE = HANDLE
 HWND = HANDLE
@@ -216,6 +269,7 @@ ERROR_SUCCESS = 0
 ERROR_NO_MORE_FILES = 18
 ERROR_BAD_LENGTH = 24
 ERROR_PARTIAL_COPY = 299
+ERROR_IO_PENDING = 997
 
 # =============================================================================
 # This calculates the list of exported symbols.

@@ -54,9 +54,9 @@ STANDARD_RIGHTS_ALL = 0x001F0000
 STANDARD_RIGHTS_REQUIRED = 0x000F0000
 
 # Process access rights for OpenProcess
-PROCESS_QUERY_INFORMATION = 0x0400
 PROCESS_VM_READ = 0x0010
 PROCESS_VM_WRITE = 0x0020
+PROCESS_QUERY_INFORMATION = 0x0400
 
 # The values of PROCESS_ALL_ACCESS and THREAD_ALL_ACCESS were changed in
 # Vista/2008
@@ -71,6 +71,24 @@ else:
     PROCESS_ALL_ACCESS = PROCESS_ALL_ACCESS_VISTA
     THREAD_ALL_ACCESS = THREAD_ALL_ACCESS_VISTA
 
+# Memory access
+PAGE_NOACCESS = 0x01
+PAGE_READONLY = 0x02
+PAGE_READWRITE = 0x04
+PAGE_WRITECOPY = 0x08
+PAGE_EXECUTE = 0x10
+PAGE_EXECUTE_READ = 0x20
+PAGE_EXECUTE_READWRITE = 0x40
+PAGE_EXECUTE_WRITECOPY = 0x80
+PAGE_GUARD = 0x100
+MEM_COMMIT = 0x1000
+MEM_RESERVE = 0x2000
+MEM_FREE = 0x10000
+MEM_PRIVATE = 0x20000
+MEM_MAPPED = 0x40000
+SEC_IMAGE = 0x1000000
+MEM_IMAGE = SEC_IMAGE
+
 # DuplicateHandle constants
 DUPLICATE_SAME_ACCESS = 0x00000002
 
@@ -78,9 +96,13 @@ DUPLICATE_SAME_ACCESS = 0x00000002
 HANDLE_FLAG_INHERIT = 0x00000001
 HANDLE_FLAG_PROTECT_FROM_CLOSE = 0x00000002
 
+# RegisterWaitForSingleObject
+WT_EXECUTEDEFAULT = 0x00000000
+WT_EXECUTEONLYONCE = 0x00000008
+
 # --- Handle wrappers ---------------------------------------------------------
 
-class Handle(object):
+class Handle:
     """
     Encapsulates Win32 handles to avoid leaking them.
     @type inherit: bool
@@ -330,71 +352,202 @@ class SnapshotHandle(Handle):
     @see: L{Handle}
     """
 
-# pylint: disable=too-many-arguments
-def duplicate_handle(
-        h_source_handle, h_source_process_handle=None,
-        h_target_process_handle=None, dw_desired_access=STANDARD_RIGHTS_ALL,
-        b_inherit_handle=False, dw_options=DUPLICATE_SAME_ACCESS
-):
+# --- Structure wrappers ------------------------------------------------------
+
+# Don't psyco-optimize this class because it needs to be serialized.
+class MemoryBasicInformation:
     """
-    BOOL WINAPI DuplicateHandle(
-        __in   HANDLE hSourceProcessHandle,
-        __in   HANDLE hSourceHandle,
-        __in   HANDLE hTargetProcessHandle,
-        __out  LPHANDLE lpTargetHandle,
-        __in   DWORD dwDesiredAccess,
-        __in   BOOL bInheritHandle,
-        __in   DWORD dwOptions
-    ;
+    Memory information object returned by L{VirtualQueryEx}.
     """
-
-    _duplicate_handle = WINDLL.kernel32.DuplicateHandle
-    _duplicate_handle.argtypes = [
-        HANDLE, HANDLE, HANDLE, LPHANDLE, DWORD, BOOL, DWORD
-    ]
-    _duplicate_handle.restype = bool
-    _duplicate_handle.errcheck = raise_if_zero
-
-    # NOTE: the arguments to this function are in a different order,
-    # so we can set default values for all of them but one (hSourceHandle).
-
-    if h_source_process_handle is None:
-        h_source_process_handle = get_current_process()
-    if h_target_process_handle is None:
-        h_target_process_handle = h_source_process_handle
-    lp_target_handle = HANDLE(INVALID_HANDLE_VALUE)
-    _duplicate_handle(
-        h_source_process_handle, h_source_handle, h_target_process_handle,
-        BY_REF(lp_target_handle), dw_desired_access, bool(b_inherit_handle),
-        dw_options
+    READABLE = (
+        PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY
+        | PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY
     )
-    if isinstance(h_source_handle, Handle):
-        handle_class = h_source_handle.__class__
-    else:
-        handle_class = Handle
-    if hasattr(h_source_handle, 'dw_access'):
-        return handle_class(
-            lp_target_handle.value, dw_access=h_source_handle.dw_access
-        )
-    else:
-        return handle_class(lp_target_handle.value)
+    WRITEABLE = (
+        PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY | PAGE_READWRITE
+        | PAGE_WRITECOPY
+    )
+    COPY_ON_WRITE = PAGE_EXECUTE_WRITECOPY | PAGE_WRITECOPY
+    EXECUTABLE = (
+        PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE
+        | PAGE_EXECUTE_WRITECOPY
+    )
+    EXECUTABLE_AND_WRITEABLE = PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY
 
-def close_handle(h_handle):
+    def __init__(self, mbi=None):
+        """
+        @type  mbi: L{MEMORY_BASIC_INFORMATION} or L{MemoryBasicInformation}
+        @param mbi: Either a L{MEMORY_BASIC_INFORMATION} structure or another
+            L{MemoryBasicInformation} instance.
+        """
+        if mbi is None:
+            self.base_address = None
+            self.allocation_base = None
+            self.allocation_protect = None
+            self.region_size = None
+            self.state = None
+            self.protect = None
+            self.type = None
+        else:
+            self.base_address = mbi.base_address
+            self.allocation_base = mbi.allocation_base
+            self.allocation_protect = mbi.allocation_protect
+            self.region_size = mbi.region_size
+            self.state = mbi.state
+            self.protect = mbi.protect
+            self.type = mbi.type
+
+            # Only used when copying MemoryBasicInformation objects, instead of
+            # instancing them from a MEMORY_BASIC_INFORMATION structure.
+            if hasattr(mbi, 'content'):
+                self.content = mbi.content
+            if hasattr(mbi, 'filename'):
+                self.content = mbi.filename
+
+    def __contains__(self, address):
+        """
+        Test if the given memory address falls within this memory region.
+        @type  address: int
+        @param address: Memory address to test.
+        @rtype:  bool
+        @return: C{True} if the given memory address falls within this memory
+            region, C{False} otherwise.
+        """
+        return (
+            self.base_address <= address < self.base_address + self.region_size
+        )
+
+    def is_free(self):
+        """
+        @rtype:  bool
+        @return: C{True} if the memory in this region is free.
+        """
+        return self.state == MEM_FREE
+
+    def is_reserved(self):
+        """
+        @rtype:  bool
+        @return: C{True} if the memory in this region is reserved.
+        """
+        return self.state == MEM_RESERVE
+
+    def is_commited(self):
+        """
+        @rtype:  bool
+        @return: C{True} if the memory in this region is commited.
+        """
+        return self.state == MEM_COMMIT
+
+    def is_image(self):
+        """
+        @rtype:  bool
+        @return: C{True} if the memory in this region belongs to an executable
+            image.
+        """
+        return self.type == MEM_IMAGE
+
+    def is_mapped(self):
+        """
+        @rtype:  bool
+        @return: C{True} if the memory in this region belongs to a mapped file.
+        """
+        return self.type == MEM_MAPPED
+
+    def is_private(self):
+        """
+        @rtype:  bool
+        @return: C{True} if the memory in this region is private.
+        """
+        return self.type == MEM_PRIVATE
+
+    def is_guard(self):
+        """
+        @rtype:  bool
+        @return: C{True} if all pages in this region are guard pages.
+        """
+        return self.is_commited() and bool(self.protect & PAGE_GUARD)
+
+    def has_content(self):
+        """
+        @rtype:  bool
+        @return: C{True} if the memory in this region has any data in it.
+        """
+        return (
+            self.is_commited()
+            and not bool(self.protect & (PAGE_GUARD | PAGE_NOACCESS))
+        )
+
+    def is_readable(self):
+        """
+        @rtype:  bool
+        @return: C{True} if all pages in this region are readable.
+        """
+        return self.has_content() and bool(self.protect & self.READABLE)
+
+    def is_writeable(self):
+        """
+        @rtype:  bool
+        @return: C{True} if all pages in this region are writeable.
+        """
+        return self.has_content() and bool(self.protect & self.WRITEABLE)
+
+    def is_copy_on_write(self):
+        """
+        @rtype:  bool
+        @return: C{True} if all pages in this region are marked as
+            copy-on-write. This means the pages are writeable, but changes
+            are not propagated to disk.
+        @note:
+            Typically data sections in executable images are marked like this.
+        """
+        return self.has_content() and bool(self.protect & self.COPY_ON_WRITE)
+
+    def is_executable(self):
+        """
+        @rtype:  bool
+        @return: C{True} if all pages in this region are executable.
+        @note: Executable pages are always readable.
+        """
+        return self.has_content() and bool(self.protect & self.EXECUTABLE)
+
+    def is_executable_and_writeable(self):
+        """
+        @rtype:  bool
+        @return: C{True} if all pages in this region are executable and
+            writeable.
+        @note: The presence of such pages make memory corruption
+            vulnerabilities much easier to exploit.
+        """
+        return (
+            self.has_content()
+            and bool(self.protect & self.EXECUTABLE_AND_WRITEABLE)
+        )
+
+# --- MEMORY_BASIC_INFORMATION structure --------------------------------------
+
+# pylint: disable=too-few-public-methods
+class MemoryBasicInformationStruc(Structure):
     """
-    BOOL WINAPI CloseHandle(
-        __in  HANDLE hObject
-    );
+    typedef struct _MEMORY_BASIC_INFORMATION {
+        PVOID BaseAddress;
+        PVOID AllocationBase;
+        DWORD AllocationProtect;
+        SIZE_T RegionSize;
+        DWORD State;
+        DWORD Protect;
+        DWORD Type;
+    } MEMORY_BASIC_INFORMATION, *PMEMORY_BASIC_INFORMATION;
     """
-    if isinstance(h_handle, Handle):
-        # Prevents the handle from being closed without notifying
-        # the Handle object.
-        h_handle.close()
-    else:
-        _close_handle = WINDLL.kernel32.CloseHandle
-        _close_handle.argtypes = [HANDLE]
-        _close_handle.restype = bool
-        _close_handle.errcheck = raise_if_zero
-        _close_handle(h_handle)
+    _fields_ = [
+        ('base_address', SIZE_T),    # remote pointer
+        ('allocation_base', SIZE_T),    # remote pointer
+        ('allocation_protect', DWORD),
+        ('region_size', SIZE_T),
+        ('state', DWORD),
+        ('protect', DWORD),
+        ('type', DWORD),
+    ]
+PMEMORY_BASIC_INFORMATION = POINTER(MemoryBasicInformationStruc)
 
 # --- Toolhelp library defines and structures ---------------------------------
 
@@ -464,6 +617,72 @@ def set_last_error(dw_err_code):
     _set_last_error.restype = None
     _set_last_error(dw_err_code)
 
+def close_handle(h_handle):
+    """
+    BOOL WINAPI CloseHandle(
+        __in  HANDLE hObject
+    );
+    """
+    if isinstance(h_handle, Handle):
+        # Prevents the handle from being closed without notifying
+        # the Handle object.
+        h_handle.close()
+    else:
+        _close_handle = WINDLL.kernel32.CloseHandle
+        _close_handle.argtypes = [HANDLE]
+        _close_handle.restype = bool
+        _close_handle.errcheck = raise_if_zero
+        _close_handle(h_handle)
+
+# pylint: disable=too-many-arguments
+def duplicate_handle(
+        h_source_handle, h_source_process_handle=None,
+        h_target_process_handle=None, dw_desired_access=STANDARD_RIGHTS_ALL,
+        b_inherit_handle=False, dw_options=DUPLICATE_SAME_ACCESS
+):
+    """
+    BOOL WINAPI DuplicateHandle(
+        __in   HANDLE hSourceProcessHandle,
+        __in   HANDLE hSourceHandle,
+        __in   HANDLE hTargetProcessHandle,
+        __out  LPHANDLE lpTargetHandle,
+        __in   DWORD dwDesiredAccess,
+        __in   BOOL bInheritHandle,
+        __in   DWORD dwOptions
+    ;
+    """
+
+    _duplicate_handle = WINDLL.kernel32.DuplicateHandle
+    _duplicate_handle.argtypes = [
+        HANDLE, HANDLE, HANDLE, LPHANDLE, DWORD, BOOL, DWORD
+    ]
+    _duplicate_handle.restype = bool
+    _duplicate_handle.errcheck = raise_if_zero
+
+    # NOTE: the arguments to this function are in a different order,
+    # so we can set default values for all of them but one (hSourceHandle).
+
+    if h_source_process_handle is None:
+        h_source_process_handle = get_current_process()
+    if h_target_process_handle is None:
+        h_target_process_handle = h_source_process_handle
+    lp_target_handle = HANDLE(INVALID_HANDLE_VALUE)
+    _duplicate_handle(
+        h_source_process_handle, h_source_handle, h_target_process_handle,
+        BY_REF(lp_target_handle), dw_desired_access, bool(b_inherit_handle),
+        dw_options
+    )
+    if isinstance(h_source_handle, Handle):
+        handle_class = h_source_handle.__class__
+    else:
+        handle_class = Handle
+    if hasattr(h_source_handle, 'dw_access'):
+        return handle_class(
+            lp_target_handle.value, dw_access=h_source_handle.dw_access
+        )
+    else:
+        return handle_class(lp_target_handle.value)
+
 # -----------------------------------------------------------------------------
 # Debug API
 
@@ -520,6 +739,30 @@ def write_process_memory(h_process, lp_base_address, lp_buffer):
     if not success and get_last_error() != ERROR_PARTIAL_COPY:
         raise ctypes.WinError()
     return lp_number_of_bytes_written.value
+
+def virtual_query_ex(h_process, lp_address):
+    """
+    SIZE_T WINAPI VirtualQueryEx(
+        __in      HANDLE hProcess,
+        __in_opt  LPCVOID lpAddress,
+        __out     PMEMORY_BASIC_INFORMATION lpBuffer,
+        __in      SIZE_T dwLength
+    );
+    """
+    _virtual_query_ex = WINDLL.kernel32.VirtualQueryEx
+    _virtual_query_ex.argtypes = [
+        HANDLE, LPVOID, PMEMORY_BASIC_INFORMATION, SIZE_T
+    ]
+    _virtual_query_ex.restype = SIZE_T
+
+    lp_buffer = MemoryBasicInformationStruc()
+    dw_length = SIZE_OF(MemoryBasicInformationStruc)
+    success = _virtual_query_ex(
+        h_process, lp_address, BY_REF(lp_buffer), dw_length
+    )
+    if success == 0:
+        raise ctypes.WinError()
+    return MemoryBasicInformation(lp_buffer)
 
 # -----------------------------------------------------------------------------
 # Process API
@@ -626,6 +869,64 @@ def wait_for_single_object(h_handle, dw_milliseconds=INFINITE):
             if result != WAIT_TIMEOUT:
                 break
     return result
+
+WAIT_OR_TIMER_CALLBACK = ctypes.WINFUNCTYPE(
+    None, PVOID, BOOL
+)
+
+def wait_or_timer_callback(callback):
+    return WAIT_OR_TIMER_CALLBACK(callback)
+
+def register_wait_for_single_object(
+        h_object, callback, context, dw_milliseconds=INFINITE,
+        dw_flags=WT_EXECUTEDEFAULT
+):
+    """
+    BOOL RegisterWaitForSingleObject(
+        PHANDLE phNewWaitObject,
+        HANDLE hObject,
+        WAITORTIMERCALLBACK Callback,
+        PVOID Context,
+        ULONG dwMilliseconds,
+        ULONG dwFlags
+    );
+    """
+
+    _register_wait_for_single_object = (
+        WINDLL.kernel32.RegisterWaitForSingleObject
+    )
+    _register_wait_for_single_object.argtypes = [
+        PHANDLE, HANDLE, WAIT_OR_TIMER_CALLBACK, PVOID, ULONG, ULONG
+    ]
+    _register_wait_for_single_object.restype = bool
+
+    ph_new_wait_object = HANDLE()
+    result = _register_wait_for_single_object(
+        BY_REF(ph_new_wait_object),
+        h_object,
+        callback,
+        context,
+        dw_milliseconds,
+        dw_flags
+    )
+    if not result:
+        raise ctypes.WinError()
+    return ph_new_wait_object
+
+def unregister_wait(wait_handle):
+    """
+    BOOL UnregisterWait(
+        HANDLE WaitHandle
+    );
+    """
+
+    _unregister_wait = WINDLL.kernel32.UnregisterWait
+    _unregister_wait.argtypes = [HANDLE]
+    _unregister_wait.restype = bool
+
+    result = _unregister_wait(wait_handle)
+    if not result and get_last_error() != ERROR_IO_PENDING:
+        raise ctypes.WinError()
 
 # -----------------------------------------------------------------------------
 # Toolhelp32 API

@@ -31,13 +31,36 @@
 Wrapper for user32.dll in ctypes.
 """
 # pylint: disable=unused-wildcard-import,wildcard-import
+import ctypes
 from win32.defines import *  #NOQA
 from win32.kernel32 import get_last_error, set_last_error
 from win32.gdi32 import POINT, LPPOINT, RECT, LPRECT
+from .version import BITS
 
 #--- Constants ----------------------------------------------------------------
 
 HWND_DESKTOP = 0
+
+SM_CYCAPTION = 4
+SM_CYFRAME = 33
+SM_CXPADDEDBORDER = 92
+
+# GetWindowLong
+GWL_STYLE = -16
+GWL_EXSTYLE = -20
+
+# Styles
+WS_OVERLAPPED = 0x00000000
+WS_MAXIMIZEBOX = 0x00010000
+WS_MINIMIZEBOX = 0x00020000
+WS_THICKFRAME = 0x00040000
+WS_SYSMENU = 0x00080000
+WS_CAPTION = 0x00C00000
+WS_OVERLAPPEDWINDOW = (
+    WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX
+    | WS_MAXIMIZEBOX
+)
+
 
 #--- High level classes -------------------------------------------------------
 
@@ -252,6 +275,232 @@ class Rect(object):
         points = [(self.left, self.top), (self.right, self.bottom)]
         return map_window_points(h_wnd_from, h_wnd_to, points)
 
+    def __repr__(self):
+        return 'x: {}, y: {}, width: {}, height: {}'.format(
+            self.left, self.top, self.width, self.height
+        )
+
+# --- user32.dll --------------------------------------------------------------
+
+def find_window_a(lp_class_name=None, lp_window_name=None):
+    """
+    HWND FindWindowA(
+        LPCTSTR lpClassName,
+        LPCTSTR lpWindowName
+    );
+    """
+    _find_window_a = WINDLL.user32.FindWindowA
+    _find_window_a.argtypes = [LPSTR, LPSTR]
+    _find_window_a.restype = HWND
+
+    h_wnd = _find_window_a(lp_class_name, lp_window_name)
+    if not h_wnd:
+        errcode = get_last_error()
+        if errcode != ERROR_SUCCESS:
+            raise ctypes.WinError(errcode)
+    return h_wnd
+
+def find_window_w(lp_class_name=None, lp_window_name=None):
+    """
+    HWND FindWindowW(
+        LPCWSTR lpClassName,
+        LPCWSTR lpWindowName
+    );
+    """
+    _find_window_w = WINDLL.user32.FindWindowW
+    _find_window_w.argtypes = [LPWSTR, LPWSTR]
+    _find_window_w.restype = HWND
+
+    h_wnd = _find_window_w(lp_class_name, lp_window_name)
+    if not h_wnd:
+        errcode = get_last_error()
+        if errcode != ERROR_SUCCESS:
+            raise ctypes.WinError(errcode)
+    return h_wnd
+
+FIND_WINDOW = GuessStringType(find_window_a, find_window_w)
+
+def find_window_ex_a(
+        hwnd_parent=None, hwnd_child_after=None,
+        lp_class_name=None, lp_window_name=None
+):
+    """
+    HWND WINAPI FindWindowExA(
+        __in_opt  HWND hwndParent,
+        __in_opt  HWND hwndChildAfter,
+        __in_opt  LPCTSTR lpszClass,
+        __in_opt  LPCTSTR lpszWindow
+    );
+    """
+    _find_window_ex_a = WINDLL.user32.FindWindowExA
+    _find_window_ex_a.argtypes = [HWND, HWND, LPSTR, LPSTR]
+    _find_window_ex_a.restype = HWND
+
+    h_wnd = _find_window_ex_a(
+        hwnd_parent, hwnd_child_after, lp_class_name, lp_window_name
+    )
+    if not h_wnd:
+        errcode = get_last_error()
+        if errcode != ERROR_SUCCESS:
+            raise ctypes.WinError(errcode)
+    return h_wnd
+
+def find_window_ex_w(
+        hwnd_parent=None, hwnd_child_after=None,
+        lp_class_name=None, lp_window_name=None
+):
+    """
+    HWND WINAPI FindWindowExW(
+        __in_opt  HWND hwndParent,
+        __in_opt  HWND hwndChildAfter,
+        __in_opt  LPCWSTR lpszClass,
+        __in_opt  LPCWSTR lpszWindow
+    );
+    """
+    _find_window_ex_w = WINDLL.user32.FindWindowExW
+    _find_window_ex_w.argtypes = [HWND, HWND, LPWSTR, LPWSTR]
+    _find_window_ex_w.restype = HWND
+
+    h_wnd = _find_window_ex_w(
+        hwnd_parent, hwnd_child_after, lp_class_name, lp_window_name
+    )
+    if not h_wnd:
+        errcode = get_last_error()
+        if errcode != ERROR_SUCCESS:
+            raise ctypes.WinError(errcode)
+    return h_wnd
+
+FIND_WINDOW_EX = GuessStringType(find_window_ex_a, find_window_ex_w)
+
+def get_window_text_a(h_wnd):
+    """
+    int WINAPI GetWindowTextA(
+        __in   HWND hWnd,
+        __out  LPTSTR lpString,
+        __in   int nMaxCount
+    );
+    """
+    _get_window_text_a = WINDLL.user32.GetWindowTextA
+    _get_window_text_a.argtypes = [HWND, LPSTR, ctypes.c_int]
+    _get_window_text_a.restype = ctypes.c_int
+
+    n_max_count = 0x1000
+    dw_char_size = SIZE_OF(CHAR)
+    while 1:
+        lp_string = ctypes.create_string_buffer(b'', n_max_count)
+        n_count = _get_window_text_a(h_wnd, lp_string, n_max_count)
+        if n_count == 0:
+            raise ctypes.WinError()
+        if n_count < n_max_count - dw_char_size:
+            break
+        n_max_count += 0x1000
+    return lp_string.value
+
+def get_window_text_w(h_wnd):
+    """
+    int WINAPI GetWindowTextA(
+        __in   HWND hWnd,
+        __out  LPWSTR lpString,
+        __in   int nMaxCount
+    );
+    """
+    _get_window_text_w = WINDLL.user32.GetWindowTextW
+    _get_window_text_w.argtypes = [HWND, LPWSTR, ctypes.c_int]
+    _get_window_text_w.restype = ctypes.c_int
+
+    n_max_count = 0x1000
+    dw_char_size = SIZE_OF(CHAR)
+    while 1:
+        lp_string = ctypes.create_unicode_buffer('', n_max_count)
+        n_count = _get_window_text_w(h_wnd, lp_string, n_max_count)
+        if n_count == 0:
+            raise ctypes.WinError()
+        if n_count < n_max_count - dw_char_size:
+            break
+        n_max_count += 0x1000
+    return lp_string.value
+
+GET_WINDOW_TEXT = GuessStringType(get_window_text_a, get_window_text_w)
+
+def get_window_long_a(h_wnd, n_index=0):
+    """
+    LONG GetWindowLongA(
+        HWND hWnd,
+        int nIndex
+    );
+    """
+    _get_window_long_a = WINDLL.user32.GetWindowLongA
+    _get_window_long_a.argtypes = [HWND, ctypes.c_int]
+    _get_window_long_a.restype = DWORD
+
+    set_last_error(ERROR_SUCCESS)
+    retval = _get_window_long_a(h_wnd, n_index)
+    if retval == 0:
+        errcode = get_last_error()
+        if errcode != ERROR_SUCCESS:
+            raise ctypes.WinError(errcode)
+    return retval
+
+def get_window_long_w(h_wnd, n_index=0):
+    _get_window_long_w = WINDLL.user32.GetWindowLongW
+    _get_window_long_w.argtypes = [HWND, ctypes.c_int]
+    _get_window_long_w.restype = DWORD
+
+    set_last_error(ERROR_SUCCESS)
+    retval = _get_window_long_w(h_wnd, n_index)
+    if retval == 0:
+        errcode = get_last_error()
+        if errcode != ERROR_SUCCESS:
+            raise ctypes.WinError(errcode)
+    return retval
+
+def get_window_long(h_wnd, n_index=0):
+    return DefaultStringType(get_window_long_a, get_window_long_w)(
+        h_wnd, n_index
+    )
+
+if BITS == 32:
+    def get_window_long_ptr_a(h_wnd, n_index=0):
+        get_window_long_a(h_wnd, n_index)
+
+    def get_window_long_ptr_w(h_wnd, n_index=0):
+        get_window_long_w(h_wnd, n_index)
+
+    def get_window_long_ptr(h_wnd, n_index=0):
+        get_window_long(h_wnd, n_index)
+
+else:
+    def get_window_long_ptr_a(h_wnd, n_index=0):
+        _get_window_long_ptr_a = WINDLL.user32.GetWindowLongPtrA
+        _get_window_long_ptr_a.argtypes = [HWND, ctypes.c_int]
+        _get_window_long_ptr_a.restype = SIZE_T
+
+        set_last_error(ERROR_SUCCESS)
+        retval = _get_window_long_ptr_a(h_wnd, n_index)
+        if retval == 0:
+            errcode = get_last_error()
+            if errcode != ERROR_SUCCESS:
+                raise ctypes.WinError(errcode)
+        return retval
+
+    def get_window_long_ptr_w(h_wnd, n_index=0):
+        _get_window_long_ptr_w = WINDLL.user32.GetWindowLongPtrW
+        _get_window_long_ptr_w.argtypes = [HWND, ctypes.c_int]
+        _get_window_long_ptr_w.restype = DWORD
+
+        set_last_error(ERROR_SUCCESS)
+        retval = _get_window_long_ptr_w(h_wnd, n_index)
+        if retval == 0:
+            errcode = get_last_error()
+            if errcode != ERROR_SUCCESS:
+                raise ctypes.WinError(errcode)
+        return retval
+
+    def get_window_long_ptr(h_wnd, n_index=0):
+        return DefaultStringType(get_window_long_ptr_a, get_window_long_ptr_w)(
+            h_wnd, n_index
+        )
+
 def client_to_screen(h_wnd, lp_point):
     """
     BOOL ClientToScreen(
@@ -271,7 +520,6 @@ def client_to_screen(h_wnd, lp_point):
     _client_to_screen(h_wnd, BY_REF(lp_point))
     return Point(lp_point.x, lp_point.y)
 
-
 def get_foreground_window():
     """
     HWND GetForegroundWindow(VOID);
@@ -281,6 +529,23 @@ def get_foreground_window():
     _get_foreground_window.restype = HWND
     _get_foreground_window.errcheck = raise_if_zero
     return _get_foreground_window()
+
+def get_system_metrics(n_index):
+    """
+    int GetSystemMetrics(
+        int nIndex
+    );
+    """
+    _get_system_metrics = WINDLL.user32.GetSystemMetrics
+    _get_system_metrics.argtypes = [ctypes.c_int]
+    _get_system_metrics.restype = ctypes.c_int
+    _get_system_metrics.errcheck = raise_if_zero
+
+    metric = _get_system_metrics(n_index)
+    if not metric:
+        errcode = get_last_error()
+        raise ctypes.WinError(errcode)
+    return metric
 
 def get_window_rect(h_wnd):
     """

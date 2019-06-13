@@ -196,6 +196,15 @@ def get_version_ex_w():
 
 GET_VERISON_EX = GuessStringType(get_version_ex_a, get_version_ex_w)
 
+def _get_bits():
+    """
+    Determines the current integer size in bits.
+    This is useful to know if we're running in a 32 bits or a 64 bits machine.
+    @rtype: int
+    @return: Returns the size of L{SIZE_T} in bits.
+    """
+    return SIZE_OF(SIZE_T) * 8
+
 def _get_ntddi(osvi):
     """
     Determines the current operating system.
@@ -219,6 +228,9 @@ def _get_ntddi(osvi):
     ntddi += (osvi.w_service_pack_major & 0xFF) << 8
     ntddi += (osvi.w_service_pack_minor & 0xFF)
     return ntddi
+
+# Current integer size in bits. See L{_get_bits} for more details.
+BITS = _get_bits()
 
 _OSVI = GET_VERISON_EX()
 
