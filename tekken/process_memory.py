@@ -28,45 +28,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """
-
 """
 
-import math
-
-class GameSnapshot:
+class ProcessMemory():
     """
-
     """
-    def __init__(
-            self, bot, opp, frame_count, timer_in_frames, facing_bool,
-            opponent_name, is_player_player_one
-    ):
-        self.bot = bot
-        self.opp = opp
-        self.frame_count = frame_count
-        self.facing_bool = facing_bool
-        self.timer_frames_remaining = timer_in_frames
-        self.opponent_name = opponent_name
-        self.is_player_player_one = is_player_player_one
+    def __init__(self, pid, module_address, address):
+        self.pid = pid
+        self.module_address = module_address
+        self.address = address
 
-    def from_mirrored(self):
-        """
-        """
-        return GameSnapshot(
-            self.opp, self.bot, self.frame_count, self.timer_frames_remaining,
-            self.facing_bool, self.opponent_name, self.is_player_player_one
-        )
-
-    def get_distance(self):
-        """
-        """
-        # print(
-        #     '{}, {} : {}, {}'.format(
-        #         self.bot.skeleton[0][22], self.opp.skeleton[0][22],
-        #         self.bot.skeleton[2][22], self.opp.skeleton[2][22]
-        #     )
-        # )
-        return math.hypot(
-            self.bot.skeleton[0][22] - self.opp.skeleton[0][22],
-            self.bot.skeleton[2][22] - self.opp.skeleton[2][22]
+    def __repr__(self):
+        return 'pid: {}, module_address: {}, address: {}'.format(
+            self.pid, self.module_address, self.address
         )

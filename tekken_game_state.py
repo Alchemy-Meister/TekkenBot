@@ -15,42 +15,43 @@ emerges from block), or multiple game states over time (did player 1 just begin
 to block this frame?, what was the last move player 2 did?).
 """
 
+import sys
 from collections import Counter
-
-import ctypes as c
-from ctypes import wintypes as w
-import struct
 import math
 
 # pylint: disable=wildcard-import
 from MoveInfoEnums import *  # NOQA
-from ConfigReader import ConfigReader, ReloadableConfig
 from MoveDataReport import MoveDataReport
 import MovelistParser
 
-import module_enumerator
-import pid_searcher
+from constants.event import GameStateEvent
 import win32.kernel32 as kernel32
-
-from tekken.game_reader import TekkenGameReader
+from tekken.process_io_manager import ProcessIOManager
 
 class TekkenGameState:
     """
-
     """
     def __init__(self):
-        self.game_reader = TekkenGameReader()
+        self.game_io_manager = ProcessIOManager()
         self.duplicate_frame_obtained = 0
         self.state_log = []
         self.mirrored_state_log = []
         self.is_mirrored = False
         self.futurestate_log = None
 
+    def get_reader(self):
+        return self.game_io_manager.process_reader
+
+    def get_writer(self):
+        return self.game_io_manager.process_writer
+
+    def is_pid_valid(self):
+        return self.game_io_manager.is_pid_valid()
+
     def update(self, buffer=0):
         """
-
         """
-        game_state = self.game_reader.get_updated_state(buffer)
+        game_state = self.game_io_manager.update(buffer)
 
         if game_state is not None:
             # we don't run perfectly in sync, if we get back the same frame,
@@ -63,30 +64,30 @@ class TekkenGameState:
 
                 frames_lost = 0
                 if self.state_log:
-                    frames_lost = game_state.frame_count - \
-                        self.state_log[-1].frame_count - 1
-                    if frames_lost > 0:
-                        pass
-                        #print("DROPPED FRAMES: " + str(frames_lost))
+                    frames_lost = (
+                        game_state.frame_count
+                        - self.state_log[-1].frame_count - 1
+                    )
 
                 for i in range(min(7 - buffer, frames_lost)):
-                    #print("RETRIEVING FRAMES")
-                    dropped_game_state = self.game_reader.get_updated_state(
-                        min(7, frames_lost + buffer) - i)
-                    self.append_game_data(dropped_game_state)
+                    dropped_game_state = self.game_io_manager.read_update(
+                        min(7, frames_lost + buffer) - i
+                    )
+                    if dropped_game_state is not None:
+                        self.append_game_data(dropped_game_state)
 
                 self.append_game_data(game_state)
                 return True
-
-            self.duplicate_frame_obtained += 1
+            if game_state.frame_count == self.state_log[-1].frame_count:
+                self.duplicate_frame_obtained += 1
         return False
 
     def append_game_data(self, game_data):
         if not self.is_mirrored:
             self.state_log.append(game_data)
-            self.mirrored_state_log.append(game_data.FromMirrored())
+            self.mirrored_state_log.append(game_data.from_mirrored())
         else:
-            self.state_log.append(game_data.FromMirrored())
+            self.state_log.append(game_data.from_mirrored())
             self.mirrored_state_log.append(game_data)
 
         if len(self.state_log) > 300:
@@ -105,9 +106,8 @@ class TekkenGameState:
                 'Already called BackToTheFuture, '
                 'need to return to the present first, Marty'
             )
-        else:
-            self.futurestate_log = self.state_log[0 - frames:]
-            self.state_log = self.state_log[:0 - frames]
+        self.futurestate_log = self.state_log[0 - frames:]
+        self.state_log = self.state_log[:0 - frames]
 
     def return_to_present(self):
         if self.futurestate_log is None:
@@ -117,11 +117,15 @@ class TekkenGameState:
         self.futurestate_log = None
 
     def is_game_happening(self):
-        return not self.game_reader.is_state_reacquisition_required()
+        return (
+            not self.game_io_manager.process_reader
+            .is_state_reacquisition_required()
+        )
 
     def is_bot_on_left(self):
         is_player_one_on_left = (
-            self.game_reader.original_facing == self.state_log[-1].facing_bool
+            self.game_io_manager.process_reader
+            .original_facing == self.state_log[-1].facing_bool
         )
         if not self.is_mirrored:
             return is_player_one_on_left
@@ -131,7 +135,7 @@ class TekkenGameState:
         return max(0, 170 - self.state_log[-1].bot.damage_taken)
 
     def get_dist(self):
-        return self.state_log[-1].GetDist()
+        return self.state_log[-1].get_distance()
 
     def did_opp_combo_counter_just_start_x_frames_ago(self, frames_ago):
         if len(self.state_log) > frames_ago:
@@ -210,7 +214,6 @@ class TekkenGameState:
         return self.state_log[-1].opp.is_getting_hit()
 
     def is_bot_getting_hit(self):
-        # or self.get_frames_since_bot_took_damage() < 15
         return self.state_log[-1].bot.is_getting_hit()
         # return self.get_frames_since_bot_took_damage() < 15
 
@@ -310,10 +313,9 @@ class TekkenGameState:
         # print(self.state_log[-1].bot.block_flags)
         if not self.is_bot_blocking():
             return 0
-        else:
-            recovery = self.state_log[-1].bot.recovery
-            block_frames = self.get_frames_bot_has_been_blocking_attack()
-            return (recovery) - block_frames
+        recovery = self.state_log[-1].bot.recovery
+        block_frames = self.get_frames_bot_has_been_blocking_attack()
+        return (recovery) - block_frames
 
     def get_frame_progress_of_opp_attack(self):
         most_recent_state_with_attack = None
@@ -342,9 +344,6 @@ class TekkenGameState:
 
         frames_spent_blocking = 0
         for state in reversed(self.state_log):
-            # print(state.opp.move_timer)
-            # print(state.opp.move_id)
-            # print(opponent_move_id)
             if(
                     state.bot.is_blocking()
                     and state.opp.move_timer <= opponent_move_timer
@@ -355,7 +354,6 @@ class TekkenGameState:
                 opponent_move_timer = state.opp.move_timer
             else:
                 break
-        # print(frames_spent_blocking)
         return frames_spent_blocking
 
     def is_opp_whiffing_x_frames_ago(self, frames_ago):
@@ -405,8 +403,7 @@ class TekkenGameState:
     def get_bot_startup_x_frames_ago(self, frames_ago):
         if len(self.state_log) > frames_ago:
             return self.state_log[0 - frames_ago].bot.startup
-        else:
-            return False
+        return False
 
     def get_opp_active_frames(self):
         return self.state_log[-1].opp.get_active_frames()
@@ -416,25 +413,9 @@ class TekkenGameState:
         for state in reversed(self.state_log[-(frames + 2):]):
             if return_next_state:
                 return (state.opp.move_timer - state.opp.startup) + 1
-
             if state.bot.move_timer == 1:
                 return_next_state = True
-
         return 0
-
-        # return (
-        #     self.state_log[-1].opp.move_timer - self.state_log[-1].opp.startup
-        # )
-        # elapsedActiveFrames = 0
-        # opp_move_timer = -1
-        # for state in reversed(self.state_log):
-        #     elapsedActiveFrames += 1
-        # if (
-        #         state.bot.move_timer == 1
-        #         or state.opp.move_timer == state.opp.startup
-        # ):
-        #     return elapsedActiveFrames
-        # return -1
 
     def get_opp_active_frames_x_frames_ago(self, frames_ago):
         if len(self.state_log) > frames_ago:
@@ -581,25 +562,10 @@ class TekkenGameState:
 
     def did_bot_timer_interrupt_x_moves_ago(self, frames_ago):
         if len(self.state_log) > frames_ago:
-            # if(
-            #         self.state_log[0 - frames_ago].bot.move_id != 32769
-            #         or self.state_log[0 - frames_ago -1].bot.move_id != 32769
-            # ):
             return (
                 self.state_log[0 - frames_ago].bot.move_timer
                 < self.state_log[0 - frames_ago - 1].bot.move_timer
             )
-            #print(
-            #     '{} {}'.format(
-            #         self.state_log[0 - frames_ago].bot.move_timer,
-            #         self.state_log[0 - frames_ago - 1].bot.move_timer
-            #     )
-            # )
-            # return (
-            #     self.state_log[0 - frames_ago].bot.move_timer
-            #     != self.state_log[0 - frames_ago - 1].bot.move_timer + 1
-            # )
-
         return False
 
     def did_bot_start_getting_hit_x_frames_ago(self, frames_ago):
@@ -703,7 +669,6 @@ class TekkenGameState:
                 if last_move_was_empty_cancel:
                     input_array[-1] = ''
 
-                # if len(next_move) > 0:
                 input_array.append(next_move)
 
                 if(
@@ -729,8 +694,6 @@ class TekkenGameState:
         else:
             return 'N/A'
 
-        # self.state_log[-1].opp.movelist_parser.can_be_done_from_neutral
-
     def get_opp_move_string(self, move_id, previous_move_id):
         return self.state_log[-1].opp.movelist_parser.input_for_move(
             move_id, previous_move_id
@@ -750,9 +713,9 @@ class TekkenGameState:
         if self.state_log[-1].opp.startup > 0:
             opp = self.state_log[-1].opp
         else:
-            gameState = self.get_last_opp_snapshot_with_different_move_id()
-            if gameState != None:
-                opp = gameState.opp
+            game_state = self.get_last_opp_snapshot_with_different_move_id()
+            if game_state != None:
+                opp = game_state.opp
             else:
                 opp = self.state_log[-1].opp
         return self.get_frame_data(self.state_log[-1].bot, opp)
@@ -770,7 +733,6 @@ class TekkenGameState:
 
     def get_bot_char_id(self):
         char_id = self.state_log[-1].bot.char_id
-        # if -1 < char_id < 50:
         print("Character: " + str(char_id))
         return char_id
 
@@ -840,10 +802,6 @@ class TekkenGameState:
         startup_frames = []
         frozen_frames = []
 
-        #found = False
-        # for state in reversed(self.state_log):
-        # if state.opp.move_id == opp_id and not state.opp.is_bufferable:
-        #found = True
         previous_state = None
         skipped_frames_counter = 0
         frozen_frames_counter = 0
@@ -929,7 +887,7 @@ class TekkenGameState:
         return False
 
     def get_round_number(self):
-        return self.state_log[-1].opp.wins + self.state_log[-1].bot.wins
+        return self.state_log[-1].opp.wins + self.state_log[-1].bot.wins + 1
 
     def get_opp_round_summary(self, frames_ago):
         if len(self.state_log) > frames_ago:
@@ -944,7 +902,7 @@ class TekkenGameState:
         for state in reversed(self.state_log):
             starting_skeleton = state.opp.skeleton
             bot_skeleton = state.bot.skeleton
-            old_dist = state.GetDist()
+            old_dist = state.get_distance()
             if move_timer < state.opp.move_timer:
                 break
             if opp_id != state.opp.move_id:
@@ -1011,18 +969,29 @@ class TekkenGameState:
                     or self.is_mirrored and is_for_bot
             ):
                 if not use_opponents_movelist:
-                    movelist = self.game_reader.p2_movelist_names
+                    movelist = (
+                        self.game_io_manager.process_reader.p2_movelist_names
+                    )
                 else:
-                    movelist = self.game_reader.p1_movelist_names
+                    movelist = (
+                        self.game_io_manager.process_reader.p1_movelist_names
+                    )
             else:
                 if not use_opponents_movelist:
-                    movelist = self.game_reader.p1_movelist_names
+                    movelist = (
+                        self.game_io_manager.process_reader.p1_movelist_names
+                    )
                 else:
-                    movelist = self.game_reader.p2_movelist_names
+                    movelist = (
+                        self.game_io_manager.process_reader.p2_movelist_names
+                    )
 
             return movelist[(move_id * 2) + 4].decode('utf-8')
         except:
             return "ERROR"
 
     def is_tekken_foreground_wnd(self):
-        return self.game_reader.is_tekken_foreground_wnd()
+        return self.game_io_manager.process_reader.is_tekken_foreground_wnd()
+
+    def is_in_battle(self):
+        return self.game_io_manager.process_reader.is_in_battle

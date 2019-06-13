@@ -30,37 +30,31 @@
 """
 
 """
+import sys
 import struct
-from ConfigReader import ReloadableConfig
 import MovelistParser
 
-import module_enumerator
-import pid_searcher
 # pylint: disable=unused-wildcard-import,wildcard-import
 from win32.defines import *  #NOQA
 import win32.kernel32 as kernel32
 import win32.user32 as user32
 
-from tekken.bot_snapshot import BotSnapshot
-from tekken.game_snapshot import GameSnapshot
+from .bot_snapshot import BotSnapshot
+from .game_snapshot import GameSnapshot
+from .process_identifier import ProcessIO
 
-class TekkenGameReader:
+class TekkenGameReader(ProcessIO):
+    """
     """
 
-    """
-    PROCESS_NAME = 'TekkenGame-Win64-Shipping.exe'
-
-    def __init__(self):
-        self.pid = -1
+    def __init__(self, config, pid, module_address=None):
+        super().__init__(config, pid, module_address)
         self.reacquire_game_state = True
-        self.reacquire_module_base_address = True
         self.reacquire_names = True
-        self.module_address = 0
         self.original_facing = None
         self.opponent_name = None
         self.opponent_side = None
         self.is_player_player_one = None
-        self.config = ReloadableConfig('memory_address', parse_nums=True)
         # , #lambda x: int(x, 16))
         self.player_data_pointer_offset = (
             self.config['MemoryAddressOffsets']['player_data_pointer_offset']
@@ -71,22 +65,23 @@ class TekkenGameReader:
         self.p2_movelist_to_use = None
         self.p1_movelist_parser = None
         self.p2_movelist_parser = None
+        self.p1_movelist_names = None
+        self.p2_movelist_names = None
+
+        self.is_in_battle = False
 
     def reacquire_everything(self):
         """
-
         """
-        self.reacquire_module_base_address = True
+        ProcessIO._reacquire_everything(self)
         self.reacquire_game_state = True
         self.reacquire_names = True
-        self.pid = -1
 
     def get_value_from_address(
             self, process_handle, address, is_float=False,
             is_64bit=False, is_string=False
     ):
         """
-
         """
         t_size = None
         if is_string:
@@ -104,30 +99,32 @@ class TekkenGameReader:
                 try:
                     return data.decode('utf-8')
                 except UnicodeError:
-                    print("ERROR: Couldn't decode string from memory")
+                    sys.stdout.write(
+                        "ERROR: Couldn't decode string from memory"
+                    )
                     return 'ERROR'
             elif is_float:
                 return struct.unpack('<f', data)[0]
             else:
                 return int.from_bytes(data, byteorder='little')
-        except OSError:
-            print(
+        except Exception:
+            sys.stdout.write(
                 'Read process memory. Error: Code {}'.format(
                     kernel32.get_last_error()
                 )
             )
             self.reacquire_everything()
+            raise
 
     def get_block_data(self, process_handle, address, size_of_block):
         """
-
         """
         try:
             data = kernel32.read_process_memory(
                 process_handle, address, size_of_block
             )
         except OSError:
-            print(
+            sys.stdout.write(
                 'Getting Block of Data Error: Code {}'.format(
                     kernel32.get_last_error()
                 )
@@ -138,7 +135,6 @@ class TekkenGameReader:
             self, frame, offset, player_2_offset=0x0, is_float=False
     ):
         """
-
         """
         address = offset
         address += player_2_offset
@@ -151,12 +147,8 @@ class TekkenGameReader:
             self, process_handle, data_type, is_string
     ):
         """
-
         """
-        addresses_str = self.config['NonPlayerDataAddresses'][data_type]
-        # The pointer trail is stored as a string of addresses in hex in the
-        # config. Split them up and convert.
-        addresses = list(map(hex2int, addresses_str.split()))
+        addresses = self.config['NonPlayerDataAddresses'][data_type]
         value = self.module_address
         for i, offset in enumerate(addresses):
             if i + 1 < len(addresses):
@@ -169,7 +161,6 @@ class TekkenGameReader:
 
     def is_tekken_foreground_wnd(self):
         """
-
         """
         try:
             foreground_window = user32.get_foreground_window()
@@ -180,26 +171,41 @@ class TekkenGameReader:
             # such as when a window is losing activation.
             return False
 
-    def get_tekken_window_rect(self):
-        """
+    def is_tekken_borderless(self, h_wnd):
+        style = user32.get_window_long_ptr(h_wnd, user32.GWL_STYLE)
+        return not bool(style & user32.WS_CAPTION)
 
-        """
-        # see (https://stackoverflow.com/questions/21175922/enumerating
-        # -windows-trough-ctypes-in-python) for clues for doing this without
-        # needing focus using WindowsEnum
-        if self.is_tekken_foreground_wnd():
-            return user32.get_window_rect(user32.get_foreground_window())
-        return None
+    def adapt_window_rect_to_title_bar(self, rect):
+        rect.top = (
+            rect.top
+            + user32.get_system_metrics(user32.SM_CYFRAME)
+            + user32.get_system_metrics(user32.SM_CYCAPTION)
+            + user32.get_system_metrics(user32.SM_CXPADDEDBORDER)
+        )
 
-    def is_pid_valid(self):
+    def get_tekken_window_rect(self, foreground_only=False):
         """
-
         """
-        return self.pid > -1
+        window_rect = None
+        try:
+            window_handler = None
+            if foreground_only:
+                if self.is_tekken_foreground_wnd():
+                    window_handler = user32.get_foreground_window()
+            else:
+                window_handler = user32.FIND_WINDOW(
+                    lp_class_name='UnrealWindow', lp_window_name='TEKKEN 7 '
+                )
+            if window_handler:
+                window_rect = user32.get_window_rect(window_handler)
+                if not self.is_tekken_borderless(window_handler):
+                    self.adapt_window_rect_to_title_bar(window_rect)
+        except OSError:
+            pass
+        return window_rect
 
     def is_data_a_float(self, data):
         """
-
         """
         return data in (
             'x', 'y', 'z', 'activebox_x', 'activebox_y', 'activebox_z'
@@ -207,50 +213,9 @@ class TekkenGameReader:
 
     def get_updated_state(self, rollback_frame=0):
         """
-
         """
-        game_snapshot = None
-
-        if not self.is_pid_valid():
-            self.pid = pid_searcher.get_pid_by_unique_process_name(
-                TekkenGameReader.PROCESS_NAME
-            )
-            if self.is_pid_valid():
-                print('Tekken PID acquired: {}'.format(self.pid))
-            else:
-                print('Tekken PID not acquired. Trying to acquire...')
-            return game_snapshot
-
-        if self.reacquire_module_base_address:
-            print(
-                'Trying to acquire Tekken library in PID: {}'.format(self.pid)
-            )
-            self.module_address = module_enumerator.get_module_base_address(
-                self.pid, TekkenGameReader.PROCESS_NAME
-            )
-            if self.module_address is None:
-                print(
-                    '{} not found. Likely wrong process ID.'.format(
-                        TekkenGameReader.PROCESS_NAME
-                    ) + 'Reacquiring PID.'
-                )
-                self.reacquire_everything()
-            elif(
-                    self.module_address != (
-                        self.config
-                        ['MemoryAddressOffsets']['expected_module_address']
-                    )
-            ):
-                print(
-                    'Unrecognized location for {} module.'.format(
-                        TekkenGameReader.PROCESS_NAME
-                    ) + 'Tekken.exe Patch? Wrong process id?'
-                )
-            else:
-                print('Found {}'.format(TekkenGameReader.PROCESS_NAME))
-                self.reacquire_module_base_address = False
-
-        if self.module_address is not None:
+        if self.is_pid_valid() and self.module_address is not None:
+            game_snapshot = None
             process_handle = kernel32.open_process(
                 kernel32.PROCESS_VM_READ, False, self.pid
             )
@@ -262,10 +227,14 @@ class TekkenGameReader:
                 )
                 if player_data_base_address == 0:
                     if not self.reacquire_game_state:
-                        print('No fight detected. Gamestate not updated.')
+                        sys.stdout.write(
+                            'No fight detected. Gamestate not updated.'
+                        )
+                        self.is_in_battle = False
                     self.reacquire_game_state = True
                     self.reacquire_names = True
                 else:
+
                     last_eight_frames = []
                     second_address_base = self.get_value_from_address(
                         process_handle, player_data_base_address, is_64bit=True)
@@ -288,7 +257,7 @@ class TekkenGameReader:
                             (potential_frame_count, potential_second_address))
 
                     if rollback_frame >= len(last_eight_frames):
-                        print(
+                        sys.stdout.write(
                             'ERROR: requesting {} frame of {} '.format(
                                 rollback_frame, len(last_eight_frames)
                             ) + 'long rollback frame'
@@ -309,9 +278,18 @@ class TekkenGameReader:
                         player_data_frame,
                         self.config['GameDataAddress']['facing']
                     )
+                    timer_in_frames = self.get_value_from_data_block(
+                        player_data_frame,
+                        self.config['GameDataAddress']['timer_in_frames']
+                    )
                     p1_bot, p2_bot = self.initialize_bots(
                         player_data_frame, bot_facing, best_frame_count
                     )
+
+                    if self.reacquire_game_state:
+                        self.reacquire_game_state = False
+                        sys.stdout.write('Fight detected. Updating gamestate.')
+                        self.is_in_battle = True
 
                     if self.reacquire_names:
                         if(
@@ -320,19 +298,19 @@ class TekkenGameReader:
                         ):
                             self.opponent_name = (
                                 self.get_value_at_end_of_pointer_trail(
-                                    process_handle, "OPPONENT_NAME", True
+                                    process_handle, 'opponent_name', True
                                 )
                             )
                             self.opponent_side = (
                                 self.get_value_at_end_of_pointer_trail(
-                                    process_handle, "OPPONENT_SIDE", False
+                                    process_handle, 'opponent_side', False
                                 )
                             )
                             self.is_player_player_one = (
                                 self.opponent_side == 1
                             )
-                            # print(self.opponent_char_id)
-                            # print(self.is_player_player_one)
+                            # sys.stdout.write(self.opponent_char_id)
+                            # sys.stdout.write(self.is_player_player_one)
 
                             self.p1_movelist_to_use = (
                                 p1_bot.get_movelist_to_use()
@@ -341,62 +319,59 @@ class TekkenGameReader:
                                 p2_bot.get_movelist_to_use()
                             )
 
-                            self.p1_movelist_block, p1_movelist_address = (
+                            p1_movelist_block, p1_movelist_address = (
                                 self.populate_movelists(
-                                    process_handle, 'P1_Movelist'
+                                    process_handle, 'p1_movelist'
                                 )
                             )
-                            self.p2_movelist_block, p2_movelist_address = (
+                            p2_movelist_block, p2_movelist_address = (
                                 self.populate_movelists(
-                                    process_handle, 'P2_Movelist'
+                                    process_handle, 'p2_movelist'
                                     )
                             )
 
                             self.p1_movelist_parser = (
                                 MovelistParser.MovelistParser(
-                                    self.p1_movelist_block, p1_movelist_address
+                                    p1_movelist_block, p1_movelist_address
                                 )
                             )
                             self.p2_movelist_parser = (
                                 MovelistParser.MovelistParser(
-                                    self.p2_movelist_block, p2_movelist_address
+                                    p2_movelist_block, p2_movelist_address
                                 )
                             )
 
                             # self.write_movelists_to_file(
-                            #    self.p1_movelist_block, p1_bot.character_name
+                            #    p1_movelist_block, p1_bot.character_name
                             # )
                             # self.write_movelists_to_file(
-                            #    self.p2_movelist_block, p2_bot.character_name
+                            #    p2_movelist_block, p2_bot.character_name
                             # )
 
                             # TODO: figure out the actual size of the name
                             # movelist
-                            self.p1_movelist_names = self.p1_movelist_block[
+                            self.p1_movelist_names = p1_movelist_block[
                                 0x2E8:200000
                             ].split(b'\00')
-                            self.p2_movelist_names = self.p2_movelist_block[
+                            self.p2_movelist_names = p2_movelist_block[
                                 0x2E8:200000
                             ].split(b'\00')
-                            #print(self.p1_movelist_names[(1572 * 2)])
+                            #sys.stdout.write(p1_movelist_names[(1572 * 2)])
 
                             self.reacquire_names = False
-
-                    timer_in_frames = self.get_value_from_data_block(
-                        player_data_frame,
-                        self.config['GameDataAddress']['timer_in_frames']
-                    )
 
                     game_snapshot = GameSnapshot(
                         p1_bot, p2_bot, best_frame_count, timer_in_frames,
                         bot_facing, self.opponent_name,
                         self.is_player_player_one
                     )
-
+            except OSError:
+                self.reacquire_everything()
+                raise
             finally:
                 kernel32.close_handle(process_handle)
-
-        return game_snapshot
+            return game_snapshot
+        raise OSError('invalid PID or module address')
 
     def initialize_bots(self, player_data_frame, bot_facing, best_frame_count):
         """
@@ -468,10 +443,10 @@ class TekkenGameReader:
                 )
             p1_bot_data_dict['PlayerDataAddress.' + axis] = p1_coord_array
             p2_bot_data_dict['PlayerDataAddress.' + axis] = p2_coord_array
-            # print("numpy.array(" + str(p1_coord_array) + ")")
+            # sys.stdout.write("numpy.array(" + str(p1_coord_array) + ")")
         # list = p1_bot_data_dict[self.config['PlayerDataAddress']['y']]
-        # print('{} [{}]'.format(max(list), list.index(max(list))))
-        # print("--------------------")
+        # sys.stdout.write('{} [{}]'.format(max(list), list.index(max(list))))
+        # sys.stdout.write("--------------------")
 
         # FIXME: This seems like it would always be true.
         # The old code seems to be doing the same, so I don't know.
@@ -495,10 +470,6 @@ class TekkenGameReader:
         if self.original_facing is None and best_frame_count > 0:
             self.original_facing = bot_facing > 0
 
-        if self.reacquire_game_state:
-            print('Fight detected. Updating gamestate.')
-        self.reacquire_game_state = False
-
         p1_bot = BotSnapshot(p1_bot_data_dict)
         p2_bot = BotSnapshot(p2_bot_data_dict)
 
@@ -506,18 +477,14 @@ class TekkenGameReader:
 
     def write_movelists_to_file(self, movelist, name):
         """
-        
         """
         with open('RawData/' + name + ".dat", 'wb') as file:
             file.write(movelist)
 
     def populate_movelists(self, process_handle, data_type):
         """
-
         """
-        movelist_str = self.config["NonPlayerDataAddresses"][data_type]
-        movelist_trail = list(map(hex2int, movelist_str.split()))
-
+        movelist_trail = self.config["NonPlayerDataAddresses"][data_type]
         movelist_address = self.get_value_from_address(
             process_handle, self.module_address + movelist_trail[0],
             is_64bit=True
@@ -532,8 +499,3 @@ class TekkenGameReader:
         """
         """
         return self.reacquire_game_state
-
-def hex2int(number):
-    """
-    """
-    return int(number, 16)

@@ -28,9 +28,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """
-
 """
 
+from constants.character_ids import CharacterIDs
 # pylint: disable=unused-wildcard-import,wildcard-import
 from MoveInfoEnums import *  # NOQA
 
@@ -145,7 +145,7 @@ class BotSnapshot:
         self.movelist_parser = data_dict['movelist_parser']
 
         try:
-            self.character_name = CharacterCodes(
+            self.character_name = CharacterIDs(
                 data_dict['PlayerDataAddress.char_id']
             ).name
         except KeyError:
@@ -160,7 +160,8 @@ class BotSnapshot:
         """
 
         """
-        return self.character_name != CharacterCodes.NOT_YET_LOADED.name
+        # pylint: disable=no-member
+        return self.character_name != CharacterIDs.NOT_YET_LOADED.name
 
     def get_input_state(self):
         """

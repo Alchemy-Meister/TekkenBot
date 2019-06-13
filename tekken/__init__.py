@@ -27,46 +27,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
-
-"""
-
-import math
-
-class GameSnapshot:
-    """
-
-    """
-    def __init__(
-            self, bot, opp, frame_count, timer_in_frames, facing_bool,
-            opponent_name, is_player_player_one
-    ):
-        self.bot = bot
-        self.opp = opp
-        self.frame_count = frame_count
-        self.facing_bool = facing_bool
-        self.timer_frames_remaining = timer_in_frames
-        self.opponent_name = opponent_name
-        self.is_player_player_one = is_player_player_one
-
-    def from_mirrored(self):
-        """
-        """
-        return GameSnapshot(
-            self.opp, self.bot, self.frame_count, self.timer_frames_remaining,
-            self.facing_bool, self.opponent_name, self.is_player_player_one
-        )
-
-    def get_distance(self):
-        """
-        """
-        # print(
-        #     '{}, {} : {}, {}'.format(
-        #         self.bot.skeleton[0][22], self.opp.skeleton[0][22],
-        #         self.bot.skeleton[2][22], self.opp.skeleton[2][22]
-        #     )
-        # )
-        return math.hypot(
-            self.bot.skeleton[0][22] - self.opp.skeleton[0][22],
-            self.bot.skeleton[2][22] - self.opp.skeleton[2][22]
-        )
+from tekken.launcher import Launcher
+from tekken.process_identifier import ProcessIO
+from tekken.process_memory import ProcessMemory
