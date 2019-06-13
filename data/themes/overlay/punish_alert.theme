@@ -1,0 +1,13 @@
+[theme]
+printable_name = Punish Alert
+background = black
+transparent = white
+p1_text = black
+p2_text = black
+system_text = black
+advantage_plus = black
+advantage_safe_slight_minus = black
+advantage_safe_minus = black
+advantage_punishible = black
+advantage_very_punishable = red
+advantage_text = black

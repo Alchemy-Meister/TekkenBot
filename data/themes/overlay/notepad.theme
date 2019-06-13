@@ -1,0 +1,13 @@
+[theme]
+printable_name = Nonepad
+background = snow
+transparent = white
+p1_text = black
+p2_text = black
+system_text = black
+advantage_plus = snow
+advantage_safe_slight_minus = snow
+advantage_safe_minus = snow
+advantage_punishible = snow
+advantage_very_punishable = snow
+advantage_text = black

@@ -1,0 +1,13 @@
+[theme]
+printable_name = Black and White
+background = black
+transparent = white
+p1_text = snow
+p2_text = snow
+system_text = cornsilk2
+advantage_plus = black
+advantage_safe_slight_minus = black
+advantage_safe_minus = black
+advantage_punishible = black
+advantage_very_punishable = black
+advantage_text = snow
