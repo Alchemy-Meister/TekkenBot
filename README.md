@@ -3,7 +3,29 @@ AI and tools for playing and understanding Tekken 7.
 
 Created by roguelike2d. Maintained by the community.
 
-# Frequently asked questions
+## New Features in this fork
+
+### GUI
+- Menu-bar has been re-organized to make its usage more intuituve.
+- New custom themes can be added by placing new theme files under *./data/themes/overlay/*
+- Changes in themes can be dynamically reloaded by restarting the app *Tekken Bot > restart*. (No need to close the App)
+- Automatic scrolling can be now disabled to read previous log files with ease *Tekken Bot > Preferences > Scroll on Output*
+- A tekkenbotprime.log file is created/overwritten every time the app is run.
+- Added the possibility to write into the Tekken's process memory to overwrite characters, stages, among other settings. (Includes non-playable and DLC characters and stages)
+
+### Overlays
+- Frame data overlay shows and hides automatically on battle's start and end.
+- Frame data text widget width fits to its content.
+
+### TODO
+- [] Add a settings menu to display or hide frame data columns and save configuration into a file.
+- [] Reimplement other overlays (Only frame-data overlay has been implemented)
+- [] Complete this list :P
+
+## Screenshot
+(Screenshots/memory_overwrite.png?raw=true)
+
+## Frequently asked questions
 **Q:** What is this thing?\
 **A:** It's a program for Tekken 7 that shows frame data information of your moves in real-time on PC.
 
