@@ -86,3 +86,7 @@ class CharacterIDs(PrintableEnum):
     ARMOR_KING = PrintableValue(48, 'Armor King') # DLC
     JULIA = PrintableValue(49, 'Julia') # DLC
     NEGAN = PrintableValue(50, 'Negan') # DLC
+
+    NOT_YET_LOADED = PrintableValue(71, None)
+
+    NO_SELECTION = PrintableValue(255, None) # Value if cursor is not shown
