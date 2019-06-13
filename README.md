@@ -23,7 +23,7 @@ Created by roguelike2d. Maintained by the community.
 - [] Complete this list :P
 
 ## Screenshot
-(Screenshots/memory_overwrite.png?raw=true)
+![Memory Overwrite](Screenshots/memory_overwrite.png?raw=true)
 
 ## Frequently asked questions
 **Q:** What is this thing?\
