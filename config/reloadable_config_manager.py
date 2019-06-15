@@ -51,6 +51,15 @@ class ReloadableConfigManager(metaclass=Singleton):
         self.__configs[path] = config
         return self.__configs[path]
 
+    def remove_config(self, file_name, sub_dir=None):
+        path = self.__get_file_path(file_name, sub_dir)
+        config = self.__configs.get(path)
+        if not config:
+            raise ValueError('config does not exist')
+        deleted_config = self.__configs[path]
+        del self.__configs[path]
+        return deleted_config
+
     def add_config_group(
             self, group_key, path_function, parse=False
     ):

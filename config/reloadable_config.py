@@ -45,6 +45,11 @@ class ReloadableConfig():
     def __getitem__(self, key):
         return self.config.get(key)
 
+    def __repr__(self):
+        return 'path: {0}, parse: {1}, config: {2}'.format(
+            self.path, self.parse, self.config
+        )
+
     @staticmethod
     def __generate_config(path, parse=False):
         input_dict = dict()
