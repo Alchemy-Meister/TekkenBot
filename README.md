@@ -71,4 +71,4 @@ Attempts to punish negative attacks with the best available punish. Punishes are
 ### Prerequisites
 Tekken Bot is developed on Python 3.5 and tries to use only core libraries to improve portability, download size, and, someday, optimization. It targets the 64-bit version of Tekken 7 available through Steam on Windows 7/8/10.
 ### Deployment
-Tekken Bot distributable is built using pyinstaller with Python 3.5. On Windows, use the included build_project.bat file.
+Tekken Bot distributable is built using pyinstaller with Python 3.7. On Windows, use the included build_project.ps1 file with Powershell 5.
