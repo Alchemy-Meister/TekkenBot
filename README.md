@@ -18,9 +18,10 @@ Created by roguelike2d. Maintained by the community.
 - Frame data text widget width fits to its content.
 
 ### TODO
-- [] Add a settings menu to display or hide frame data columns and save configuration into a file.
-- [] Reimplement other overlays (Only frame-data overlay has been implemented)
-- [] Complete this list :P
+- [x] Check for new releases on github repository and download them.
+- [ ] Add a settings menu to display or hide frame data columns and save configuration into a file.
+- [ ] Reimplement other overlays (Only frame-data overlay has been implemented)
+- [ ] Complete this list :P
 
 ## Screenshot
 ![Memory Overwrite](Screenshots/memory_overwrite.png?raw=true)

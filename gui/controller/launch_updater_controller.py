@@ -27,7 +27,39 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from gui.view.memory_overwrite_panel import MemoryOverwritePanel
-from gui.view.player_panel import PlayerOverwritePanel
-from gui.view.tekken_bot_prime_view import TekkenBotPrimeView
-from gui.view.update_download_confirm_view import UpdatadeDownloadConfirmView
+"""
+"""
+import sys
+import tkinter as tk
+
+from gui.view import UpdatadeDownloadConfirmView
+from network.updater import Updater
+
+class LaunchUpdaterController():
+    def __init__(
+            self, updater: Updater, tekken_bot_controller_class,
+            title=None, icon=None
+    ):
+        self.updater = updater
+        self.tekken_bot_controller_class = tekken_bot_controller_class
+        self.title = title
+        self.icon = icon
+
+        self.root = tk.Tk()
+        self.root.withdraw()
+        self.root.title(title)
+        self.root.iconbitmap(icon)
+
+        self.view = UpdatadeDownloadConfirmView(self)
+
+        self.root.mainloop()
+
+    def download_update(self):
+        self.root.destroy()
+        self.updater.download_update(use_cache=True)
+
+    def start_tekken_bot_prime(self):
+        self.root.destroy()
+        self.tekken_bot_controller_class(
+            self.updater, title=self.title, icon=self.icon
+        )

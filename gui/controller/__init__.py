@@ -27,12 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from gui.controller.memory_override_panel_controller import (
-    MemoryOverwritePanelController
-)
-from gui.controller.player_override_panel_controller import (
-    PlayerOverwritePanelController
-)
-from gui.controller.tekken_bot_prime_controller import (
-    TekkenBotPrimeController
-)
+from .launch_updater_controller import LaunchUpdaterController
+from .memory_override_panel_controller import MemoryOverwritePanelController
+from .player_override_panel_controller import PlayerOverwritePanelController
+from .tekken_bot_prime_controller import TekkenBotPrimeController

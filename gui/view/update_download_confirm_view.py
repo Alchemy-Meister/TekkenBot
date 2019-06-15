@@ -27,7 +27,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from gui.view.memory_overwrite_panel import MemoryOverwritePanel
-from gui.view.player_panel import PlayerOverwritePanel
-from gui.view.tekken_bot_prime_view import TekkenBotPrimeView
-from gui.view.update_download_confirm_view import UpdatadeDownloadConfirmView
+"""
+"""
+
+from tkinter import messagebox
+
+class UpdatadeDownloadConfirmView():
+    """
+    """
+    def __init__(self, controller):
+        if messagebox.askyesno(
+                controller.title,
+                '{0} {1}'.format(
+                    'A new version of Tekken Bot Prime is available.',
+                    'Would you like to download it now?'
+                )
+        ):
+            controller.download_update()
+        else:
+            controller.start_tekken_bot_prime()

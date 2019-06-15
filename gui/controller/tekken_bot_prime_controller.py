@@ -31,6 +31,7 @@
 """
 import sys
 import tkinter as tk
+from tkinter import messagebox
 
 from constants.overlay import OverlayMode, OverlayPosition
 from config import ReloadableConfigManager
@@ -46,7 +47,10 @@ from .memory_override_panel_controller import MemoryOverwritePanelController
 class TekkenBotPrimeController():
     """
     """
-    def __init__(self):
+    def __init__(self, updater, title=None, icon=None):
+        self.updater = updater
+        self.title = title
+
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
 
@@ -56,8 +60,8 @@ class TekkenBotPrimeController():
         self.save_to_file = True
         self.is_auto_scroll_enabled = True
 
-        self.root.title('Tekken Bot Prime')
-        self.root.iconbitmap('TekkenData/tekken_bot_close.ico')
+        self.root.title(self.title)
+        self.root.iconbitmap(icon)
         self.root.geometry('{}x{}'.format(920, 720))
         self.root.protocol('WM_DELETE_WINDOW', self.on_delete_window)
 
@@ -72,6 +76,8 @@ class TekkenBotPrimeController():
         TekkenBotPrimeController.__initialize_console_text()
 
         self.__initialize_memory_override_panel()
+
+        self.root.after(1, self.root.focus_force())
 
         self.launcher.start()
         self.root.mainloop()
@@ -117,7 +123,19 @@ class TekkenBotPrimeController():
         )
 
     def check_for_updates(self):
-        sys.stdout.write('There are currently no updates available.')
+        if self.updater.is_update_available():
+            if messagebox.askyesno(
+                    self.title,
+                    '{0} {1}'.format(
+                        'A new version of Tekken Bot Prime is available.',
+                        'Would you like to download it now?'
+                    )
+            ):
+                self.updater.download_update()
+        else:
+            messagebox.showinfo(
+                self.title, 'There are currently no updates available.'
+            )
 
     def on_delete_window(self):
         sys.stdout.close()
