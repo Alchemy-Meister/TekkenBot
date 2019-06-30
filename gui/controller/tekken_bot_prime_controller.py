@@ -65,6 +65,8 @@ class TekkenBotPrimeController():
         self.root.geometry('{}x{}'.format(920, 720))
         self.root.protocol('WM_DELETE_WINDOW', self.on_delete_window)
 
+        self.updater.gui_container = self.root
+
         self.view = TekkenBotPrimeView(self.root, self)
 
         self.launcher = Launcher(self.root, extended_print=False)
@@ -123,19 +125,12 @@ class TekkenBotPrimeController():
         )
 
     def check_for_updates(self):
-        if self.updater.is_update_available():
-            if messagebox.askyesno(
-                    self.title,
-                    '{0} {1}'.format(
-                        'A new version of Tekken Bot Prime is available.',
-                        'Would you like to download it now?'
-                    )
-            ):
-                self.updater.download_update()
-        else:
-            messagebox.showinfo(
-                self.title, 'There are currently no updates available.'
-            )
+        self.updater.is_update_available(
+            use_cache=False,
+            available_callback=self.__updates_available,
+            not_available_callback=self.__updates_not_available,
+            run_async=True
+        )
 
     def on_delete_window(self):
         sys.stdout.close()
@@ -205,4 +200,19 @@ class TekkenBotPrimeController():
             default_overlay_id=default_overlay_mode.value,
             default_position=default_overlay_position,
             default_theme=default_overlay_theme
+        )
+
+    def __updates_available(self):
+        if messagebox.askyesno(
+                self.title,
+                '{0} {1}'.format(
+                    'A new version of Tekken Bot Prime is available.',
+                    'Would you like to download it now?'
+                )
+        ):
+            self.updater.download_update(use_cache=True)
+
+    def __updates_not_available(self):
+        messagebox.showinfo(
+            self.title, 'There are currently no updates available.'
         )

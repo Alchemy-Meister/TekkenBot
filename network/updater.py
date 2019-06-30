@@ -31,6 +31,8 @@
 """
 from distutils.version import LooseVersion
 import os
+import queue
+import threading
 import urllib.parse as url_parse
 import urllib.request as urllib2
 import webbrowser
@@ -47,34 +49,50 @@ class Updater(metaclass=Singleton):
         )
         self.download_filename_format = download_filename_format
 
+        self.update_version_initialized = False
         self.update_version = None
 
+        self.gui_container = None
+        self.queue = queue.Queue()
+        self.thread = None
+        self.gui_update_running = False
+
+    def __gui_update(self, success_callback, error_callback):
+        try:
+            message = self.queue.get_nowait()
+            if message:
+                success_callback()
+            else:
+                error_callback()
+            self.gui_update_running = False
+        except queue.Empty:
+            pass
+        if self.gui_update_running:
+            self.gui_container.after(
+                500,
+                lambda: self.__gui_update(success_callback, error_callback)
+            )
+
     def get_update_version(self, use_cache=True):
-        if use_cache and self.update_version:
+        if use_cache and self.update_version_initialized:
             return self.update_version
 
-        latest_release_url = url_parse.urljoin(self.github_releases, 'latest/')
+        return self.__get_update_version()
 
-        try:
-            response = urllib2.urlopen(latest_release_url)
-            response_redirected_url = response.geturl()
-
-            if 'tag' in response_redirected_url:
-                self.update_version = str(
-                    os.path.basename(response_redirected_url)
+    def is_update_available(
+            self, use_cache=True, run_async=False, available_callback=None,
+            not_available_callback=None
+    ):
+        if run_async and self.gui_container:
+            if not self.gui_update_running:
+                self.__async_is_update_available(
+                    use_cache, available_callback, not_available_callback
                 )
-                return self.update_version
-        except urllib2.HTTPError:
-            return None
+        else:
+            return self.__proccess_update_available(use_cache)
 
-    def is_update_available(self, use_cache=True):
-        version = self.get_update_version(use_cache=use_cache)
-        if version and self.current_version < LooseVersion(version):
-            return True
-        return False
-
-    def get_download_url(self, use_cache=False):
-        if self.is_update_available(use_cache=use_cache):
+    def get_download_url(self, use_cache=False, run_async=False):
+        if self.is_update_available(use_cache=use_cache, run_async=run_async):
             version = self.get_update_version(use_cache=True)
             return url_parse.urljoin(
                 self.github_releases,
@@ -85,4 +103,52 @@ class Updater(metaclass=Singleton):
         return None
 
     def download_update(self, use_cache=False):
-        webbrowser.open(self.get_download_url(use_cache=use_cache))
+        threading.Thread(
+            target=self.__open_download_url,
+            kwargs={'use_cache': use_cache, 'run_async': False}
+        ).start()
+
+    def __get_update_version(self):
+        latest_release_url = url_parse.urljoin(self.github_releases, 'latest/')
+
+        try:
+            response = urllib2.urlopen(latest_release_url)
+            response_redirected_url = response.geturl()
+
+            self.update_version_initialized = True
+
+            if 'tag' in response_redirected_url:
+                self.update_version = str(
+                    os.path.basename(response_redirected_url)
+                )
+            else:
+                self.update_version = None
+        except urllib2.HTTPError:
+            self.update_version_initialized = False
+            self.update_version = None
+
+        return self.update_version
+
+    def __async_is_update_available(
+            self, cache, available_callback, not_available_callback
+    ):
+        self.gui_update_running = True
+        self.__gui_update(available_callback, not_available_callback)
+        threading.Thread(
+            target=self.__proccess_update_available, args=(cache, True,)
+        ).start()
+
+    def __proccess_update_available(self, cache, use_queue=False):
+        version = self.get_update_version(use_cache=cache)
+        if version and self.current_version < LooseVersion(version):
+            if use_queue:
+                self.queue.put(True)
+            return True
+        if use_queue:
+            self.queue.put(False)
+        return False
+
+    def __open_download_url(self, use_cache=False, run_async=False):
+        webbrowser.open(
+            self.get_download_url(use_cache=use_cache, run_async=run_async)
+        )
