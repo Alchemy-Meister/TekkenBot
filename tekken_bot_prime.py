@@ -27,7 +27,35 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from gui.controller.tekken_bot_prime_controller import TekkenBotPrimeController
+from config import ReloadableConfig
+from gui.controller import LaunchUpdaterController, TekkenBotPrimeController
+from network.updater import Updater
+
+class TekkenBotPrime():
+    """
+    """
+    def __init__(self):
+        updater_config = (
+            ReloadableConfig('data/updater_config.ini').config['DEFAULT']
+        )
+
+        updater = Updater(
+            updater_config['current_version'],
+            updater_config['github_username'],
+            updater_config['repository_name'],
+            updater_config['download_filename_format']
+        )
+        del updater_config
+
+        title = 'Tekken Bot Prime'
+        icon = 'data/tekken_bot_close.ico'
+
+        if updater.is_update_available():
+            LaunchUpdaterController(
+                updater, TekkenBotPrimeController, title=title, icon=icon
+            )
+        else:
+            TekkenBotPrimeController(updater, title=title, icon=icon)
 
 if __name__ == "__main__":
-    TekkenBotPrimeController()
+    TekkenBotPrime()
