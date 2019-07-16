@@ -31,7 +31,7 @@
 Wrapper for gdi32.dll in ctypes.
 """
 # pylint: disable=unused-wildcard-import,wildcard-import
-from win32.defines import *  # NOQA
+from .defines import *  # NOQA
 
 #--- Structures ---------------------------------------------------------------
 

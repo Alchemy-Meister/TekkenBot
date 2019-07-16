@@ -32,9 +32,9 @@ Wrapper for user32.dll in ctypes.
 """
 # pylint: disable=unused-wildcard-import,wildcard-import
 import ctypes
-from win32.defines import *  #NOQA
-from win32.kernel32 import get_last_error, set_last_error
-from win32.gdi32 import POINT, LPPOINT, RECT, LPRECT
+from .defines import *  #NOQA
+from .kernel32 import get_last_error, set_last_error
+from .gdi32 import POINT, LPPOINT, RECT, LPRECT
 from .version import BITS
 
 #--- Constants ----------------------------------------------------------------
@@ -42,6 +42,8 @@ from .version import BITS
 HWND_DESKTOP = 0
 
 SM_CYCAPTION = 4
+SM_CXBORDER = 5
+SM_CXSIZEFRAME = 32
 SM_CYFRAME = 33
 SM_CXPADDEDBORDER = 92
 
