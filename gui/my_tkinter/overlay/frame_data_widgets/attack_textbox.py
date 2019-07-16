@@ -29,6 +29,7 @@
 
 """
 """
+import math
 import tkinter as tk
 from gui.my_tkinter import Textbox
 
@@ -68,7 +69,7 @@ class AttackTextbox(Textbox):
         self.configure(state='disable')
 
     def resize_to_scale(self, scale):
-        self.configure(font=(self.font[0], int(self.font[1] * scale[0])))
+        self.configure(font=(self.font[0], math.ceil(self.font[1] * scale[0])))
 
     @staticmethod
     def __disable_mouse_wheel(_event):

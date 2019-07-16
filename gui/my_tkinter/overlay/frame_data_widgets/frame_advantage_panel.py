@@ -29,9 +29,8 @@
 
 """
 """
+import math
 import tkinter as tk
-import tkinter.ttk as ttk
-import uuid
 
 from constants.battle import FrameAdvantage
 
@@ -46,9 +45,6 @@ class FrameAdvantagePanel(tk.Frame):
 
     def __init__(self, master, transparent_color, **kwargs):
         super().__init__(master=master, **kwargs)
-        self.style_name = '{}.TLabel'.format(uuid.uuid4())
-        self.style = ttk.Style()
-        self.style.configure(self.style_name, background='DodgerBlue2')
 
         self.frame_advantage_backgrounds = None
         self.frame_advantage = FrameAdvantage.SAFE_MINUS
@@ -144,7 +140,7 @@ class FrameAdvantagePanel(tk.Frame):
             width=int(FrameAdvantagePanel.__PADDING_WIDTH * scale[0])
         )
 
-    def __center_frame_advantage(self, scale=(1,1,)):
+    def __center_frame_advantage(self, scale=(1, 1,)):
         self.frame_advantage_canvas.coords(
             self.frame_advantage_text,
             FrameAdvantagePanel.__CANVAS_CONFIG['width'] / 2 * scale[0],
@@ -166,7 +162,7 @@ class FrameAdvantagePanel(tk.Frame):
             canvas_item,
             font=(
                 config['font'][0],
-                int(config['font'][1] * scale[0])
+                math.ceil(config['font'][1] * scale[0])
             )
         )
 
