@@ -6,19 +6,22 @@ Created by roguelike2d. Maintained by the community.
 ## New Features in this fork
 
 ### GUI
-- Menu-bar has been re-organized to make its usage more intuituve.
-- New custom themes can be added by placing new theme files under *./data/themes/overlay/*
-- Changes in themes can be dynamically reloaded by restarting the app *Tekken Bot > restart*. (No need to close the App)
-- Automatic scrolling can be now disabled to read previous log files with ease *Tekken Bot > Preferences > Scroll on Output*
-- A tekkenbotprime.log file is created/overwritten every time the app is run.
-- Added the possibility to write into the Tekken's process memory to overwrite characters, stages, among other settings. (Includes non-playable and DLC characters and stages)
+[x] Menu-bar has been re-organized to make its usage more intuituve.
+[x] New custom themes can be added by placing new theme files under *./data/themes/overlay/*
+[x] Changes in themes can be dynamically reloaded by restarting the app *Tekken Bot > restart*. (No need to close the App)
+[x] Automatic scrolling can be now disabled to read previous log files with ease *Tekken Bot > Preferences > Scroll on Output*
+[x] A tekkenbotprime.log file is created/overwritten every time the app is run.
+[x] Added the possibility to write into the Tekken's process memory to overwrite characters, stages, among other settings. (Includes non-playable and DLC characters and stages)
 
 ### Overlays
-- Frame data overlay shows and hides automatically on battle's start and end.
-- Frame data text widget width fits to its content.
+[x] Frame data overlay shows and hides automatically on battle's start and end.
+[x] Frame data text widget width fits to its content.
+[x] Overlays scale to different resolutions.
+
+### Networking
+[x] Check for new releases on github repository and download them.
 
 ### TODO
-- [x] Check for new releases on github repository and download them.
 - [ ] Add a settings menu to display or hide frame data columns and save configuration into a file.
 - [ ] Reimplement other overlays (Only frame-data overlay has been implemented)
 - [ ] Complete this list :P
