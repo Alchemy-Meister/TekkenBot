@@ -541,12 +541,11 @@ def get_system_metrics(n_index):
     _get_system_metrics = WINDLL.user32.GetSystemMetrics
     _get_system_metrics.argtypes = [ctypes.c_int]
     _get_system_metrics.restype = ctypes.c_int
-    _get_system_metrics.errcheck = raise_if_zero
 
     metric = _get_system_metrics(n_index)
-    if not metric:
-        errcode = get_last_error()
-        raise ctypes.WinError(errcode)
+    error_code = get_last_error()
+    if not metric and error_code != ERROR_SUCCESS:
+        raise ctypes.WinError(error_code)
     return metric
 
 def get_window_rect(h_wnd):
