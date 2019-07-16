@@ -5,6 +5,9 @@ Created by roguelike2d. Maintained by the community.
 
 ## New Features in this fork
 
+### Executable
+ - [x] No more external dependecies, just one .exe file and a *data* folder.
+
 ### GUI
 - [x] Menu-bar has been re-organized to make its usage more intuituve.
 - [x] New custom themes can be added by placing new theme files under *./data/themes/overlay/*
@@ -26,6 +29,9 @@ Created by roguelike2d. Maintained by the community.
 - [ ] Reimplement other overlays (Only frame-data overlay has been implemented)
 - [ ] Complete this list :P
 
+## Disclaimer
+**Tekken's process memory overwrite has only been tested in offline mode, it probably won't work in online mode, nor I intend to make it work. Its only purpose is for debugging or for training with specific character/stages. No DLC piracy is intended. Use at your own risk**
+
 ## Screenshot
 ![Memory Overwrite](Screenshots/memory_overwrite.png?raw=true)
 
@@ -35,7 +41,7 @@ Created by roguelike2d. Maintained by the community.
 
 **Q:** How do I use this thing?\
 **A:** Go to the releases page, download the latest `TekkenBotPrime_vXXX.zip`, extract the files somewhere, open `TekkenBotPrime.exe`, and finally hop into practice mode.\
-If you want to run from source instead, install Python 3 and run `GUI_TekkenBotPrime.py`
+If you want to run from source instead, install Python 3 and run `tekken_bot_prime.py`
 
 **Q:** The bot stopped working after a game patch!\
 **A:** Wait for a good soul to update the `memory_address.ini` file, or fix it yourself by following the guide on the Wiki.
