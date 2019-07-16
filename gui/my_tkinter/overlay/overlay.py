@@ -48,8 +48,7 @@ class Overlay(ABC):
 
     def __init__(self, launcher: Launcher):
         self.launcher = launcher
-        self.raw_dimensions = None
-        self.__scale = None
+        self._scale = None
         self.coordinates = {
             'x': 0, 'y': 0, 'width': 0, 'height': 0
         }
@@ -123,7 +122,6 @@ class Overlay(ABC):
         pass
 
     def _set_dimensions(self, width, height):
-        self.raw_dimensions = (width, height)
         self.coordinates['width'] = width
         self.coordinates['height'] = height
 
@@ -164,14 +162,10 @@ class Overlay(ABC):
                 self.__tekken_rect = tekken_rect
 
                 updated_scale = Overlay.__calculate_rect_scale(tekken_rect)
-                if self.__scale != updated_scale:
-                    self.__scale = updated_scale
-                    self.coordinates['width'] = math.ceil(
-                        self.raw_dimensions[0] * self.__scale[0]
-                    )
-                    self.coordinates['height'] = math.ceil(
-                        self.raw_dimensions[1] * self.__scale[1]
-                    )
+                if self._scale != updated_scale:
+                    self._scale = updated_scale
+                    self._resize_overlay_widgets()
+                    self._update_dimensions()
                 if not self.is_draggable or not self.coordinates_initialized:
                     self.__update_location(tekken_rect=tekken_rect)
 
@@ -206,6 +200,14 @@ class Overlay(ABC):
             self.coordinates['y'] = (
                 tekken_rect.bottom - self.coordinates['height']
             )
+
+    @abstractmethod
+    def _resize_overlay_widgets(self):
+        pass
+
+    @abstractmethod
+    def _update_dimensions(self):
+        pass
 
     @abstractmethod
     def _update_visible_state(self):

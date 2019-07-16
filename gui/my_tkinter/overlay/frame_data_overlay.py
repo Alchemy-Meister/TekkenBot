@@ -40,7 +40,8 @@ from .overlay import Overlay
 from .frame_data_widgets import AttackTextbox, FrameAdvantagePanel
 
 class FrameDataOverlay(Overlay):
-
+    """
+    """
     class GUIColumns(PrintableEnum):
         INPUT_COMMAND = PrintableValue(0, 'input command')
         MOVE_ID = PrintableValue(1, 'internal move id number')
@@ -141,7 +142,7 @@ class FrameDataOverlay(Overlay):
         self.textbox.grid(column=1, row=0, rowspan=2, sticky=tk.N + tk.E + tk.W)
         self.p2_frame_panel.grid(column=2, row=1, sticky=tk.N + tk.S + tk.E)
 
-        self.overlay.update()
+        self.overlay.update_idletasks()
 
         self._set_dimensions(
             self.overlay.winfo_width(), self.overlay.winfo_height()
@@ -163,9 +164,11 @@ class FrameDataOverlay(Overlay):
         advantage_text_color = theme_dict.get('advantage_text')
 
         self.p1_frame_panel.set_theme(
-            frame_advantage_backgrounds, advantage_text_color)
+            frame_advantage_backgrounds, advantage_text_color
+            )
         self.p2_frame_panel.set_theme(
-            frame_advantage_backgrounds, advantage_text_color)
+            frame_advantage_backgrounds, advantage_text_color
+        )
 
     def write(self, string):
         if self.frame_advantage_tag in string:
@@ -184,7 +187,7 @@ class FrameDataOverlay(Overlay):
                 round(
                     (
                         self.textbox.winfo_height()
-                        - self.p1_frame_panel.frame_advantage_label
+                        - self.p1_frame_panel.frame_advantage_canvas
                         .winfo_height()
                     ) / 2
                 )
@@ -284,6 +287,21 @@ class FrameDataOverlay(Overlay):
                 self.p2_frame_panel.set_frame_advantage(
                     current_frame_advantage_enum
                 )
+
+    def _resize_overlay_widgets(self):
+        self.p1_frame_panel.resize_to_scale(self._scale)
+        self.textbox.resize_to_scale(self._scale)
+        self.p2_frame_panel.resize_to_scale(self._scale)
+
+        self.overlay.update_idletasks()
+
+    def _update_dimensions(self):
+        self.coordinates['width'] = (
+            self.p1_frame_panel.winfo_width()
+            + self.textbox.winfo_width()
+            + self.p2_frame_panel.winfo_width()
+        )
+        self.coordinates['height'] = self.textbox.winfo_height()
 
     def _update_visible_state(self):
         previous_visible_state = self.visible

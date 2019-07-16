@@ -38,6 +38,7 @@ import MovelistParser
 from win32.defines import *  #NOQA
 import win32.kernel32 as kernel32
 import win32.user32 as user32
+import win32.utils.actual_rect as actual_rect
 
 from .bot_snapshot import BotSnapshot
 from .game_snapshot import GameSnapshot
@@ -176,12 +177,12 @@ class TekkenGameReader(ProcessIO):
         return not bool(style & user32.WS_CAPTION)
 
     def adapt_window_rect_to_title_bar(self, rect):
-        rect.top = (
-            rect.top
-            + user32.get_system_metrics(user32.SM_CYFRAME)
+        rect.top += (
+            user32.get_system_metrics(user32.SM_CYFRAME)
             + user32.get_system_metrics(user32.SM_CYCAPTION)
             + user32.get_system_metrics(user32.SM_CXPADDEDBORDER)
         )
+        rect.bottom -= user32.get_system_metrics(user32.SM_CXBORDER)
 
     def get_tekken_window_rect(self, foreground_only=False):
         """
@@ -197,9 +198,12 @@ class TekkenGameReader(ProcessIO):
                     lp_class_name='UnrealWindow', lp_window_name='TEKKEN 7 '
                 )
             if window_handler:
-                window_rect = user32.get_window_rect(window_handler)
                 if not self.is_tekken_borderless(window_handler):
+                    # Unstyled window + titlebar rect
+                    window_rect = actual_rect.get_actual_rect(window_handler)
                     self.adapt_window_rect_to_title_bar(window_rect)
+                else:
+                    window_rect = user32.get_window_rect(window_handler)
         except OSError:
             pass
         return window_rect

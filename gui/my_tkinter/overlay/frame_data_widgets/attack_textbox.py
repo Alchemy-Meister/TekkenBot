@@ -29,7 +29,6 @@
 
 """
 """
-import sys
 import tkinter as tk
 from gui.my_tkinter import Textbox
 
@@ -42,6 +41,9 @@ class AttackTextbox(Textbox):
 
         self.configure(height=self.max_lines, state='disable')
         self.bind('<MouseWheel>', AttackTextbox.__disable_mouse_wheel)
+
+        self.font = ['Consolas', 11]
+        self.configure(font=tuple(self.font))
 
     def is_clear(self, include_header=False):
         line_count = int(self.index('end-1c').split('.')[0])
@@ -64,6 +66,9 @@ class AttackTextbox(Textbox):
             self.delete('2.0', '3.0')
         super().insert(index, chars, *args)
         self.configure(state='disable')
+
+    def resize_to_scale(self, scale):
+        self.configure(font=(self.font[0], int(self.font[1] * scale[0])))
 
     @staticmethod
     def __disable_mouse_wheel(_event):
