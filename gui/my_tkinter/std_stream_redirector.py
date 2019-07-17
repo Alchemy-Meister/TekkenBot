@@ -52,7 +52,9 @@ class StdStreamRedirector():
             if self.file_path:
                 self.save_to_file = file_config.get('save_to_file', True)
                 if self.save_to_file:
-                    self.file = open(self.file_path, 'w')
+                    self.file = open(
+                        self.file_path, file_config.get('write_mode', 'w')
+                    )
         self.callback = callback
 
         self.queue = queue.Queue()

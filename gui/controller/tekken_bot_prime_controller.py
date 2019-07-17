@@ -93,12 +93,14 @@ class TekkenBotPrimeController():
 
     def enable_save_to_file(self, enable):
         sys.stdout.enable_save_to_file(enable)
+        sys.stderr.enable_save_to_file(enable)
 
     def is_save_to_file_enabled(self):
         return self.save_to_file
 
     def enable_auto_scroll(self, enable):
         sys.stdout.enable_auto_scroll(enable)
+        sys.stderr.enable_auto_scroll(enable)
 
     def show_memory_override(self, enable):
         if enable:
@@ -153,13 +155,19 @@ class TekkenBotPrimeController():
             {'auto_scroll': self.is_auto_scroll_enabled, 'tag': 'stdout'},
             {
                 'file_path': 'tekkenbotprime.log',
-                'save_to_file': self.save_to_file
+                'save_to_file': self.save_to_file,
+                'write_mode': 'w'
             },
             self.overlay_manager.write_to_overlay
         )
         sys.stderr = StdStreamRedirector(
             widget,
             {'auto_scroll': self.is_auto_scroll_enabled, 'tag': 'stderr'},
+            {
+                'file_path': 'tekkenbotprime.log',
+                'save_to_file': self.save_to_file,
+                'write_mode': 'a'
+            },
             callback=self.original_stderr.write # TODO disable on build version
         )
 
