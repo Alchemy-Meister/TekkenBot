@@ -36,10 +36,10 @@ from constants.printable_enum import PrintableEnum, PrintableValue
 from constants.battle import FrameAdvantage
 from constants.overlay import OverlayMode
 
-from .overlay import Overlay
+from .writable_overlay import WritableOverlay
 from .frame_data_widgets import AttackTextbox, FrameAdvantagePanel
 
-class FrameDataOverlay(Overlay):
+class FrameDataOverlay(WritableOverlay):
     """
     """
     class GUIColumns(PrintableEnum):
@@ -293,9 +293,8 @@ class FrameDataOverlay(Overlay):
         self.textbox.resize_to_scale(self._scale)
         self.p2_frame_panel.resize_to_scale(self._scale)
 
-        self.overlay.update_idletasks()
-
     def _update_dimensions(self):
+        self.overlay.update_idletasks()
         self.coordinates['width'] = (
             self.p1_frame_panel.winfo_width()
             + self.textbox.winfo_width()

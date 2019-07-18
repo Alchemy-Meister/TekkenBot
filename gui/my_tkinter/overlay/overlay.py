@@ -117,10 +117,6 @@ class Overlay(ABC):
         self.visible = True
         self.overlay.deiconify()
 
-    @abstractmethod
-    def write(self, string):
-        pass
-
     def _set_dimensions(self, width, height):
         self.coordinates['width'] = width
         self.coordinates['height'] = height

@@ -29,6 +29,7 @@
 
 """
 """
+import inspect
 
 from gui.my_tkinter.overlay import Overlay
 from .factory import Factory
@@ -37,5 +38,11 @@ class OverlayFactory(Factory):
 
     def __init__(self):
         super().__init__()
-        for cls in Overlay.__subclasses__():
-            self.register_class(cls.CLASS_ID, cls)
+        self.__register_subclasses(Overlay)
+
+    def __register_subclasses(self, parent_class):
+        for cls in parent_class.__subclasses__():
+            if inspect.isabstract(cls):
+                self.__register_subclasses(cls)
+            else:
+                self.register_class(cls.CLASS_ID, cls)

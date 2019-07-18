@@ -27,8 +27,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .frame_data_overlay import FrameDataOverlay
+"""
+"""
+from abc import abstractmethod
 from .overlay import Overlay
-from .writable_overlay import WritableOverlay
-from .overlay_manager import OverlayManager
-from .punish_alarm_overlay import PunishAlarmOverlay
+
+class WritableOverlay(Overlay):
+    """
+    """
+    @abstractmethod
+    def write(self, string):
+        pass

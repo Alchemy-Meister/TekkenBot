@@ -37,6 +37,7 @@ from patterns.factory import OverlayFactory
 from patterns.singleton import Singleton
 
 from .overlay import Overlay
+from .writable_overlay import WritableOverlay
 
 class OverlayManager(metaclass=Singleton):
     """
@@ -104,7 +105,11 @@ class OverlayManager(metaclass=Singleton):
         self.current_overlay.set_theme(theme_dict)
 
     def write_to_overlay(self, string):
-        if self.current_overlay.enabled and self.current_overlay.visible:
+        if(
+                isinstance(self.current_overlay, WritableOverlay)
+                and self.current_overlay.enabled
+                and self.current_overlay.visible
+        ):
             self.current_overlay.write(string)
 
     def __add_overlay(self, overlay_id):
