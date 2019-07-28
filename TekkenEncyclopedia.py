@@ -578,7 +578,7 @@ class TekkenEncyclopedia:
                     )
                     frame_data_entry.prefix = self.get_player_string()
 
-                    print(str(frame_data_entry))
+                    sys.stdout.write(frame_data_entry)
 
                     self.current_frame_data_entry = frame_data_entry
 

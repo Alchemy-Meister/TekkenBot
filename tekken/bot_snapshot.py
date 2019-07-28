@@ -33,6 +33,7 @@
 from constants.character_ids import CharacterIDs
 # pylint: disable=unused-wildcard-import,wildcard-import
 from MoveInfoEnums import *  # NOQA
+from constants.input import InputAttack, InputDirection
 
 class BotSnapshot:
     """
@@ -65,15 +66,16 @@ class BotSnapshot:
         self.throw_flag = data_dict['PlayerDataAddress.throw_flag']
         self.rage_flag = data_dict['PlayerDataAddress.rage_flag']
         self.input_counter = data_dict['PlayerDataAddress.input_counter']
-        self.input_direction = InputDirectionCodes(
-            data_dict['PlayerDataAddress.input_direction'])
-        self.input_button = InputAttackCodes(
+        self.input_direction = InputDirection(
+            data_dict['PlayerDataAddress.input_direction']
+        )
+        self.input_button = InputAttack(
             data_dict['PlayerDataAddress.input_attack']
-            % InputAttackCodes.xRAGE.value
+            # % InputAttackCodes.xRAGE.value
         )
         self.rage_button_flag = (
             data_dict['PlayerDataAddress.input_attack']
-            >= InputAttackCodes.xRAGE.value
+            >= InputAttack.RAGE.value
         )
         self.stun_state = StunStates(data_dict['PlayerDataAddress.stun_type'])
         self.power_crush_flag = data_dict['PlayerDataAddress.power_crush'] > 0
@@ -321,13 +323,13 @@ class BotSnapshot:
         """
 
         """
-        return self.input_direction == InputDirectionCodes.u
+        return self.input_direction == InputDirection.UP
 
     def is_holding_up_back(self):
         """
 
         """
-        return self.input_direction == InputDirectionCodes.ub
+        return self.input_direction == InputDirection.UP_BACK
 
     def is_technical_crouch(self):
         """

@@ -25,6 +25,7 @@ from MoveDataReport import MoveDataReport
 import MovelistParser
 
 from constants.event import GameStateEvent
+from constants.input import InputAttack, InputDirection
 import win32.kernel32 as kernel32
 from tekken.process_io_manager import ProcessIOManager
 
@@ -642,12 +643,12 @@ class TekkenGameState:
         for state in reversed(self.state_log):
             if (
                     state.opp.move_id != oppMoveId
-                    and state.opp.get_input_state()[1] != InputAttackCodes.N
+                    and state.opp.get_input_state()[1] != InputAttack.NULL
             ):
                 input.append(state.opp.get_input_state())
                 return input
 
-        return [(InputDirectionCodes.N, InputAttackCodes.N, False)]
+        return [(InputDirectionCodes.N, InputAttack.NULL, False)]
 
     def get_current_opp_move_string(self):
         if self.state_log[-1].opp.movelist_parser != None:
