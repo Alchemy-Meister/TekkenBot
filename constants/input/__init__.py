@@ -27,9 +27,5 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .frame_advantage import FrameAdvantage
-from .health import BattleHealth
-from .move_cancel import MoveCancel
-from .rounds import BattleRounds
-from .stages import BattleStages
-from .timer import BattleTime
+from .attack import InputAttack
+from .direction import InputDirection
