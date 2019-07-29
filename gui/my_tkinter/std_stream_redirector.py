@@ -53,7 +53,9 @@ class StdStreamRedirector():
                 self.save_to_file = file_config.get('save_to_file', True)
                 if self.save_to_file:
                     self.file = open(
-                        self.file_path, file_config.get('write_mode', 'w')
+                        self.file_path,
+                        file_config.get('write_mode', 'w'),
+                        encoding='utf-8'
                     )
         self.callback = callback
 
