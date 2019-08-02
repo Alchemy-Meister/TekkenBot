@@ -17,16 +17,24 @@ Created by roguelike2d. Maintained by the community.
 - [x] Added the possibility to write into the Tekken's process memory to overwrite characters, stages, among other settings. (Includes non-playable and DLC characters and stages)
 
 ### Overlays
-- [x] Frame data overlay shows and hides automatically on battle's start and end.
-- [x] Frame data text widget width fits to its content.
+- [x] Overlays show and hide automatically on battle's start and end.
 - [x] Overlays scale to different resolutions.
+
+#### Frame data overlay
+- [x] Frame data text widget width fits to its content.
+
+#### Command input overlay
+- [x] Input arrows and buttons mimic Tekken GUI's style. (Credits to: [mspkvp](https://github.com/mspkvp/tk7movespretty))
+- [x] Support for Rage button.
+- [x] SVG icon scaling.
 
 ### Networking
 - [x] Check for new releases on github repository and download them.
 
 ### TODO
 - [ ] Add a settings menu to display or hide frame data columns and save configuration into a file.
-- [ ] Reimplement other overlays (Only frame-data overlay has been implemented)
+- [ ] Reimplement other overlays (Only frame-data and command input overlays have been implemented)
+- [ ] Endless bug fixes
 - [ ] Complete this list :P
 
 ## Disclaimer
