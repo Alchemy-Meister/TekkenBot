@@ -94,7 +94,10 @@ class OverlayManager(metaclass=Singleton):
             sys.stdout.write('creating new overlay')
             self.__add_overlay(mode.value)
         sys.stdout.write('Turning overlay on')
-        self.current_overlay.on()
+        self.current_overlay.set_position(self.current_position)
+        self.current_overlay.set_theme(self.current_theme)
+        if self.overlay_enabled:
+            self.current_overlay.on()
 
     def change_overlay_position(self, position):
         self.current_position = position

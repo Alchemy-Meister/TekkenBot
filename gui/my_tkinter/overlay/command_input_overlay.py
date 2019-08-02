@@ -29,6 +29,7 @@
 
 """
 """
+import math
 import io
 from PIL import Image, ImageTk
 import sys
@@ -55,9 +56,10 @@ class CommandInputOverlay(Overlay):
         'background': 0x0,
         'frame_index_y': 8,
         'frame_index_min_margin': 6,
+        'frame_index_min_y_margin': 9,
         'frame_image_min_margin': 1,
         'frame_rect_min_margin': 4,
-        'font': ['TkDefaultFont', 14]
+        'font': ['TkDefaultFont', -16]
     }
 
     __CANCEL_PROPERTY_COLORS = {
@@ -71,6 +73,8 @@ class CommandInputOverlay(Overlay):
     def __init__(self, launcher):
         super().__init__(launcher)
 
+        self.index_tag = 'index'
+        self.line_tag = 'line'
         self.input_tag = 'input'
         self.canvas_step_number = 60
 
@@ -90,9 +94,6 @@ class CommandInputOverlay(Overlay):
         self.button_image_coordinate_y0 = None
         self.cancel_rect_coordinate_y0 = None
 
-        self.frame_indexes = list()
-        self.frame_lines = list()
-
         self.frame_inputs = list()
         self.frame_cancels = list()
 
@@ -101,58 +102,77 @@ class CommandInputOverlay(Overlay):
         self.arrow_images = dict()
         self.button_images = dict()
 
+        self.__initialize_frame_indexes()
+        self._load_resources()
+        self.__initialize_input_coordinates()
+        self.__initialize_frame_lines()
+        self.__initialize_canvas()
+
+        self.command_input_canvas.pack()
+
+        self._set_dimensions(self.canvas_width, self.canvas_height)
+
+    def __initialize_frame_indexes(self, scale=(1, 1,)):
+        font_height = int(
+            CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG['font'][1]
+            * scale[1]
+        )
         font = tkfont.Font(
             family=CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG['font'][0],
-            size=CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG['font'][1]
+            size=font_height
         )
 
         for index in range(self.canvas_step_number):
             str_frame_intex = str(self.canvas_step_number - index)
             frame_index_text = self.command_input_canvas.create_text(
                 0,
-                CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                    'frame_index_y'
-                ],
+                0,
                 font=font,
                 text=str_frame_intex,
-                fill='snow'
+                fill='snow',
+                tag=self.index_tag
             )
 
             width, height = CommandInputOverlay.__get_font_text_dimensions(
                 font, str_frame_intex
             )
 
-            if self.step_length is None:
+            if not index:
                 self.max_frame_width = width
-                self.arrow_image_coordinate_y0 = (
+
+                scaled_frame_index_y = (
                     CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
                         'frame_index_y'
                     ]
-                    + height
-                    + CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                        'frame_index_min_margin'
-                    ]
+                    * scale[1]
                 )
+
+                scaled_frame_index_min_margin = (
+                    CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
+                        'frame_index_min_y_margin'
+                    ]
+                    * scale[1]
+                )
+
+                self.arrow_image_coordinate_y0 = math.ceil(
+                    scaled_frame_index_y
+                    + font_height * -1
+                    + scaled_frame_index_min_margin
+                )
+
                 self.step_length = (
                     width
                     + 2
-                    * CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                        'frame_index_min_margin'
-                    ]
+                    * scaled_frame_index_y
                 )
 
             self.command_input_canvas.coords(
                 frame_index_text,
                 index * self.step_length + index + self.step_length / 2,
-                CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                    'frame_index_y'
-                ]
+                scaled_frame_index_y
             )
 
-            self.frame_indexes.append(frame_index_text)
-
-        self._load_resources()
-
+    def __initialize_input_coordinates(self, scale=(1, 1,)):
         self.button_image_coordinate_y0 = (
             self.arrow_image_coordinate_y0
             + next(iter(self.arrow_images.values())).height()
@@ -170,6 +190,7 @@ class CommandInputOverlay(Overlay):
             - CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
                 'frame_rect_min_margin'
             ] * 2
+            * scale[0]
         )
 
         self.cancel_rect_size = (
@@ -178,27 +199,27 @@ class CommandInputOverlay(Overlay):
 
         self.canvas_height = self.cancel_rect_coordinate_y1 + 2
 
+    def __initialize_frame_lines(self):
         for index in range(1, self.canvas_step_number):
             coordinate_x = index * self.step_length + index
-            self.frame_lines.append(
-                self.command_input_canvas.create_line(
-                    coordinate_x - 1,
-                    0,
-                    coordinate_x - 1,
-                    self.canvas_height,
-                    fill='red'
-                )
+            self.command_input_canvas.create_line(
+                coordinate_x - 1,
+                0,
+                coordinate_x - 1,
+                self.canvas_height,
+                fill='red',
+                tag=self.line_tag
             )
 
-        last_line_cords = self.command_input_canvas.coords(self.frame_lines[-1])
-        self.canvas_width = last_line_cords[0] + self.step_length
+    def __initialize_canvas(self):
+        last_line_cords = self.command_input_canvas.coords(
+            self.command_input_canvas.find_withtag(self.line_tag)[-1]
+        )
+        self.canvas_width = last_line_cords[0] + self.step_length + 1
 
         self.command_input_canvas.configure(
             width=self.canvas_width, height=self.canvas_height
         )
-        self.command_input_canvas.pack()
-
-        self._set_dimensions(self.canvas_width, self.canvas_height)
 
     @staticmethod
     def __get_font_text_dimensions(font, text):
@@ -210,15 +231,25 @@ class CommandInputOverlay(Overlay):
         bounds = self.command_input_canvas.bbox(item_id)
         width = bounds[2] - bounds[0]
         height = bounds[3] - bounds[1]
-        self.command_input_canvas.create_rectangle(*bounds, outline='red')
         return width, height
 
     def _resize_overlay_widgets(self):
-        pass
+        self.command_input_canvas.delete('all')
+
+        self.__initialize_frame_indexes(self._scale)
+        self.arrow_images = self.scale_svg_images(
+            self.svg_arrow_images, self._scale
+        )
+        self.button_images = self.scale_svg_images(
+            self.svg_button_images, self._scale
+        )
+        self.__initialize_input_coordinates(self._scale)
+        self.__initialize_frame_lines()
+        self.__initialize_canvas()
 
     def _update_dimensions(self):
-        self.coordinates['width'] = int(self.canvas_width * self._scale[0])
-        self.coordinates['height'] = int(self.canvas_height * self._scale[1])
+        self.coordinates['width'] = int(self.canvas_width)
+        self.coordinates['height'] = int(self.canvas_height)
 
     def _update_state(self):
         last_game_state_log = self.launcher.game_state.state_log[-1]
@@ -250,7 +281,10 @@ class CommandInputOverlay(Overlay):
         self._update_input(input_state, cancel_color)
 
     def _update_visible_state(self):
-        self.visible = True
+        previous_visible_state = self.visible
+        self.visible = self.launcher.game_state.is_in_battle()
+        if previous_visible_state != self.visible and not self.visible:
+            self.command_input_canvas.delete(self.input_tag)
 
     def _load_resources(self):
         for printable_value in InputDirection:
@@ -293,9 +327,9 @@ class CommandInputOverlay(Overlay):
                         * CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
                             'frame_image_min_margin'
                         ]
+                        * scale[0]
                     )
                     / svg_drawing.width
-                    * scale[0]
                 )
                 svg_height_scale = (
                     (
@@ -304,9 +338,9 @@ class CommandInputOverlay(Overlay):
                         * CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
                             'frame_image_min_margin'
                         ]
+                        * scale[0]
                     )
                     / svg_drawing.width
-                    * scale[1]
                 )
                 svg_drawing.scale(
                     svg_width_scale, svg_height_scale
@@ -342,10 +376,12 @@ class CommandInputOverlay(Overlay):
                         self.frame_inputs
                 ):
                     coordinate_x = (
-                        index
-                        * self.step_length
-                        + index
-                        + (self.step_length / 2)
+                        (
+                            index
+                            * self.step_length
+                            + index
+                            + (self.step_length / 2)
+                        )
                     )
 
                     direction_code = InputDirection(direction_code)
@@ -355,7 +391,7 @@ class CommandInputOverlay(Overlay):
                     ):
                         canvas_arrow_image = (
                             self.command_input_canvas.create_image(
-                                int(coordinate_x),
+                                coordinate_x,
                                 self.arrow_image_coordinate_y0,
                                 image=self.arrow_images[
                                     direction_code.printable_name['symbol']
@@ -368,7 +404,7 @@ class CommandInputOverlay(Overlay):
                     if input_code != InputAttack.NULL:
                         canvas_input_image =  (
                             self.command_input_canvas.create_image(
-                                int(coordinate_x),
+                                coordinate_x,
                                 self.button_image_coordinate_y0,
                                 image=self.button_images[
                                     input_code.printable_name
@@ -383,7 +419,7 @@ class CommandInputOverlay(Overlay):
                         + index
                         + CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
                             'frame_rect_min_margin'
-                        ]
+                        ] * self._scale[0]
                     )
                     rect_coordinate_x1 = coordinate_x + self.cancel_rect_size
                     self.command_input_canvas.create_rectangle(
