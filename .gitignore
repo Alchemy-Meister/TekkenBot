@@ -19,3 +19,6 @@ __pycache__/
 
 # Log files
 *.log
+
+# Dynamic created settings files
+/data/settings.ini

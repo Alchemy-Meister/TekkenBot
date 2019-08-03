@@ -27,6 +27,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .default_settings import DefaultSettings
-from .reloadable_config import ReloadableConfig
-from .reloadable_config_manager import ReloadableConfigManager
+"""
+"""
+import configparser
+
+class DefaultSettings():
+    """
+    """
+
+    PATH = 'data/settings.ini'
+
+    def __init__(self):
+        default_settings = configparser.ConfigParser()
+        default_settings['DEFAULT'] = {
+            'overlay_enable': 'true',
+            'overlay_mode': 'FRAMEDATA',
+            'overlay_position': 'TOP',
+            'overlay_theme': 'classic'
+        }
+        with open(DefaultSettings.PATH, 'w') as default_settings_file:
+            default_settings.write(default_settings_file)

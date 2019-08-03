@@ -44,12 +44,15 @@ class ReloadableConfigManager(metaclass=Singleton):
 
     def add_config(self, file_name, sub_dir=None, parse=False):
         path = self.__get_file_path(file_name, sub_dir)
-        config = self.__configs.get(path)
-        if config:
-            raise ValueError('config already exists')
-        config = ReloadableConfig(path, parse)
-        self.__configs[path] = config
-        return self.__configs[path]
+        if os.path.exists(path):
+            config = self.__configs.get(path)
+            if config:
+                raise ValueError('config already exists')
+            config = ReloadableConfig(path, parse)
+            self.__configs[path] = config
+            return self.__configs[path]
+        raise ValueError('{} does not exist'.format(path))
+
 
     def remove_config(self, file_name, sub_dir=None):
         path = self.__get_file_path(file_name, sub_dir)
@@ -88,6 +91,7 @@ class ReloadableConfigManager(metaclass=Singleton):
             os.path.join(self.data_folder, sub_dir),
             file_name
         )
+
 
     def reload_all(self):
         for config in self.__configs.values():
