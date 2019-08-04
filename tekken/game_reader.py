@@ -172,6 +172,12 @@ class TekkenGameReader(ProcessIO):
             # such as when a window is losing activation.
             return False
 
+    def is_tekken_fullscreen(self, h_wnd):
+        monitor_info = user32.get_monitor_info(
+            user32.monitor_from_window(h_wnd, user32.MONITOR_DEFAULTTOPRIMARY)
+        )
+        return user32.get_window_rect(h_wnd) == monitor_info.rc_monitor
+
     def is_tekken_borderless(self, h_wnd):
         style = user32.get_window_long_ptr(h_wnd, user32.GWL_STYLE)
         return not bool(style & user32.WS_CAPTION)
@@ -194,16 +200,19 @@ class TekkenGameReader(ProcessIO):
                 if self.is_tekken_foreground_wnd():
                     window_handler = user32.get_foreground_window()
             else:
-                window_handler = user32.FIND_WINDOW(
+                window_handler = user32.find_window(
                     lp_class_name='UnrealWindow', lp_window_name='TEKKEN 7 '
                 )
             if window_handler:
+                # self.is_tekken_fullscreen(window_handler)
                 if not self.is_tekken_borderless(window_handler):
                     # Unstyled window + titlebar rect
                     window_rect = actual_rect.get_actual_rect(window_handler)
                     self.adapt_window_rect_to_title_bar(window_rect)
                 else:
-                    window_rect = user32.get_window_rect(window_handler)
+                    window_rect = user32.get_window_placement(
+                        window_handler
+                    ).rc_normal_position
         except OSError:
             pass
         return window_rect
@@ -351,7 +360,6 @@ class TekkenGameReader(ProcessIO):
                             # self.write_movelists_to_file(
                             #    p2_movelist_block, p2_bot.character_name
                             # )
-
                             # TODO: figure out the actual size of the name
                             # movelist
                             self.p1_movelist_names = p1_movelist_block[

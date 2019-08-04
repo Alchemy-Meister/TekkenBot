@@ -124,7 +124,7 @@ class Overlay(ABC):
     def __update(self, is_state_updated):
         if self.enabled:
             success = self.__update_coordinates()
-            if success:
+            if self.coordinates_initialized and success:
                 previous_visible_state = self.visible
                 self._update_visible_state()
                 if(
@@ -153,7 +153,6 @@ class Overlay(ABC):
         )
         if tekken_rect:
             if self.__tekken_rect != tekken_rect:
-                success = self.dimensions_initialized
                 self.dimensions_initialized = True
                 self.__tekken_rect = tekken_rect
 
@@ -181,8 +180,8 @@ class Overlay(ABC):
                             self.coordinates['y']
                         )
                     )
-                self.coordinates_initialized = True
-                return success
+                    self.coordinates_initialized = True
+            return True
         return False
 
     def __update_location(self, tekken_rect: Rect):

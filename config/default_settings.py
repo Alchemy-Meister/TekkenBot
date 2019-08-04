@@ -30,19 +30,20 @@
 """
 """
 import configparser
+from constants.overlay import OverlayMode, OverlayPosition
 
 class DefaultSettings():
     """
     """
-
     PATH = 'data/settings.ini'
 
     def __init__(self):
         default_settings = configparser.ConfigParser()
+        # pylint: disable=no-member
         default_settings['DEFAULT'] = {
             'overlay_enable': 'true',
-            'overlay_mode': 'FRAMEDATA',
-            'overlay_position': 'TOP',
+            'overlay_mode': OverlayMode.FRAMEDATA.name,
+            'overlay_position': OverlayPosition.TOP.name,
             'overlay_theme': 'classic'
         }
         with open(DefaultSettings.PATH, 'w') as default_settings_file:

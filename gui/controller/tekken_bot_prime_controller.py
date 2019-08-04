@@ -183,15 +183,9 @@ class TekkenBotPrimeController():
         self.show_memory_override(False)
 
     def __intialize_overlay_settings(self):
-        try:
-            settings = ReloadableConfigManager().add_config(
-                'settings.ini', parse=True
-            ).config['DEFAULT']
-        except ValueError:
-            DefaultSettings()
-            settings = ReloadableConfigManager().add_config(
-                'settings.ini', parse=True
-            ).config['DEFAULT']
+        settings = ReloadableConfigManager().add_config(
+            'settings.ini', parse=True, default_writer_class=DefaultSettings
+        ).config['DEFAULT']
 
         default_overlay_enabled = settings.get('overlay_enable')
         default_overlay_mode = OverlayMode[settings.get('overlay_mode')]

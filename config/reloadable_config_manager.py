@@ -42,16 +42,21 @@ class ReloadableConfigManager(metaclass=Singleton):
         self.__configs = dict()
         self.__config_groups = dict()
 
-    def add_config(self, file_name, sub_dir=None, parse=False):
+    def add_config(
+        self, file_name, sub_dir=None, parse=False, default_writer_class=None
+    ):
         path = self.__get_file_path(file_name, sub_dir)
-        if os.path.exists(path):
-            config = self.__configs.get(path)
-            if config:
-                raise ValueError('config already exists')
-            config = ReloadableConfig(path, parse)
-            self.__configs[path] = config
-            return self.__configs[path]
-        raise ValueError('{} does not exist'.format(path))
+        if not os.path.exists(path):
+            if default_writer_class:
+                default_writer_class()
+            else:
+                raise ValueError('{} does not exist'.format(path))
+        config = self.__configs.get(path)
+        if config:
+            raise ValueError('config already exists')
+        config = ReloadableConfig(path, parse)
+        self.__configs[path] = config
+        return self.__configs[path]
 
 
     def remove_config(self, file_name, sub_dir=None):
