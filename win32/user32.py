@@ -41,6 +41,10 @@ from .version import BITS
 
 HWND_DESKTOP = 0
 
+MONITOR_DEFAULTTONULL = 0
+MONITOR_DEFAULTTOPRIMARY = 1
+MONITOR_DEFAULTTONEAREST = 2
+
 SM_CYCAPTION = 4
 SM_CXBORDER = 5
 SM_CXSIZEFRAME = 32
@@ -63,6 +67,86 @@ WS_OVERLAPPEDWINDOW = (
     | WS_MAXIMIZEBOX
 )
 
+# --- structures ---------------------------------------------------
+
+# pylint: disable=too-few-public-methods
+class MONITORINFO(Structure):
+    """
+    typedef struct tagMONITORINFO {
+        DWORD cbSize;
+        RECT  rcMonitor;
+        RECT  rcWork;
+        DWORD dwFlags;
+    } MONITORINFO, *LPMONITORINFO;
+    """
+
+    _fields_ = [
+        ('cb_size', DWORD),
+        ('rc_monitor', RECT),
+        ('rc_work', RECT),
+        ('dw_flags', DWORD)
+    ]
+
+    def __init__(self, *args, **kwds):
+        super(MONITORINFO, self).__init__(*args, **kwds)
+        self.cb_size = SIZE_OF(self)
+
+    def __repr__(self):
+        return 'cb_size: {}, rc_monitor: {}, rc_work: {}, dw_flags: {}'.format(
+            self.cb_size,
+            repr(self.rc_monitor),
+            repr(self.rc_work),
+            self.dw_flags
+        )
+
+LPMONITORINFO = POINTER(MONITORINFO)
+
+class WINDOWPLACEMENT(Structure):
+    """
+    typedef struct _WINDOWPLACEMENT {
+        UINT length;
+        UINT flags;
+        UINT showCmd;
+        POINT ptMinPosition;
+        POINT ptMaxPosition;
+        RECT rcNormalPosition;
+    } WINDOWPLACEMENT;
+    """
+    _fields_ = [
+        ('length', UINT),
+        ('flags', UINT),
+        ('show_cmd', UINT),
+        ('pt_min_position', POINT),
+        ('pt_max_position', POINT),
+        ('rc_normal_position', RECT)
+    ]
+
+    def __init__(self, window_placement=None):
+        super(WINDOWPLACEMENT, self).__init__()
+        self.length = SIZE_OF(self)
+
+        if window_placement:
+            self.flags = window_placement.flags
+            self.show_cmd = window_placement.show_cmd
+            self.pt_min_position.x = window_placement.pt_min_position.x
+            self.pt_min_position.y = window_placement.pt_min_position.y
+            self.pt_max_position.x = window_placement.pt_max_position.x
+            self.pt_max_position.y = window_placement.pt_max_position.y
+            self.rc_normal_position.left = (
+                window_placement.rc_normal_position.left
+            )
+            self.rc_normal_position.top = (
+                window_placement.rc_normal_position.top
+            )
+            self.rc_normal_position.right = (
+                window_placement.rc_normal_position.right
+            )
+            self.rc_normal_position.bottom = (
+                window_placement.rc_normal_position.bottom
+            )
+
+PWINDOWPLACEMENT = POINTER(WINDOWPLACEMENT)
+LPWINDOWPLACEMENT = PWINDOWPLACEMENT
 
 #--- High level classes -------------------------------------------------------
 
@@ -72,7 +156,7 @@ WS_OVERLAPPEDWINDOW = (
 # XXX not sure if these classes should be psyco-optimized,
 # it may not work if the user wants to serialize them for some reason
 
-class Point(object):
+class Point():
     """
     Python wrapper over the L{POINT} class.
     @type x: int
@@ -103,12 +187,15 @@ class Point(object):
         return (self.x, self.y)[index]
 
     def __setitem__(self, index, value):
-        if   index == 0:
+        if index == 0:
             self.x = value
         elif index == 1:
             self.y = value
         else:
             raise IndexError("index out of range")
+    
+    def __repr__(self):
+        return 'x: {}, y: {}'.format(self.x, self.y)
 
     @property
     def _as_parameter_(self):
@@ -157,7 +244,7 @@ class Point(object):
         """
         return map_window_points(h_wnd_from, h_wnd_to, [self])
 
-class Rect(object):
+class Rect():
     """
     Python wrapper over the L{RECT} class.
     @type   left: int
@@ -235,6 +322,19 @@ class Rect(object):
     width = property(__get_width, __set_width)
     height = property(__get_height, __set_height)
 
+    def __eq__(self, rect):
+        if not isinstance(rect, Rect):
+            return NotImplemented
+        return (
+            self.left == rect.left
+            and self.top == rect.top
+            and self.right == rect.right
+            and self.bottom == rect.bottom
+        )
+
+    def __ne__(self, rect):
+        return not self == rect
+
     def screen_to_client(self, h_wnd):
         """
         Translates window screen coordinates to client coordinates.
@@ -277,9 +377,104 @@ class Rect(object):
         points = [(self.left, self.top), (self.right, self.bottom)]
         return map_window_points(h_wnd_from, h_wnd_to, points)
 
+    @staticmethod
+    def get_rect_from_structure(rect_struc):
+        return Rect(
+            rect_struc.left, rect_struc.top, rect_struc.right, rect_struc.bottom
+        )
+
     def __repr__(self):
         return 'x: {}, y: {}, width: {}, height: {}'.format(
             self.left, self.top, self.width, self.height
+        )
+
+class MonitorInfo():
+    """
+    Python wrapper over the L{MONITORINFO} class.
+    @type monitor_info: L{MonitorInfo} or L{MONITORINFO}
+    @ivar monitor_info: Another monitor info object.
+    """
+
+    MONITORINFOF_PRIMARY = 1
+
+    def __init__(self, monitor_info=None):
+        self.cb_size = monitor_info.cb_size
+        self.rc_monitor = Rect.get_rect_from_structure(
+            monitor_info.rc_monitor
+        )
+        self.rc_work = Rect.get_rect_from_structure(
+            monitor_info.rc_work
+        )
+        self.dw_flags = monitor_info.dw_flags
+
+    def __repr__(self):
+        return 'cb_size: {}, rc_monitor: {}, rc_work: {}, dw_flags: {}'.format(
+            self.cb_size,
+            repr(self.rc_monitor),
+            repr(self.rc_work),
+            self.dw_flags
+        )
+
+class WindowPlacement():
+    """
+    Python wrapper over the L{WINDOWPLACEMENT} class.
+    """
+
+    def __init__(self, window_placement=None):
+        """
+        @type  window_placement: L{WindowPlacement} or L{WINDOWPLACEMENT}
+        @param window_placement: Another window placement object.
+        """
+
+        # Initialize all properties with empty values.
+        self.flags = 0
+        self.show_cmd = 0
+        self.pt_min_position = Point()
+        self.pt_max_position = Point()
+        self.rc_normal_position = Rect()
+
+        # If a window placement was given copy it's properties.
+        if window_placement:
+            self.flags = window_placement.flags
+            self.show_cmd = window_placement.show_cmd
+            self.pt_min_position = Point(
+                window_placement.pt_min_position.x,
+                window_placement.pt_min_position.y
+            )
+            self.pt_max_position = Point(
+                window_placement.pt_max_position.x,
+                window_placement.pt_max_position.y
+            )
+            self.rc_normal_position = Rect(
+                window_placement.rc_normal_position.left,
+                window_placement.rc_normal_position.top,
+                window_placement.rc_normal_position.right,
+                window_placement.rc_normal_position.bottom,
+            )
+
+    @property
+    def _as_parameter_(self):
+        """
+        Compatibility with ctypes.
+        Allows passing transparently a Point object to an API call.
+        """
+        return WINDOWPLACEMENT(window_placement=self)
+
+    def __repr__(self):
+        return (
+            """
+            flags: {},\n
+            show_cmd: {},\n
+            pt_min_position: {},\n
+            pt_max_position: {},\n
+            rc_normal_position: {}
+            """.format(
+                self.flags,
+                self.show_cmd,
+                repr(self.pt_min_position),
+                repr(self.pt_max_position),
+                repr(self.rc_normal_position)
+            )
         )
 
 # --- user32.dll --------------------------------------------------------------
@@ -320,7 +515,10 @@ def find_window_w(lp_class_name=None, lp_window_name=None):
             raise ctypes.WinError(errcode)
     return h_wnd
 
-FIND_WINDOW = GuessStringType(find_window_a, find_window_w)
+def find_window(lp_class_name=None, lp_window_name=None):
+    return GuessStringType(find_window_a, find_window_w)(
+        lp_class_name, lp_window_name
+    )
 
 def find_window_ex_a(
         hwnd_parent=None, hwnd_child_after=None,
@@ -522,6 +720,26 @@ def client_to_screen(h_wnd, lp_point):
     _client_to_screen(h_wnd, BY_REF(lp_point))
     return Point(lp_point.x, lp_point.y)
 
+def get_shell_window():
+    """
+    HWND GetShellWindow(VOID);
+    """
+    _get_shell_window = WINDLL.user32.GetShellWindow
+    _get_shell_window.argtypes = []
+    _get_shell_window.restype = HWND
+    _get_shell_window.errcheck = raise_if_zero
+    return _get_shell_window()
+
+def get_desktop_window():
+    """
+    HWND GetDesktopWindow(VOID);
+    """
+    _get_desktop_window = WINDLL.user32.GetDesktopWindow
+    _get_desktop_window.argtypes = []
+    _get_desktop_window.restype = HWND
+    _get_desktop_window.errcheck = raise_if_zero
+    return _get_desktop_window()
+
 def get_foreground_window():
     """
     HWND GetForegroundWindow(VOID);
@@ -531,6 +749,39 @@ def get_foreground_window():
     _get_foreground_window.restype = HWND
     _get_foreground_window.errcheck = raise_if_zero
     return _get_foreground_window()
+
+def __get_monitor_info(get_monitor_info_func, h_monitor):
+    get_monitor_info_func.argtypes = [HMONITOR, LPMONITORINFO]
+    get_monitor_info_func.restype = bool
+    get_monitor_info_func.errcheck = raise_if_zero
+
+    monitor_info = MONITORINFO()
+    success = get_monitor_info_func(h_monitor, BY_REF(monitor_info))
+    if not success:
+        raise WindowsError()
+    return MonitorInfo(monitor_info)
+
+def get_monitor_info_a(h_monitor):
+    """
+    BOOL GetMonitorInfoA(
+        HMONITOR      hMonitor,
+        LPMONITORINFO lpmi
+    );
+    """
+    return __get_monitor_info(WINDLL.user32.GetMonitorInfoA, h_monitor)
+
+def get_monitor_info_w(h_monitor):
+    """
+    BOOL GetMonitorInfoW(
+        HMONITOR      hMonitor,
+        LPMONITORINFO lpmi
+    );
+    """
+    return __get_monitor_info(WINDLL.user32.GetMonitorInfoW, h_monitor)
+
+
+def get_monitor_info(h_monitor):
+    return GuessStringType(get_monitor_info_a, get_monitor_info_w)(h_monitor)
 
 def get_system_metrics(n_index):
     """
@@ -548,6 +799,36 @@ def get_system_metrics(n_index):
         raise ctypes.WinError(error_code)
     return metric
 
+def get_window_placement(h_wnd):
+    """
+    BOOL GetWindowPlacement(
+        HWND hWnd,
+        WINDOWPLACEMENT *lpwndpl
+    );
+    """
+    _get_window_placement = WINDLL.user32.GetWindowPlacement
+    _get_window_placement.argtypes = [HWND, PWINDOWPLACEMENT]
+    _get_window_placement.restype = bool
+    _get_window_placement.errcheck = raise_if_zero
+
+    lpwndpl = WINDOWPLACEMENT()
+    _get_window_placement(h_wnd, BY_REF(lpwndpl))
+    return WindowPlacement(lpwndpl)
+
+def set_window_placement(h_wnd, lpwndpl):
+    """
+    BOOL SetWindowPlacement(
+        HWND hWnd,
+        WINDOWPLACEMENT *lpwndpl
+    );
+    """
+    _set_window_placement = WINDLL.user32.SetWindowPlacement
+    _set_window_placement.argtypes = [HWND, PWINDOWPLACEMENT]
+    _set_window_placement.restype = bool
+    _set_window_placement.errcheck = raise_if_zero
+
+    _set_window_placement(h_wnd, BY_REF(lpwndpl))
+
 def get_window_rect(h_wnd):
     """
     BOOL WINAPI GetWindowRect(
@@ -562,7 +843,7 @@ def get_window_rect(h_wnd):
 
     lp_rect = RECT()
     _get_window_rect(h_wnd, BY_REF(lp_rect))
-    return Rect(lp_rect.left, lp_rect.top, lp_rect.right, lp_rect.bottom)
+    return Rect.get_rect_from_structure(lp_rect)
 
 def get_window_thread_process_id(h_wnd):
     """
@@ -606,6 +887,19 @@ def map_window_points(h_wnd_from, h_wnd_to, lp_points):
     x_delta = number & 0xFFFF
     y_delta = (number >> 16) & 0xFFFF
     return x_delta, y_delta, [(Point.x, Point.y) for Point in lp_points]
+
+def monitor_from_window(h_wnd, dw_flags):
+    """
+    HMONITOR MonitorFromWindow(
+        HWND  hwnd,
+        DWORD dwFlags
+    );
+    """
+    _monitor_from_window = WINDLL.user32.MonitorFromWindow
+    _monitor_from_window.argtypes = [HWND, DWORD]
+    _monitor_from_window.restype = HMONITOR
+
+    return _monitor_from_window(h_wnd, dw_flags)
 
 def screen_to_client(h_wnd, lp_point):
     """

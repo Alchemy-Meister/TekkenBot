@@ -794,7 +794,7 @@ def open_process(dw_desired_access, b_inherit_handle, dw_process_id):
     h_process = _open_process(
         dw_desired_access, bool(b_inherit_handle), dw_process_id
     )
-    if h_process == NULL:
+    if h_process is NULL:
         raise ctypes.WinError()
     return ProcessHandle(h_process, dw_access=dw_desired_access)
 

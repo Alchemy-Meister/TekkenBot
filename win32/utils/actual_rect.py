@@ -40,5 +40,5 @@ def get_actual_rect(h_wnd):
     )
 
     if result == dwmapi.S_OK:
-        return Rect(rect.left, rect.top, rect.right, rect.bottom)
+        return Rect.get_rect_from_structure(rect)
     return None

@@ -64,5 +64,11 @@ class RECT(Structure):
         ('right', LONG),
         ('bottom', LONG),
     ]
+
+    def __repr__(self):
+        return 'left: {}, top: {}, right: {}, bottom: {}'.format(
+            self.left, self.top, self.right, self.bottom
+        )
+
 PRECT = POINTER(RECT)
 LPRECT = PRECT
