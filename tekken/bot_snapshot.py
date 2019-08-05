@@ -78,7 +78,7 @@ class BotSnapshot:
             >= InputAttack.RAGE.value
         )
         self.stun_state = StunStates(data_dict['PlayerDataAddress.stun_type'])
-        self.power_crush_flag = data_dict['PlayerDataAddress.power_crush'] > 0
+        self.is_power_crush = data_dict['PlayerDataAddress.power_crush'] > 0
 
         cancel_window_bitmask = data_dict['PlayerDataAddress.cancel_window']
 
@@ -86,7 +86,7 @@ class BotSnapshot:
             (CancelStatesBitmask.CANCELABLE.value & cancel_window_bitmask)
             == CancelStatesBitmask.CANCELABLE.value
         )
-        self.bufferable = (
+        self.is_bufferable = (
             (CancelStatesBitmask.BUFFERABLE.value & cancel_window_bitmask)
             == CancelStatesBitmask.BUFFERABLE.value
         )
@@ -364,12 +364,6 @@ class BotSnapshot:
         """
         return self.complex_state == ComplexMoveStates.S
 
-    def is_power_crush(self):
-        """
-
-        """
-        return self.power_crush_flag
-
     def is_being_knocked_down(self):
         """
 
@@ -401,31 +395,6 @@ class BotSnapshot:
 
         """
         return self.rage_flag > 0
-
-    def is_able_to_act(self):
-        """
-
-        """
-        # print(self.cwb)
-        return self.is_cancelable
-
-    def is_parryable1(self):
-        """
-
-        """
-        return self.is_parry1
-
-    def is_parryable2(self):
-        """
-
-        """
-        return self.is_parry2
-
-    def is_bufferable(self):
-        """
-
-        """
-        return self.bufferable
 
     def is_attack_starting(self):
         """

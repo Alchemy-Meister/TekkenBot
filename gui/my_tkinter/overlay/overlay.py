@@ -149,8 +149,8 @@ class Overlay(ABC):
     def on_delete_window(self):
         pass
 
+    @abstractmethod
     def on_resize_window(self, event):
-        # sys.stdout.write(event.width, event.height)
         pass
 
     def __update_coordinates(self, force_update=False):

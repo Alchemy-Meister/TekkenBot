@@ -757,7 +757,7 @@ class TekkenGameState:
         return False
 
     def is_opp_able_to_act(self):
-        return self.state_log[-1].opp.is_able_to_act()
+        return self.state_log[-1].opp.is_cancelable
 
     def get_bot_input_state(self):
         return self.state_log[-1].bot.get_input_state()
@@ -824,13 +824,13 @@ class TekkenGameState:
             if skipped_frames_counter + i <= startup:
                 tc_frames.append(state.opp.is_technical_crouch())
                 tj_frames.append(state.opp.is_technical_jump())
-                cancel_frames.append(state.opp.is_able_to_act())
-                buffer_frames.append(state.opp.is_bufferable())
-                pc_frames.append(state.opp.is_power_crush())
+                cancel_frames.append(state.opp.is_cancelable)
+                buffer_frames.append(state.opp.is_bufferable)
+                pc_frames.append(state.opp.is_power_crush)
                 homing_frames1.append(state.opp.is_homing1())
                 homing_frames2.append(state.opp.is_homing2())
-                parryable_frames1.append(state.opp.is_parryable1())
-                parryable_frames2.append(state.opp.is_parryable2())
+                parryable_frames1.append(state.opp.is_parry1)
+                parryable_frames2.append(state.opp.is_parry2)
                 startup_frames.append(is_skipped)
                 frozen_frames.append(is_frozen)
 

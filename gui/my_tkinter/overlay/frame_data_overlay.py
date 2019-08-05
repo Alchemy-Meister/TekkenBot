@@ -293,6 +293,9 @@ class FrameDataOverlay(WritableOverlay):
         self.textbox.resize_to_scale(self._scale)
         self.p2_frame_panel.resize_to_scale(self._scale)
 
+    def on_resize_window(self, event):
+        pass
+
     def _update_dimensions(self):
         self.overlay.update_idletasks()
         self.coordinates['width'] = (

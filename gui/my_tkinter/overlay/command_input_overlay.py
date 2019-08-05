@@ -31,14 +31,12 @@
 """
 import math
 import io
-from PIL import Image, ImageTk
-import sys
 import tkinter as tk
 import tkinter.font as tkfont
 
+from PIL import Image, ImageTk
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
-from reportlab.graphics.shapes import Drawing
 
 from constants.battle import MoveCancel
 from constants.input import InputAttack, InputDirection
@@ -133,7 +131,7 @@ class CommandInputOverlay(Overlay):
                 tag=self.index_tag
             )
 
-            width, height = CommandInputOverlay.__get_font_text_dimensions(
+            width, _ = CommandInputOverlay.__get_font_text_dimensions(
                 font, str_frame_intex
             )
 
@@ -247,6 +245,9 @@ class CommandInputOverlay(Overlay):
         self.__initialize_frame_lines()
         self.__initialize_canvas()
 
+    def on_resize_window(self, event):
+        pass
+
     def _update_dimensions(self):
         self.coordinates['width'] = int(self.canvas_width)
         self.coordinates['height'] = int(self.canvas_height)
@@ -289,8 +290,9 @@ class CommandInputOverlay(Overlay):
     def _load_resources(self):
         for printable_value in InputDirection:
             if(
-                    printable_value != InputDirection.NULL
-                    and printable_value != InputDirection.NEUTRAL
+                    InputDirection.NULL
+                    != printable_value
+                    != InputDirection.NEUTRAL
             ):
                 str_arrow = printable_value.printable_name['symbol']
                 svg_drawing = svg2rlg(
@@ -372,7 +374,7 @@ class CommandInputOverlay(Overlay):
             if input_state != self.frame_inputs[-2]:
                 self.command_input_canvas.delete(self.input_tag)
 
-                for index, (direction_code, input_code, rage_flag) in enumerate(
+                for index, (direction_code, input_code, _) in enumerate(
                         self.frame_inputs
                 ):
                     coordinate_x = (
@@ -386,31 +388,28 @@ class CommandInputOverlay(Overlay):
 
                     direction_code = InputDirection(direction_code)
                     if(
-                        direction_code != InputDirection.NULL 
-                        and direction_code != InputDirection.NEUTRAL
+                            InputDirection.NEUTRAL
+                            != direction_code
+                            != InputDirection.NULL
                     ):
-                        canvas_arrow_image = (
-                            self.command_input_canvas.create_image(
-                                coordinate_x,
-                                self.arrow_image_coordinate_y0,
-                                image=self.arrow_images[
-                                    direction_code.printable_name['symbol']
-                                ],
-                                tag=self.input_tag
-                            )
+                        self.command_input_canvas.create_image(
+                            coordinate_x,
+                            self.arrow_image_coordinate_y0,
+                            image=self.arrow_images[
+                                direction_code.printable_name['symbol']
+                            ],
+                            tag=self.input_tag
                         )
 
                     input_code = InputAttack(input_code)
                     if input_code != InputAttack.NULL:
-                        canvas_input_image =  (
-                            self.command_input_canvas.create_image(
-                                coordinate_x,
-                                self.button_image_coordinate_y0,
-                                image=self.button_images[
-                                    input_code.printable_name
-                                ],
-                                tag=self.input_tag
-                            )
+                        self.command_input_canvas.create_image(
+                            coordinate_x,
+                            self.button_image_coordinate_y0,
+                            image=self.button_images[
+                                input_code.printable_name
+                            ],
+                            tag=self.input_tag
                         )
 
                     coordinate_x = (
