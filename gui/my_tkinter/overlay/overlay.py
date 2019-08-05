@@ -29,6 +29,7 @@
 
 """
 """
+import sys
 from abc import ABC, abstractmethod
 import math
 import platform
@@ -69,8 +70,8 @@ class Overlay(ABC):
         self.set_position(OverlayPosition.TOP)
 
         self.overlay.attributes('-topmost', True)
-        self.overlay.resizable(None, None)
         self.overlay.protocol('WM_DELETE_WINDOW', self.on_delete_window)
+        self.overlay.bind('<Configure>', self.on_resize_window)
 
         subscriber = Subscriber()
         launcher.publisher.register(
@@ -105,6 +106,11 @@ class Overlay(ABC):
             self.overlay.attributes(
                 '-alpha', '1' if self.is_draggable else '0.75'
             )
+
+        try:
+            self.__update_coordinates(force_update=True)
+        except AttributeError:
+            pass
 
     def set_theme(self, theme_dict):
         self.transparent_color = theme_dict.get('transparent')
@@ -143,21 +149,27 @@ class Overlay(ABC):
     def on_delete_window(self):
         pass
 
-    def __update_coordinates(self):
+    def on_resize_window(self, event):
+        # sys.stdout.write(event.width, event.height)
+        pass
+
+    def __update_coordinates(self, force_update=False):
         tekken_rect = (
             self.launcher.game_state.get_reader().get_tekken_window_rect(
                 foreground_only=(
-                    self.dimensions_initialized and not self.is_draggable
+                    self.dimensions_initialized
+                    and not self.is_draggable
+                    and not force_update
                 )
             )
         )
         if tekken_rect:
-            if self.__tekken_rect != tekken_rect:
+            if self.__tekken_rect != tekken_rect or force_update:
                 self.dimensions_initialized = True
                 self.__tekken_rect = tekken_rect
 
                 updated_scale = Overlay.__calculate_rect_scale(tekken_rect)
-                if self._scale != updated_scale:
+                if self._scale != updated_scale or force_update:
                     self._scale = updated_scale
                     self._resize_overlay_widgets()
                     self._update_dimensions()
