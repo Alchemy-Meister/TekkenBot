@@ -40,6 +40,8 @@ from gui.my_tkinter import StdStreamRedirector
 from gui.my_tkinter.overlay import OverlayManager
 from gui.view import TekkenBotPrimeView
 
+from network import NoInternetConnectionError
+
 from tekken.launcher import Launcher
 
 from .memory_override_panel_controller import MemoryOverwritePanelController
@@ -127,12 +129,15 @@ class TekkenBotPrimeController():
         )
 
     def check_for_updates(self):
-        self.updater.is_update_available(
-            use_cache=False,
-            available_callback=self.__updates_available,
-            not_available_callback=self.__updates_not_available,
-            run_async=True
-        )
+        try:
+            self.updater.is_update_available(
+                use_cache=False,
+                success_callback=self.__update_check_success,
+                error_callback=self.__no_internet_connection,
+                run_async=True
+            )
+        except NoInternetConnectionError:
+            self.__no_internet_connection()
 
     def on_delete_window(self):
         sys.stdout.close()
@@ -210,17 +215,22 @@ class TekkenBotPrimeController():
             default_theme=default_overlay_theme
         )
 
-    def __updates_available(self):
-        if messagebox.askyesno(
+    def __update_check_success(self, available):
+        if available:
+            if messagebox.askyesno(
                 self.title,
                 '{0} {1}'.format(
                     'A new version of Tekken Bot Prime is available.',
                     'Would you like to download it now?'
                 )
-        ):
-            self.updater.download_update(use_cache=True)
+            ):
+                self.updater.download_update(use_cache=True)
+        else:
+            messagebox.showinfo(
+                self.title, 'There are currently no updates available.'
+            )
 
-    def __updates_not_available(self):
+    def __no_internet_connection(self):
         messagebox.showinfo(
-            self.title, 'There are currently no updates available.'
+            self.title, 'Unable to connect to the Internet.'
         )

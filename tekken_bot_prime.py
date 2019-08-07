@@ -29,7 +29,7 @@
 
 from config import ReloadableConfig
 from gui.controller import LaunchUpdaterController, TekkenBotPrimeController
-from network.updater import Updater
+from network.updater import NoInternetConnectionError, Updater
 
 class TekkenBotPrime():
     """
@@ -50,7 +50,14 @@ class TekkenBotPrime():
         title = 'Tekken Bot Prime'
         icon = 'data/tekken_bot_close.ico'
 
-        if updater.is_update_available():
+        update_available = False
+
+        try:
+            update_available = updater.is_update_available()
+        except NoInternetConnectionError:
+            pass
+
+        if update_available:
             LaunchUpdaterController(
                 updater, TekkenBotPrimeController, title=title, icon=icon
             )

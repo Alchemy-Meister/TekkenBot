@@ -39,9 +39,12 @@ import webbrowser
 
 from patterns.singleton import Singleton
 
+from .no_internet_connection_error import NoInternetConnectionError
+
 class Updater(metaclass=Singleton):
     """
     """
+
     def __init__(self, current_version, user, repo, download_filename_format):
         self.current_version = LooseVersion(current_version)
         self.github_releases = 'https://github.com/{0}/{1}/releases/'.format(
@@ -60,10 +63,10 @@ class Updater(metaclass=Singleton):
     def __gui_update(self, success_callback, error_callback):
         try:
             message = self.queue.get_nowait()
-            if message:
-                success_callback()
-            else:
+            if message == NoInternetConnectionError:
                 error_callback()
+            else:
+                success_callback(message)
             self.gui_update_running = False
         except queue.Empty:
             pass
@@ -80,13 +83,13 @@ class Updater(metaclass=Singleton):
         return self.__get_update_version()
 
     def is_update_available(
-            self, use_cache=True, run_async=False, available_callback=None,
-            not_available_callback=None
+            self, use_cache=True, run_async=False, success_callback=None,
+            error_callback=None
     ):
         if run_async and self.gui_container:
             if not self.gui_update_running:
                 self.__async_is_update_available(
-                    use_cache, available_callback, not_available_callback
+                    use_cache, success_callback, error_callback
                 )
         else:
             return self.__proccess_update_available(use_cache)
@@ -126,27 +129,35 @@ class Updater(metaclass=Singleton):
         except urllib2.HTTPError:
             self.update_version_initialized = False
             self.update_version = None
+        except urllib2.URLError:
+            raise NoInternetConnectionError
 
         return self.update_version
 
     def __async_is_update_available(
-            self, cache, available_callback, not_available_callback
+            self, cache, success_callback, error_callback
     ):
         self.gui_update_running = True
-        self.__gui_update(available_callback, not_available_callback)
+        self.__gui_update(success_callback, error_callback)
         threading.Thread(
             target=self.__proccess_update_available, args=(cache, True,)
         ).start()
 
     def __proccess_update_available(self, cache, use_queue=False):
-        version = self.get_update_version(use_cache=cache)
-        if version and self.current_version < LooseVersion(version):
+        try:
+            version = self.get_update_version(use_cache=cache)
+            if version and self.current_version < LooseVersion(version):
+                if use_queue:
+                    self.queue.put(True)
+                return True
+            elif use_queue:
+                self.queue.put(False)
+            return False
+        except NoInternetConnectionError:
             if use_queue:
-                self.queue.put(True)
-            return True
-        if use_queue:
-            self.queue.put(False)
-        return False
+                self.queue.put(NoInternetConnectionError)
+            else:
+                raise NoInternetConnectionError
 
     def __open_download_url(self, use_cache=False, run_async=False):
         webbrowser.open(

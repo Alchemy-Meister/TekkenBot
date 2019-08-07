@@ -27,52 +27,5 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
-Helper to find process identifiers by their names
-"""
-
-import os
-import traceback
-
-import win32.psapi as psapi
-import win32.kernel32 as kernel32
-
-def get_pids_by_process_name(process_name):
-    """
-    Return the process identifier for each process object in the system that
-    matches the given process name as a list.
-
-    @type  process_name: str
-    @param process_name: string by which the enum. of processes is filtered.
-    """
-    pids = []
-    try:
-        process_ids = psapi.enum_processes()
-        for process_id in process_ids:
-            try:
-                h_process = kernel32.open_process(
-                    kernel32.PROCESS_QUERY_INFORMATION, False, process_id
-                )
-                if h_process:
-                    process_path = psapi.get_process_image_file_name(h_process)
-                    filename = os.path.basename(process_path)
-                    if filename == process_name:
-                        pids.append(process_id)
-                    kernel32.close_handle(h_process)
-            except OSError:
-                pass
-    except OSError:
-        traceback.print_exc()
-
-    return pids
-
-def get_pid_by_unique_process_name(unique_process_name):
-    """
-    Return the process identifier of a process object known to have a
-    unique process name. If not found, returns -1.
-    @type  unique_process_name: str
-    @param unique_process_name: unique string identifier by which the enum. of
-    processes is filtered.
-    """
-    pids = get_pids_by_process_name(unique_process_name)
-    return pids[0] if pids else -1
+class NoInternetConnectionError(Exception):
+        pass

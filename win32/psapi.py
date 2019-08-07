@@ -122,9 +122,10 @@ def get_process_image_file_name_w(h_process):
         n_size += MAX_PATH
     return lp_filename.value
 
-GET_PROCESS_IMAGE_FILE_NAME = GuessStringType(
-    get_process_image_file_name_a, get_process_image_file_name_w
-)
+def get_process_image_file_name(h_process):
+    return GuessStringType(
+        get_process_image_file_name_a, get_process_image_file_name_w
+    )(h_process)
 
 #==============================================================================
 # This calculates the list of exported symbols.

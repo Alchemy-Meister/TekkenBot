@@ -205,7 +205,7 @@ class TekkenGameReader(ProcessIO):
                 )
             if window_handler:
                 # self.is_tekken_fullscreen(window_handler)
-                if not self.is_tekken_borderless(window_handler):
+                if not self.is_tekken_fullscreen(window_handler):
                     # Unstyled window + titlebar rect
                     window_rect = actual_rect.get_actual_rect(window_handler)
                     self.adapt_window_rect_to_title_bar(window_rect)
