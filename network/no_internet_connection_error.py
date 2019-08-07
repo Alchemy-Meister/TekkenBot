@@ -28,4 +28,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 class NoInternetConnectionError(Exception):
-        pass
+    pass
