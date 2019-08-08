@@ -27,14 +27,36 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import platform
+import sys
+import tkinter as tk
+
 from config import ReloadableConfig
 from gui.controller import LaunchUpdaterController, TekkenBotPrimeController
 from network.updater import NoInternetConnectionError, Updater
+import win32.defines as win32
 
 class TekkenBotPrime():
     """
     """
     def __init__(self):
+
+        title = 'Tekken Bot Prime'
+        icon = 'data/tekken_bot_close.ico'
+
+        if platform.architecture()[0] != '64bit':
+            root = tk.Tk()
+            root.withdraw()
+            root.iconbitmap(icon)
+            tk.messagebox.showerror(
+                title,
+                '{}\n{}'.format(
+                    'You are building the project with 32-bit Python.',
+                    'Try the 64-bit version instead.'
+                )
+            )
+            sys.exit(win32.ERROR_INVALID_ENVIRONMENT)
+
         updater_config = (
             ReloadableConfig('data/updater_config.ini').config['DEFAULT']
         )
@@ -47,11 +69,7 @@ class TekkenBotPrime():
         )
         del updater_config
 
-        title = 'Tekken Bot Prime'
-        icon = 'data/tekken_bot_close.ico'
-
         update_available = False
-
         try:
             update_available = updater.is_update_available()
         except NoInternetConnectionError:

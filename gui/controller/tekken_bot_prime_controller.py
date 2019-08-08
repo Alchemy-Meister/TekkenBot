@@ -173,7 +173,7 @@ class TekkenBotPrimeController():
                 'save_to_file': self.save_to_file,
                 'write_mode': 'a'
             },
-            callback=self.original_stderr.write # TODO disable on build version
+            callback=self.original_stderr.write
         )
 
     @staticmethod
@@ -218,11 +218,11 @@ class TekkenBotPrimeController():
     def __update_check_success(self, available):
         if available:
             if messagebox.askyesno(
-                self.title,
-                '{0} {1}'.format(
-                    'A new version of Tekken Bot Prime is available.',
-                    'Would you like to download it now?'
-                )
+                    self.title,
+                    '{0} {1}'.format(
+                        'A new version of Tekken Bot Prime is available.',
+                        'Would you like to download it now?'
+                    )
             ):
                 self.updater.download_update(use_cache=True)
         else:
@@ -231,6 +231,6 @@ class TekkenBotPrimeController():
             )
 
     def __no_internet_connection(self):
-        messagebox.showinfo(
+        messagebox.showerror(
             self.title, 'Unable to connect to the Internet.'
         )
