@@ -288,13 +288,20 @@ class FrameDataOverlay(WritableOverlay):
                     current_frame_advantage_enum
                 )
 
-    def _resize_overlay_widgets(self):
-        self.p1_frame_panel.resize_to_scale(self._scale)
-        self.textbox.resize_to_scale(self._scale)
-        self.p2_frame_panel.resize_to_scale(self._scale)
-
-    def on_resize_window(self, event):
-        pass
+    def _resize_overlay_widgets(self, overlay_scale=None):
+        if overlay_scale:
+            scale = [
+                overlay_scale_size * tekken_scale_size
+                for overlay_scale_size, tekken_scale_size in zip(
+                    overlay_scale, self._tekken_scale
+                    )
+            ]
+        else:
+            scale = self._tekken_scale
+        self.p1_frame_panel.resize_to_scale(scale)
+        self.textbox.resize_to_scale(scale)
+        self.p2_frame_panel.resize_to_scale(scale)
+        self._update_dimensions()
 
     def _update_dimensions(self):
         self.overlay.update_idletasks()

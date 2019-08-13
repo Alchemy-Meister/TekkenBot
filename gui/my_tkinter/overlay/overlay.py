@@ -29,7 +29,6 @@
 
 """
 """
-import sys
 from abc import ABC, abstractmethod
 import math
 import platform
@@ -49,10 +48,11 @@ class Overlay(ABC):
 
     def __init__(self, launcher: Launcher):
         self.launcher = launcher
-        self._scale = None
+        self._tekken_scale = None
         self.coordinates = {
             'x': 0, 'y': 0, 'width': 0, 'height': 0
         }
+        self.window_dimensions = [0, 0]
         self.coordinates_initialized = False
         self.dimensions_initialized = False
         self.visible = False
@@ -70,8 +70,8 @@ class Overlay(ABC):
         self.set_position(OverlayPosition.TOP)
 
         self.overlay.attributes('-topmost', True)
-        self.overlay.protocol('WM_DELETE_WINDOW', self.on_delete_window)
-        self.overlay.bind('<Configure>', self.on_resize_window)
+        self.overlay.protocol('WM_DELETE_WINDOW', self.__on_delete_window)
+        self.overlay.bind('<Configure>', self._on_resize_window)
 
         subscriber = Subscriber()
         launcher.publisher.register(
@@ -146,11 +146,32 @@ class Overlay(ABC):
             if is_state_updated:
                 self._update_state()
 
-    def on_delete_window(self):
+    def __on_delete_window(self):
         pass
 
+    def _on_resize_window(self, event):
+        if(
+                self.is_draggable
+                and self.coordinates_initialized
+        ):
+            if(
+                    self.window_dimensions[0] != event.width
+                    or self.window_dimensions[1] != event.height
+            ):
+                try:
+                    self.window_dimensions[0] = event.width
+                    self.window_dimensions[1] = event.height
+
+                    overlay_scale = Overlay.__calculate_scale(
+                        [event.width, event.height],
+                        [self.coordinates['width'], self.coordinates['height']]
+                    )
+                    self._resize_overlay_widgets(overlay_scale=overlay_scale)
+                except ZeroDivisionError:
+                    pass
+
     @abstractmethod
-    def on_resize_window(self, event):
+    def _resize_overlay_widgets(self, overlay_scale=None):
         pass
 
     def __update_coordinates(self, force_update=False):
@@ -168,9 +189,12 @@ class Overlay(ABC):
                 self.dimensions_initialized = True
                 self.__tekken_rect = tekken_rect
 
-                updated_scale = Overlay.__calculate_rect_scale(tekken_rect)
-                if self._scale != updated_scale or force_update:
-                    self._scale = updated_scale
+                updated_scale = Overlay.__calculate_scale(
+                    [tekken_rect.width, tekken_rect.height],
+                    [Overlay.WIDTH, Overlay.HEIGHT]
+                )
+                if self._tekken_scale != updated_scale or force_update:
+                    self._tekken_scale = updated_scale
                     self._resize_overlay_widgets()
                     self._update_dimensions()
                 if not self.is_draggable or not self.coordinates_initialized:
@@ -209,10 +233,6 @@ class Overlay(ABC):
             )
 
     @abstractmethod
-    def _resize_overlay_widgets(self):
-        pass
-
-    @abstractmethod
     def _update_dimensions(self):
         pass
 
@@ -229,10 +249,11 @@ class Overlay(ABC):
         self.coordinates_initialized = False
 
     @staticmethod
-    def __calculate_rect_scale(tekken_rect: Rect):
-        width_scale = tekken_rect.width / Overlay.WIDTH
-        height_scale = tekken_rect.height / Overlay.HEIGHT
-        return (width_scale, height_scale)
+    def __calculate_scale(current_size, original_size):  
+        return (
+            current_size[0] / original_size[0],
+            current_size[1] / original_size[1]
+        )
 
     @staticmethod
     def __set_cursor_to_all_widgets(frame, cursor):
