@@ -30,10 +30,10 @@
 """
 """
 import enum
-import time
 from patterns.observer import Publisher
 from tekken_game_state import TekkenGameState
 from TekkenEncyclopedia import TekkenEncyclopedia
+from win32.utils import os_time
 
 class Launcher:
     """
@@ -63,13 +63,13 @@ class Launcher:
         self.__update_launcher()
 
     def __update_launcher(self):
-        start = time.time()
+        start = os_time.now(resolution=os_time.Resolution.MILLI)
         sucessful = self.game_state.update()
         if sucessful:
             self.cyclopedia_p1.update(self.game_state)
             self.cyclopedia_p2.update(self.game_state)
-        end = time.time()
-        elapsed_time = (end - start) * 1000
+        end = os_time.now(resolution=os_time.Resolution.MILLI)
+        elapsed_time = (end - start)
         if self.game_state.is_pid_valid():
             if not self.initialized:
                 self.initialized = True
@@ -79,7 +79,7 @@ class Launcher:
             self.view.after(
                 max(
                     Launcher.INITIAL_SHORT_DELAY,
-                    Launcher.INITIAL_LONG_DELAY - int(round(elapsed_time))
+                    round(Launcher.INITIAL_LONG_DELAY - elapsed_time)
                 ),
                 self.__update_launcher
             )
