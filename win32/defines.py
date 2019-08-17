@@ -54,6 +54,13 @@ class Structure(ctypes.Structure):
     if SIZE_OF(ctypes.c_void_p) == 4:
         _pack_ = 1
 
+class Union(ctypes.Union):
+    """
+    Automatically disable padding of structs and unions on 32 bits.
+    """
+    if SIZE_OF(ctypes.c_void_p) == 4:
+        _pack_ = 1
+
 # -----------------------------------------------------------------------------
 
 def raise_if_zero(result, _func=None, _arguments=()):
@@ -210,6 +217,7 @@ CHAR = ctypes.c_char
 DOUBLE = ctypes.c_double
 DWORD = ctypes.c_uint32
 FLOAT = ctypes.c_float
+INT = ctypes.c_int32
 LONG = ctypes.c_int32
 LONGLONG = ctypes.c_int64
 LPSTR = ctypes.c_char_p
@@ -243,6 +251,7 @@ PHANDLE = POINTER(HANDLE)
 LPHANDLE = PHANDLE
 LPDWORD = POINTER(DWORD)
 PDWORD = LPDWORD
+PLONGLONG = POINTER(LONGLONG)
 # XXX ANSI by default?
 TCHAR = CHAR
 

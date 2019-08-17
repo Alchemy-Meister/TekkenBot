@@ -578,16 +578,16 @@ class MODULEENTRY32(Structure):
     """
 
     _fields_ = [
-        ("dw_size", DWORD),
-        ("th_32_module_id", DWORD),
-        ("th_32_process_id", DWORD),
-        ("glbl_cnt_usage", DWORD),
-        ("proc_cnt_usage", DWORD),
-        ("mod_base_addr", LPVOID),  # BYTE*
-        ("mod_base_size", DWORD),
-        ("h_module", HMODULE),
-        ("sz_module", TCHAR * (MAX_MODULE_NAME32 + 1)),
-        ("sz_exe_path", TCHAR * MAX_PATH),
+        ('dw_size', DWORD),
+        ('th_32_module_id', DWORD),
+        ('th_32_process_id', DWORD),
+        ('glbl_cnt_usage', DWORD),
+        ('proc_cnt_usage', DWORD),
+        ('mod_base_addr', LPVOID),  # BYTE*
+        ('mod_base_size', DWORD),
+        ('h_module', HMODULE),
+        ('sz_module', TCHAR * (MAX_MODULE_NAME32 + 1)),
+        ('sz_exe_path', TCHAR * MAX_PATH),
     ]
     def __init__(self, *args, **kwds):
         super(MODULEENTRY32, self).__init__(*args, **kwds)
@@ -985,6 +985,40 @@ def module32next(h_snapshot, me32=None):
             return None
         raise ctypes.WinError()
     return me32
+
+def query_performance_counter():
+    """
+    BOOL QueryPerformanceCounter(
+        LARGE_INTEGER *lpPerformanceCount
+    );
+    """
+    _query_performance_counter = WINDLL.kernel32.QueryPerformanceCounter
+    _query_performance_counter.argtypes = [PLONGLONG]
+    _query_performance_counter.restype = bool
+    _query_performance_counter.errcheck = raise_if_zero
+
+    large_integer = LONGLONG()
+    success = _query_performance_counter(BY_REF(large_integer))
+    if not success:
+        raise ctypes.WinError(get_last_error())
+    return large_integer
+
+def query_performance_frequency():
+    """
+    BOOL QueryPerformanceFrequency(
+        LARGE_INTEGER *lpFrequency
+    );
+    """
+    _query_performance_frequency = WINDLL.kernel32.QueryPerformanceFrequency
+    _query_performance_frequency.argtypes = [PLONGLONG]
+    _query_performance_frequency.restype = bool
+    _query_performance_frequency.errcheck = raise_if_zero
+
+    large_integer = LONGLONG()
+    success = _query_performance_frequency(BY_REF(large_integer))
+    if not success:
+        raise ctypes.WinError(get_last_error())
+    return large_integer
 
 #==============================================================================
 # This calculates the list of exported symbols.

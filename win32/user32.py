@@ -47,6 +47,7 @@ MONITOR_DEFAULTTONEAREST = 2
 
 SM_CYCAPTION = 4
 SM_CXBORDER = 5
+SM_SWAPBUTTON = 23
 SM_CXSIZEFRAME = 32
 SM_CYFRAME = 33
 SM_CXPADDEDBORDER = 92
@@ -66,6 +67,16 @@ WS_OVERLAPPEDWINDOW = (
     WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX
     | WS_MAXIMIZEBOX
 )
+
+# Virtual-Key Codes
+VK_LBUTTON = 0x01
+VK_RBUTTON = 0x02
+VK_LEFT = 0x25
+VK_UP = 0x26
+VK_RIGHT = 0x27
+VK_DOWN = 0x28
+VK_LWIN = 0x5B
+VK_RWIN = 0x5C
 
 # --- structures ---------------------------------------------------
 
@@ -193,7 +204,7 @@ class Point():
             self.y = value
         else:
             raise IndexError("index out of range")
-    
+
     def __repr__(self):
         return 'x: {}, y: {}'.format(self.x, self.y)
 
@@ -572,6 +583,17 @@ def find_window_ex_w(
 
 FIND_WINDOW_EX = GuessStringType(find_window_ex_a, find_window_ex_w)
 
+def get_async_key_state(v_key):
+    """
+    SHORT GetAsyncKeyState(
+        int vKey
+    );
+    """
+    _get_async_key_state = WINDLL.user32.GetAsyncKeyState
+    _get_async_key_state.argtypes = [INT]
+    _get_async_key_state.restype = SHORT
+    return _get_async_key_state(v_key)
+
 def get_window_text_a(h_wnd):
     """
     int WINAPI GetWindowTextA(
@@ -583,6 +605,7 @@ def get_window_text_a(h_wnd):
     _get_window_text_a = WINDLL.user32.GetWindowTextA
     _get_window_text_a.argtypes = [HWND, LPSTR, ctypes.c_int]
     _get_window_text_a.restype = ctypes.c_int
+
 
     n_max_count = 0x1000
     dw_char_size = SIZE_OF(CHAR)
@@ -668,7 +691,6 @@ if BITS == 32:
 
     def get_window_long_ptr(h_wnd, n_index=0):
         get_window_long(h_wnd, n_index)
-
 else:
     def get_window_long_ptr_a(h_wnd, n_index=0):
         _get_window_long_ptr_a = WINDLL.user32.GetWindowLongPtrA
