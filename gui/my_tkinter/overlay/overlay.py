@@ -29,6 +29,7 @@
 
 """
 """
+import sys
 from abc import ABC, abstractmethod
 import math
 import platform
@@ -38,6 +39,7 @@ from constants.overlay import OverlayPosition
 from patterns.observer import Subscriber
 from tekken import Launcher
 from win32.user32 import Rect
+from win32.utils import mouse
 
 class Overlay(ABC):
     """
@@ -53,11 +55,18 @@ class Overlay(ABC):
             'x': 0, 'y': 0, 'width': 0, 'height': 0
         }
         self.window_dimensions = [0, 0]
+        self.window_proportion = None
+
         self.coordinates_initialized = False
         self.dimensions_initialized = False
         self.visible = False
         self.enabled = False
         self.is_draggable = False
+
+        self.is_resizing = False
+        self.resize_start = True
+        self.skip_resize_event = False
+        self.previous_event = None
 
         self.transparent_color = 'white'
 
@@ -153,22 +162,57 @@ class Overlay(ABC):
         if(
                 self.is_draggable
                 and self.coordinates_initialized
+                and self.previous_event
+                and not self.skip_resize_event
+                and not self.is_resizing
         ):
+            # sys.stdout.write('previous: {}'.format(self.previous_event))
+            # sys.stdout.write('event: {}'.format(event))
             if(
-                    self.window_dimensions[0] != event.width
-                    or self.window_dimensions[1] != event.height
-            ):
-                try:
-                    self.window_dimensions[0] = event.width
-                    self.window_dimensions[1] = event.height
-
-                    overlay_scale = Overlay.__calculate_scale(
-                        [event.width, event.height],
-                        [self.coordinates['width'], self.coordinates['height']]
+                    (
+                        self.previous_event.width != event.width
+                        or self.previous_event.height != event.height
                     )
-                    self._resize_overlay_widgets(overlay_scale=overlay_scale)
-                except ZeroDivisionError:
-                    pass
+                    and event.width
+                    and event.height
+            ):
+                self.window_dimensions[0] = event.width
+                self.window_dimensions[1] = round(
+                    event.width / self.window_proportion
+                )
+
+                overlay_scale = Overlay.__calculate_scale(
+                    [self.window_dimensions[0], self.window_dimensions[1]],
+                    [self.coordinates['width'], self.coordinates['height']]
+                )
+                self.is_resizing = True
+                self._resize_overlay_widgets(overlay_scale=overlay_scale)
+                # self.overlay.geometry('{}x{}'.format(*self.window_dimensions))
+                # self.overlay.update_idletasks()
+                self.is_resizing = False
+                if self.resize_start:
+                    sys.stdout.write('callback in')
+                    self.resize_start = False
+                    self.overlay.after(100, self.force_resize_proportion)
+
+        self.previous_event = event
+        if self.skip_resize_event:
+            self.skip_resize_event = False
+
+    def force_resize_proportion(self):
+        if not mouse.is_logical_left_button_down():
+            self.overlay.after(
+                1000,
+                lambda: self.overlay.geometry(
+                    '{}x{}'.format(*self.window_dimensions)
+                )
+            )
+            self.resize_start = True
+            sys.stdout.write(self.window_dimensions)
+            sys.stdout.write('callback out')
+            self.skip_resize_event = True
+        else:
+            self.overlay.after(100, self.force_resize_proportion)
 
     @abstractmethod
     def _resize_overlay_widgets(self, overlay_scale=None):

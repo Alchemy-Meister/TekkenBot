@@ -96,6 +96,8 @@ class CommandInputOverlay(Overlay):
 
         self.frame_inputs = list()
         self.frame_cancels = list()
+        self.last_frame_inputs = list()
+        self.last_frame_cancels = list()
 
         self.svg_arrow_images = dict()
         self.svg_button_images = dict()
@@ -207,7 +209,7 @@ class CommandInputOverlay(Overlay):
         last_line_cords = self.command_input_canvas.coords(
             self.command_input_canvas.find_withtag(self.line_tag)[-1]
         )
-        self.canvas_width = int(last_line_cords[0] + self.step_length + 1)
+        self.canvas_width = int(last_line_cords[0] + self.step_length)
 
         self.command_input_canvas.configure(
             width=self.canvas_width, height=self.canvas_height
@@ -238,7 +240,6 @@ class CommandInputOverlay(Overlay):
         else:
             scale = self._tekken_scale
 
-
         self.command_input_canvas.delete('all')
         self.__initialize_frame_indexes(scale, expand_canvas)
         self.arrow_images = self.scale_svg_images(
@@ -250,10 +251,12 @@ class CommandInputOverlay(Overlay):
         self.__initialize_input_coordinates(scale, expand_canvas)
         self.__initialize_frame_lines()
         self.__initialize_canvas()
+        self.__paint_input(restore=True)
 
     def _update_dimensions(self):
         self.coordinates['width'] = int(self.canvas_width)
         self.coordinates['height'] = int(self.canvas_height)
+        self.window_proportion = self.canvas_width / self.canvas_height
 
     def _update_state(self):
         last_game_state_log = self.launcher.game_state.state_log[-1]
@@ -289,6 +292,8 @@ class CommandInputOverlay(Overlay):
         self.visible = self.launcher.game_state.is_in_battle()
         if previous_visible_state != self.visible and not self.visible:
             self.command_input_canvas.delete(self.input_tag)
+            self.frame_inputs.clear()
+            self.frame_cancels.clear()
 
     def _load_resources(self):
         for printable_value in InputDirection:
@@ -375,66 +380,79 @@ class CommandInputOverlay(Overlay):
             self.frame_cancels = self.frame_cancels[-self.canvas_step_number:]
 
             if input_state != self.frame_inputs[-2]:
+                self.last_frame_inputs = self.frame_inputs.copy()
+                self.last_frame_cancels = self.frame_cancels.copy()
+
                 self.command_input_canvas.delete(self.input_tag)
+                self.__paint_input()
 
-                for index, (direction_code, input_code, _) in enumerate(
-                        self.frame_inputs
-                ):
-                    coordinate_x = (
-                        (
-                            index
-                            * self.step_length
-                            + index
-                            + (self.step_length / 2)
-                        )
+    def __paint_input(self, restore=False):
+        if restore:
+            frame_inputs = self.last_frame_inputs
+            frame_cancels = self.last_frame_cancels
+        else:
+            frame_inputs = self.frame_inputs
+            frame_cancels = self.frame_cancels
+
+        for index, (direction_code, input_code, _) in enumerate(frame_inputs):
+            coordinate_x = (
+                (
+                    index
+                    * self.step_length
+                    + index
+                    + (self.step_length / 2)
+                )
+            )
+
+            direction_code = InputDirection(direction_code)
+            if(
+                    InputDirection.NEUTRAL
+                    != direction_code
+                    != InputDirection.NULL
+            ):
+                self.command_input_canvas.create_image(
+                    coordinate_x,
+                    self.arrow_image_coordinate_y0,
+                    image=self.arrow_images[
+                        direction_code.printable_name['symbol']
+                    ],
+                    tag=self.input_tag
+                )
+
+            input_code = InputAttack(input_code)
+            if input_code != InputAttack.NULL:
+                self.command_input_canvas.create_image(
+                    coordinate_x,
+                    self.button_image_coordinate_y0,
+                    image=self.button_images[
+                        input_code.printable_name
+                    ],
+                    tag=self.input_tag
+                )
+
+            coordinate_x = (
+                (
+                    index
+                    * self.step_length
+                    + index
+                    + (
+                        self.step_length / 2 - self.cancel_rect_size / 2
                     )
-
-                    direction_code = InputDirection(direction_code)
-                    if(
-                            InputDirection.NEUTRAL
-                            != direction_code
-                            != InputDirection.NULL
-                    ):
-                        self.command_input_canvas.create_image(
-                            coordinate_x,
-                            self.arrow_image_coordinate_y0,
-                            image=self.arrow_images[
-                                direction_code.printable_name['symbol']
-                            ],
-                            tag=self.input_tag
-                        )
-
-                    input_code = InputAttack(input_code)
-                    if input_code != InputAttack.NULL:
-                        self.command_input_canvas.create_image(
-                            coordinate_x,
-                            self.button_image_coordinate_y0,
-                            image=self.button_images[
-                                input_code.printable_name
-                            ],
-                            tag=self.input_tag
-                        )
-
-                    coordinate_x = (
-                        index
-                        * self.step_length
-                        + index
-                        + CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                            'frame_rect_min_margin'
-                        ] * self._tekken_scale[0]
-                    )
-                    rect_coordinate_x1 = coordinate_x + self.cancel_rect_size
-                    self.command_input_canvas.create_rectangle(
-                        coordinate_x,
-                        self.cancel_rect_coordinate_y0,
-                        rect_coordinate_x1,
-                        self.cancel_rect_coordinate_y1,
-                        fill=self.frame_cancels[index],
-                        tag=self.input_tag
-                    )
+                )
+                * self._tekken_scale[0]
+            )
+            rect_coordinate_x1 = coordinate_x + self.cancel_rect_size
+            self.command_input_canvas.create_rectangle(
+                coordinate_x,
+                self.cancel_rect_coordinate_y0,
+                rect_coordinate_x1,
+                self.cancel_rect_coordinate_y1,
+                fill=frame_cancels[index],
+                tag=self.input_tag
+            )
 
     def get_fitting_font(self, scale):
-        def get_font_and_measures(size, sign):
+        def get_font_and_measures(size):
             font = tkfont.Font(
                 family=(
                     CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
@@ -461,7 +479,7 @@ class CommandInputOverlay(Overlay):
         else:
             sign = (1, -1)[size < 0]
 
-        font, width, height = get_font_and_measures(size, sign)
+        font, width, height = get_font_and_measures(size)
         max_font_width = (
             self.step_length
             - 2
@@ -483,7 +501,7 @@ class CommandInputOverlay(Overlay):
                 )
                 and abs(size) > abs(sign)
         ):
-            font, width, height = get_font_and_measures(size, sign)
+            font, width, height = get_font_and_measures(size)
             size = sign * (abs(size) - 1)
 
         return font, width, height

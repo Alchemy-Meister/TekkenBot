@@ -43,7 +43,7 @@ class AttackTextbox(Textbox):
         self.configure(height=self.max_lines, state='disable')
         self.bind('<MouseWheel>', AttackTextbox.__disable_mouse_wheel)
 
-        self.font = ['Consolas', 11]
+        self.font = ['Consolas', -16]
         self.configure(font=tuple(self.font))
 
     def is_clear(self, include_header=False):

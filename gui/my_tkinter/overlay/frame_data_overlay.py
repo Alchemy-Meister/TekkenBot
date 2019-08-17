@@ -118,11 +118,7 @@ class FrameDataOverlay(WritableOverlay):
             self.overlay, self.transparent_color
         )
 
-        self.textbox = AttackTextbox(
-            self.overlay,
-            self.max_attack_log_length,
-            font=('Consolas', 11)
-        )
+        self.textbox = AttackTextbox(self.overlay, self.max_attack_log_length)
         self.textbox.configure(background='gray10')
         self.textbox.configure(foreground='lawn green')
 
@@ -311,6 +307,9 @@ class FrameDataOverlay(WritableOverlay):
             + self.p2_frame_panel.winfo_width()
         )
         self.coordinates['height'] = self.textbox.winfo_height()
+        self.window_proportion = (
+            self.coordinates['width'] / self.coordinates['height']
+        )
 
     def _update_visible_state(self):
         previous_visible_state = self.visible
