@@ -131,7 +131,6 @@ class CommandInputOverlay(Overlay):
                 * scale[0]
             )
 
-        # self.font, _, height = self.get_fitting_font(scale)
         self.font, _, height = Overlay._get_fitting_font(
             scale,
             CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG['font'],
@@ -179,7 +178,7 @@ class CommandInputOverlay(Overlay):
                 tag=self.index_tag
             )
 
-    def __initialize_input_coordinates(self, scale=(1, 1,), expand=False):
+    def __initialize_input_coordinates(self, scale=(1, 1,)):
         arrow_image_height = next(iter(self.arrow_images.values())).height()
         self.button_image_coordinate_y0 = (
             self.arrow_image_coordinate_y0
@@ -213,10 +212,7 @@ class CommandInputOverlay(Overlay):
             self.cancel_rect_coordinate_y1 - self.cancel_rect_coordinate_y0
         )
 
-        if expand:
-            self.canvas_height = self.window_dimensions[1]
-        else:
-            self.canvas_height = int(self.cancel_rect_coordinate_y1 + 2)
+        self.canvas_height = int(self.cancel_rect_coordinate_y1 + 2)
 
     def __initialize_frame_lines(self):
         for index in range(1, self.canvas_step_number):
@@ -267,7 +263,7 @@ class CommandInputOverlay(Overlay):
         self.button_images = self.scale_svg_images(
             self.svg_button_images, scale
         )
-        self.__initialize_input_coordinates(scale, expand_canvas)
+        self.__initialize_input_coordinates(scale)
         self.__initialize_frame_lines()
         self.__initialize_canvas()
         self.__paint_input(restore=True)
@@ -448,10 +444,7 @@ class CommandInputOverlay(Overlay):
                     tag=self.input_tag
                 )
 
-            coordinate_x += (
-                (self.step_length / 2 - self.cancel_rect_size / 2)
-                * self._tekken_scale[0]
-            )
+            coordinate_x += self.step_length / 2 - self.cancel_rect_size / 2
             rect_coordinate_x1 = coordinate_x + self.cancel_rect_size
             self.command_input_canvas.create_rectangle(
                 coordinate_x,

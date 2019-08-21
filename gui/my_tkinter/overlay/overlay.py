@@ -177,7 +177,7 @@ class Overlay(ABC):
                     and event.height
             ):
                 self.window_dimensions[0] = event.width
-                self.window_dimensions[1] = round(
+                self.window_dimensions[1] = (
                     event.width / self.window_proportion
                 )
 
@@ -190,7 +190,7 @@ class Overlay(ABC):
                     overlay_scale=overlay_scale
                 )
                 self.window_dimensions[0] = width
-                self.window_dimensions[1] = height
+                self.window_dimensions[1] = round(height)
                 self.is_resizing = False
                 if self.resize_start:
                     self.resize_start = False
