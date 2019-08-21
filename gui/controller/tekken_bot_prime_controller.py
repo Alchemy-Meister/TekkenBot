@@ -71,19 +71,13 @@ class TekkenBotPrimeController():
 
         self.view = TekkenBotPrimeView(self.root, self)
 
-        self.launcher = Launcher(self.root, extended_print=False)
-
-        self.overlay_manager = None
-        self.__intialize_overlay_settings()
-
         self.__redirect_stdout_to_console(self.view.console)
-        TekkenBotPrimeController.__initialize_console_text()
 
-        self.__initialize_memory_override_panel()
+        self.launcher = None
+        self.overlay_manager = None
+        self.mop_controller = None
 
-        self.root.after(1, self.root.focus_force())
-
-        self.launcher.start()
+        self.__initialize_console_text()
         self.root.mainloop()
 
     def restart(self):
@@ -163,7 +157,7 @@ class TekkenBotPrimeController():
                 'save_to_file': self.save_to_file,
                 'write_mode': 'w'
             },
-            self.overlay_manager.write_to_overlay
+            callback=self.original_stdout.write
         )
         sys.stderr = StdStreamRedirector(
             widget,
@@ -176,9 +170,19 @@ class TekkenBotPrimeController():
             callback=self.original_stderr.write
         )
 
-    @staticmethod
-    def __initialize_console_text():
-        sys.stdout.write_file('data/readme.txt')
+    def __initialize_console_text(self):
+        sys.stdout.write_file(
+            'data/readme.txt',
+            callback=self.__post_console_initialization
+        )
+
+    def __post_console_initialization(self):
+        self.launcher = Launcher(self.root, extended_print=False)
+        self.__intialize_overlay_settings()
+        self.__initialize_memory_override_panel()
+
+        self.root.after(1, self.root.focus_force())
+        self.launcher.start()
 
     def __initialize_memory_override_panel(self):
         self.mop_controller = MemoryOverwritePanelController(

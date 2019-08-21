@@ -73,7 +73,7 @@ class StdStreamRedirector():
             else:
                 self.__sync_write(*args)
 
-    def write_file(self, file_path):
+    def write_file(self, file_path, callback=None):
         def _read_file(file_path):
             with open(file_path, 'r') as r_file:
                 for line in r_file:
@@ -82,7 +82,7 @@ class StdStreamRedirector():
             self.queue.put(False)
 
         self.__run_queue_checker = True
-        self.__update_widget()
+        self.__update_widget(callback=callback)
         threading.Thread(target=_read_file, args=(file_path,)).start()
 
     def flush(self):
@@ -146,7 +146,7 @@ class StdStreamRedirector():
         if self.callback:
             self.callback(message)
 
-    def __update_widget(self):
+    def __update_widget(self, callback=None):
         try:
             message = self.queue.get_nowait()
             if isinstance(message, str):
@@ -157,7 +157,12 @@ class StdStreamRedirector():
         except queue.Empty:
             pass
         if self.__run_queue_checker:
-            self.widget.after(self.delay, self.__update_widget)
+            self.widget.after(
+                self.delay,
+                lambda: self.__update_widget(callback=callback)
+            )
+        elif callback:
+            callback()
 
     def __update_delay(self):
         if self.last_executed_time is None:
