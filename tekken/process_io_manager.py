@@ -67,6 +67,7 @@ class ProcessIOManager():
             pid
         )
         if self.is_pid_valid():
+            sys.stdout.write('Tekken PID acquired: {}'.format(pid))
             self.__register_for_tekken_terminated_state(pid)
             module_address = ProcessIOManager.__get_process_module_address(pid)
             self.process_reader.module_address = module_address
@@ -180,4 +181,7 @@ class ProcessIOManager():
         sys.stdout.write(
             '{} process terminated'.format(ProcessIOManager.PROCESS_NAME)
         )
-        kernel32.unregister_wait(self.__wait_handle)
+        try:
+            kernel32.unregister_wait(self.__wait_handle)
+        except OSError:
+            pass
