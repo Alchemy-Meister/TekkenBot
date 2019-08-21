@@ -114,6 +114,8 @@ class CommandInputOverlay(Overlay):
 
         self._set_dimensions(self.canvas_width, self.canvas_height)
 
+        self.overlay.minsize(width=240, height=12)
+
     def __initialize_frame_indexes(self, scale=(1, 1,), expand=False):
         if expand:
             self.step_length = (
@@ -129,7 +131,22 @@ class CommandInputOverlay(Overlay):
                 * scale[0]
             )
 
-        self.font, _, height = self.get_fitting_font(scale)
+        # self.font, _, height = self.get_fitting_font(scale)
+        self.font, _, height = Overlay._get_fitting_font(
+            scale,
+            CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG['font'],
+            str(self.canvas_step_number),
+            self.step_length
+            - 2
+            * CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
+                'frame_index_min_margin'
+            ]
+            * scale[0],
+            CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
+                'font_pixel_height'
+            ]
+            * scale[1]
+        )
 
         scaled_frame_index_y = (
             CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
@@ -175,13 +192,21 @@ class CommandInputOverlay(Overlay):
             self.button_image_coordinate_y0
             + (button_image_height / 2)
         )
+
+        scaled_frame_rect_min_margin = (
+            CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
+                'frame_rect_min_margin'
+            ]
+            * scale[0]
+        )
+        if scaled_frame_rect_min_margin < 1:
+            scaled_frame_rect_min_margin = 1
+
         self.cancel_rect_coordinate_y1 = (
             self.cancel_rect_coordinate_y0
             + self.step_length
-            - CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                'frame_rect_min_margin'
-            ] * 2
-            * scale[0]
+            - 2
+            * scaled_frame_rect_min_margin
         )
 
         self.cancel_rect_size = (
@@ -215,12 +240,6 @@ class CommandInputOverlay(Overlay):
             width=self.canvas_width, height=self.canvas_height
         )
 
-    @staticmethod
-    def __get_font_text_dimensions(font, text):
-        width = font.measure(text)
-        height = font.metrics('linespace')
-        return width, height
-
     def __get_canvas_item_dimensions(self, item_id):
         bounds = self.command_input_canvas.bbox(item_id)
         width = bounds[2] - bounds[0]
@@ -252,6 +271,8 @@ class CommandInputOverlay(Overlay):
         self.__initialize_frame_lines()
         self.__initialize_canvas()
         self.__paint_input(restore=True)
+
+        return self.canvas_width, self.canvas_height
 
     def _update_dimensions(self):
         self.coordinates['width'] = int(self.canvas_width)
@@ -330,34 +351,29 @@ class CommandInputOverlay(Overlay):
         image_dict = svg_image_dict.copy()
         for key, svg_drawing in image_dict.items():
             if svg_drawing:
+                scaled_frame_min_margin = (
+                    CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
+                        'frame_image_min_margin'
+                    ]
+                    * scale[0]
+                )
+                if scaled_frame_min_margin < 1:
+                    scaled_frame_min_margin = 1
+
                 svg_width_scale = (
                     (
                         self.step_length
                         - 2
-                        * CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                            'frame_image_min_margin'
-                        ]
-                        * scale[0]
-                    )
-                    / svg_drawing.width
-                )
-                svg_height_scale = (
-                    (
-                        self.step_length
-                        - 2
-                        * CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                            'frame_image_min_margin'
-                        ]
-                        * scale[0]
+                        * scaled_frame_min_margin
                     )
                     / svg_drawing.width
                 )
                 svg_drawing.scale(
-                    svg_width_scale, svg_height_scale
+                    svg_width_scale, svg_width_scale
                 )
 
                 svg_drawing.width *= svg_width_scale
-                svg_drawing.height *= svg_height_scale
+                svg_drawing.height *= svg_width_scale
 
                 image_stream = io.BytesIO()
                 renderPM.drawToFile(
@@ -400,45 +416,40 @@ class CommandInputOverlay(Overlay):
                     index
                     * self.step_length
                     + index
-                    + (self.step_length / 2)
                 )
             )
-
             direction_code = InputDirection(direction_code)
             if(
                     InputDirection.NEUTRAL
                     != direction_code
                     != InputDirection.NULL
             ):
+                image = self.arrow_images[
+                    direction_code.printable_name['symbol']
+                ]
                 self.command_input_canvas.create_image(
-                    coordinate_x,
+                    coordinate_x
+                    + self.step_length / 2,
                     self.arrow_image_coordinate_y0,
-                    image=self.arrow_images[
-                        direction_code.printable_name['symbol']
-                    ],
+                    image=image,
                     tag=self.input_tag
                 )
 
             input_code = InputAttack(input_code)
             if input_code != InputAttack.NULL:
+                image = self.button_images[
+                    input_code.printable_name
+                ]
                 self.command_input_canvas.create_image(
-                    coordinate_x,
+                    coordinate_x
+                    + self.step_length / 2,
                     self.button_image_coordinate_y0,
-                    image=self.button_images[
-                        input_code.printable_name
-                    ],
+                    image=image,
                     tag=self.input_tag
                 )
 
-            coordinate_x = (
-                (
-                    index
-                    * self.step_length
-                    + index
-                    + (
-                        self.step_length / 2 - self.cancel_rect_size / 2
-                    )
-                )
+            coordinate_x += (
+                (self.step_length / 2 - self.cancel_rect_size / 2)
                 * self._tekken_scale[0]
             )
             rect_coordinate_x1 = coordinate_x + self.cancel_rect_size
@@ -450,58 +461,3 @@ class CommandInputOverlay(Overlay):
                 fill=frame_cancels[index],
                 tag=self.input_tag
             )
-
-    def get_fitting_font(self, scale):
-        def get_font_and_measures(size):
-            font = tkfont.Font(
-                family=(
-                    CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                        'font'
-                    ][0]
-                ),
-                size=size
-            )
-            width, height = CommandInputOverlay.__get_font_text_dimensions(
-                font, str(self.canvas_step_number)
-            )
-            return font, width, height
-
-        size = math.ceil(
-            CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG['font'][1]
-            * scale[1]
-        )
-        if not size:
-            sign = (
-                CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG['font'][1]
-                and (1, -1)[size < 0]
-            )
-            size = sign
-        else:
-            sign = (1, -1)[size < 0]
-
-        font, width, height = get_font_and_measures(size)
-        max_font_width = (
-            self.step_length
-            - 2
-            * CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                'frame_index_min_margin'
-            ]
-            * scale[0]
-        )
-        max_font_height = (
-            CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                'font_pixel_height'
-            ]
-            * scale[1]
-        )
-        while(
-                (
-                    width > max_font_width
-                    or height > max_font_height
-                )
-                and abs(size) > abs(sign)
-        ):
-            font, width, height = get_font_and_measures(size)
-            size = sign * (abs(size) - 1)
-
-        return font, width, height

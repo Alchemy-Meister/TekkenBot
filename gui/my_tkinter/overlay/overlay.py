@@ -29,11 +29,11 @@
 
 """
 """
-import sys
 from abc import ABC, abstractmethod
 import math
 import platform
 import tkinter as tk
+import tkinter.font as tkfont
 
 from constants.overlay import OverlayPosition
 from patterns.observer import Subscriber
@@ -117,7 +117,9 @@ class Overlay(ABC):
             )
 
         try:
+            self.is_resizing = True
             self.__update_coordinates(force_update=True)
+            self.is_resizing = False
         except AttributeError:
             pass
 
@@ -166,8 +168,6 @@ class Overlay(ABC):
                 and not self.skip_resize_event
                 and not self.is_resizing
         ):
-            # sys.stdout.write('previous: {}'.format(self.previous_event))
-            # sys.stdout.write('event: {}'.format(event))
             if(
                     (
                         self.previous_event.width != event.width
@@ -186,12 +186,13 @@ class Overlay(ABC):
                     [self.coordinates['width'], self.coordinates['height']]
                 )
                 self.is_resizing = True
-                self._resize_overlay_widgets(overlay_scale=overlay_scale)
-                # self.overlay.geometry('{}x{}'.format(*self.window_dimensions))
-                # self.overlay.update_idletasks()
+                width, height = self._resize_overlay_widgets(
+                    overlay_scale=overlay_scale
+                )
+                self.window_dimensions[0] = width
+                self.window_dimensions[1] = height
                 self.is_resizing = False
                 if self.resize_start:
-                    sys.stdout.write('callback in')
                     self.resize_start = False
                     self.overlay.after(100, self.force_resize_proportion)
 
@@ -208,8 +209,6 @@ class Overlay(ABC):
                 )
             )
             self.resize_start = True
-            sys.stdout.write(self.window_dimensions)
-            sys.stdout.write('callback out')
             self.skip_resize_event = True
         else:
             self.overlay.after(100, self.force_resize_proportion)
@@ -305,3 +304,39 @@ class Overlay(ABC):
             child.configure(cursor=cursor)
             if isinstance(child, tk.Frame):
                 Overlay.__set_cursor_to_all_widgets(child, cursor)
+
+    @staticmethod
+    def _get_font_text_dimensions(font, text):
+        width = font.measure(text)
+        height = font.metrics('linespace')
+        return width, height
+
+    @staticmethod
+    def _get_fitting_font(scale, font, text, max_font_width, max_font_height):
+        def get_font_and_measures(font, size):
+            font = tkfont.Font(
+                family=font[0],
+                size=size
+            )
+            width, height = Overlay._get_font_text_dimensions(
+                font, text
+            )
+            return font, width, height
+
+        size = math.ceil(font[1] * scale[0])
+        sign = (1, -1)[size < 0]
+        if not size:
+            size = sign
+
+        fitting_font, width, height = get_font_and_measures(font, size)
+        while(
+                (
+                    width > max_font_width
+                    or height > max_font_height
+                )
+                and abs(size) > abs(sign)
+        ):
+            fitting_font, width, height = get_font_and_measures(font, size)
+            size = sign * (abs(size) - 1)
+
+        return fitting_font, width, height

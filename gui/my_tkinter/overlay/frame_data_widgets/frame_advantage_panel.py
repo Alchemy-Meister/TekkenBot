@@ -104,9 +104,8 @@ class FrameAdvantagePanel(tk.Frame):
         self.__configure_style(fill=text_color)
 
     def resize_to_scale(self, scale):
-        self.left_padding.configure(
-            width=int(FrameAdvantagePanel.__PADDING_WIDTH * scale[1])
-        )
+        padding_width = int(FrameAdvantagePanel.__PADDING_WIDTH * scale[0])
+        self.left_padding.configure(width=padding_width)
 
         canvas_width = int(
             FrameAdvantagePanel.__CANVAS_CONFIG['width'] * scale[0]
@@ -136,9 +135,9 @@ class FrameAdvantagePanel(tk.Frame):
             int(FrameAdvantagePanel.__LIVE_RECOVERY_CONFIG['x'] * scale[0]),
             int(FrameAdvantagePanel.__LIVE_RECOVERY_CONFIG['y'] * scale[1])
         )
-        self.right_padding.configure(
-            width=int(FrameAdvantagePanel.__PADDING_WIDTH * scale[0])
-        )
+        self.right_padding.configure(width=padding_width)
+
+        return canvas_width + 2 * padding_width, canvas_height
 
     def __center_frame_advantage(self, scale=(1, 1,)):
         self.frame_advantage_canvas.coords(

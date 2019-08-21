@@ -50,6 +50,8 @@ class OverlayManager(metaclass=Singleton):
         self.overlay_factory = OverlayFactory()
         self.overlays = dict()
 
+        sys.stdout.callback = self.write_to_overlay
+
         self.current_theme = None
 
         self.current_overlay: Overlay

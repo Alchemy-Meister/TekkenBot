@@ -31,6 +31,7 @@
 """
 import re
 import tkinter as tk
+import tkinter.font as tkfont
 
 from constants.printable_enum import PrintableEnum, PrintableValue
 from constants.battle import FrameAdvantage
@@ -118,9 +119,14 @@ class FrameDataOverlay(WritableOverlay):
             self.overlay, self.transparent_color
         )
 
-        self.textbox = AttackTextbox(self.overlay, self.max_attack_log_length)
-        self.textbox.configure(background='gray10')
-        self.textbox.configure(foreground='lawn green')
+        self.initial_textbox_font = ['Consolas', -16]
+        self.textbox = AttackTextbox(
+            self.overlay,
+            self.max_attack_log_length,
+            font=self.initial_textbox_font,
+            background='gray10',
+            foreground='lawn green'
+        )
 
         all_title_columns = (
             [column.printable_name for column in FrameDataOverlay.Columns]
@@ -142,6 +148,14 @@ class FrameDataOverlay(WritableOverlay):
 
         self._set_dimensions(
             self.overlay.winfo_width(), self.overlay.winfo_height()
+        )
+
+        self.initial_font_size = WritableOverlay._get_font_text_dimensions(
+            tkfont.Font(
+                family=self.initial_textbox_font[0],
+                size=self.initial_textbox_font[1]
+            ),
+            self.__generate_visible_column_string(self.attack_log[0])
         )
 
     def set_theme(self, theme_dict):
@@ -250,10 +264,10 @@ class FrameDataOverlay(WritableOverlay):
             display_columns.append(''.join(['|', column]))
         return  ''.join([*display_columns, '|'])
 
-    def __generate_visible_column_string(self, all_columns):
+    def __generate_visible_column_string(self, column_values):
         visible_columns = [
             (index, column)
-            for index, column in enumerate(all_columns)
+            for index, column in enumerate(column_values)
             if self.display_columns[index]
         ]
         return FrameDataOverlay.__generate_column_string(*visible_columns)
@@ -294,10 +308,25 @@ class FrameDataOverlay(WritableOverlay):
             ]
         else:
             scale = self._tekken_scale
-        self.p1_frame_panel.resize_to_scale(scale)
-        self.textbox.resize_to_scale(scale)
+
+        scaled_frame_panel_width, _ = self.p1_frame_panel.resize_to_scale(scale)
         self.p2_frame_panel.resize_to_scale(scale)
-        self._update_dimensions()
+    
+        scaled_textbot_font, font_width, _ = WritableOverlay._get_fitting_font(
+            scale,
+            self.initial_textbox_font,
+            self.__generate_visible_column_string(self.attack_log[0]),
+            self.initial_font_size[0] * scale[0],
+            self.initial_font_size[1] * scale[1]
+            )
+
+        self.textbox.configure(font=scaled_textbot_font)
+        self.overlay.update_idletasks()
+
+        return (
+            scaled_frame_panel_width * 2 + font_width,
+            self.textbox.winfo_height()
+        )
 
     def _update_dimensions(self):
         self.overlay.update_idletasks()
