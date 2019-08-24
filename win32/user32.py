@@ -723,6 +723,30 @@ else:
             h_wnd, n_index
         )
 
+def is_iconic(h_wnd):
+    """
+    BOOL IsIconic(
+        HWND hWnd
+    );
+    """
+    _is_iconic = WINDLL.user32.IsIconic
+    _is_iconic.argtypes = [HWND]
+    _is_iconic.restype = bool
+
+    return _is_iconic(h_wnd)
+
+def is_window_visible(h_wnd):
+    """
+    BOOL IsWindowVisible(
+        HWND hWnd
+    );
+    """
+    _is_window_visible = WINDLL.user32.IsWindowVisible
+    _is_window_visible.argtypes = [HWND]
+    _is_window_visible.restype = bool
+
+    return _is_window_visible(h_wnd)
+
 def client_to_screen(h_wnd, lp_point):
     """
     BOOL ClientToScreen(
