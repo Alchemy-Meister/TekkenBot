@@ -282,9 +282,13 @@ class TekkenGameReader(ProcessIO):
             )
             try:
                 if not self.window_handler:
-                    self.window_handler = user32.find_window(
-                        lp_class_name='UnrealWindow', lp_window_name='TEKKEN 7 '
-                    )
+                    try:
+                        self.window_handler = user32.find_window(
+                            lp_class_name='UnrealWindow',
+                            lp_window_name='TEKKEN 7 '
+                        )
+                    except OSError:
+                        pass
                 else:
                     game_state[0] = self.get_graphic_settings(process_handle)
 
