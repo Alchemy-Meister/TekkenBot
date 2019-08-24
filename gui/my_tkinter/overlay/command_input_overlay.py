@@ -32,7 +32,6 @@
 import math
 import io
 import tkinter as tk
-import tkinter.font as tkfont
 
 from PIL import Image, ImageTk
 from svglib.svglib import svg2rlg

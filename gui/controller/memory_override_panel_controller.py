@@ -29,11 +29,9 @@
 
 """
 """
-import sys
 import tkinter as tk
 from gui.model import RoundModel, StageModel, TimerModel
 from gui.view import MemoryOverwritePanel
-# from patterns.observer import Subscriber
 from tekken import Launcher
 
 from .player_override_panel_controller import (
@@ -55,11 +53,6 @@ class MemoryOverwritePanelController():
         self.__initialize_player_panels()
         self.__initialize_round_number()
         self.__initialize_time_limit()
-
-        # self.__enable_all_widgets(False)
-
-        # subscriber = Subscriber(self.__initialize_tekken_writter)
-        # launcher.publisher.register(Launcher.Event.INITIALIZED, subscriber)
 
     def checkbox_stage_overwrite_change(self, enable):
         self.tekken_writer.enable_stage_overwrite = enable
@@ -146,5 +139,4 @@ class MemoryOverwritePanelController():
         enable_all_widgets(self.view, state)
 
     def __initialize_tekken_writter(self):
-        # self.tekken_writer = self.launcher.game_state.get_writer()
         self.__enable_all_widgets(True)
