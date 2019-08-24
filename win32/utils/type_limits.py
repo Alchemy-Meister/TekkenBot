@@ -27,35 +27,52 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from collections import OrderedDict
+from itertools import chain
+
 from win32.defines import (
     BYTE, DOUBLE, DWORD, FLOAT, LONG, LONGLONG, QWORD, SBYTE, SHORT, SIZE_OF,
     WORD
 )
 
-__C_UNSIGNED_INT_TYPES_FORMAT = (
-    (BYTE, '<B'), (WORD, '<H'), (DWORD, '<I'), (QWORD, '<Q')
+C_UNSIGNED_INT_TYPES_FORMAT = OrderedDict(
+    [
+        (BYTE, '<B'), (WORD, '<H'), (DWORD, '<I'), (QWORD, '<Q')
+    ]
 )
-__C_SIGNED_INT_TYPES_FORMAT = (
-    (SBYTE, '<b'), (SHORT, '<h'), (LONG, '<i'), (LONGLONG, '<q')
+C_SIGNED_INT_TYPES_FORMAT = OrderedDict(
+    [
+        (SBYTE, '<b'), (SHORT, '<h'), (LONG, '<i'), (LONGLONG, '<q')
+    ]
 )
-__C_FLOAT_TYPES_FORMAT = (
-    (FLOAT, '<f'), (DOUBLE, '<d')
+C_FLOAT_TYPES_FORMAT = OrderedDict(
+    [
+        (FLOAT, '<f'), (DOUBLE, '<d')
+    ]
+)
+
+C_ALL_TYPES_FORMAT = OrderedDict(
+    chain(
+        C_UNSIGNED_INT_TYPES_FORMAT.items(),
+        C_SIGNED_INT_TYPES_FORMAT.items(),
+        C_FLOAT_TYPES_FORMAT.items()
+    )
 )
 
 def __init_limits():
     signed_int_limits = [
         (c_type, struct_format, __limits(c_type))
-        for c_type, struct_format in __C_SIGNED_INT_TYPES_FORMAT
+        for c_type, struct_format in C_SIGNED_INT_TYPES_FORMAT.items()
     ]
 
     unsigned_int_limits = [
         (c_type, struct_format, __limits(c_type))
-        for c_type, struct_format in __C_UNSIGNED_INT_TYPES_FORMAT
+        for c_type, struct_format in C_UNSIGNED_INT_TYPES_FORMAT.items()
     ]
 
     float_limits = [
         (c_type, struct_format, __limits(c_type))
-        for c_type, struct_format in __C_FLOAT_TYPES_FORMAT
+        for c_type, struct_format in C_FLOAT_TYPES_FORMAT.items()
     ]
 
     return (signed_int_limits, unsigned_int_limits, float_limits)
