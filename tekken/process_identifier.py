@@ -86,9 +86,9 @@ class ProcessIO():
                 address += offset
         return address
 
-    def _reacquire_everything(self):
+    def reacquire_everything(self):
         """
         """
         self.pid = -1
         self.reacquire_module_address = True
-        self.module_address = 0
+        self.module_address = None

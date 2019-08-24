@@ -40,6 +40,7 @@ import win32.kernel32 as kernel32
 import win32.user32 as user32
 import win32.utils.actual_rect as actual_rect
 
+from .structures.graphic_settings import GraphicSettingsStruct, GraphicSettings
 from .bot_snapshot import BotSnapshot
 from .game_snapshot import GameSnapshot
 from .process_identifier import ProcessIO
@@ -71,12 +72,15 @@ class TekkenGameReader(ProcessIO):
 
         self.is_in_battle = False
 
+        self.window_handler = 0
+
     def reacquire_everything(self):
         """
         """
-        ProcessIO._reacquire_everything(self)
+        ProcessIO.reacquire_everything(self)
         self.reacquire_game_state = True
         self.reacquire_names = True
+        self.window_handler = 0
 
     def get_value_from_address(
             self, process_handle, address, is_float=False,
@@ -160,6 +164,33 @@ class TekkenGameReader(ProcessIO):
                     process_handle, value + offset, is_string=is_string)
         return value
 
+    def get_graphic_settings(self, process_handle):
+        graphic_settings = None
+        try:
+            graphic_setting_address = (
+                self.module_address
+                + self.config['GraphicSettingsAddress']['graphic_settings']
+            )
+            graphic_settings = GraphicSettings(
+                GraphicSettingsStruct(
+                    self.get_block_data(
+                        process_handle,
+                        graphic_setting_address,
+                        SIZE_OF(GraphicSettingsStruct)
+                    )
+                )
+            )
+            graphic_settings.position = self.get_tekken_window_position()
+        except OSError:
+            pass
+        return graphic_settings
+
+    def get_tekken_window_position(self):
+        tekken_rect = user32.get_window_placement(
+            self.window_handler
+        ).rc_normal_position
+        return (tekken_rect.left, tekken_rect.top)
+
     def is_tekken_foreground_wnd(self):
         """
         """
@@ -172,15 +203,33 @@ class TekkenGameReader(ProcessIO):
             # such as when a window is losing activation.
             return False
 
-    def is_tekken_fullscreen(self, h_wnd):
+    def is_tekken_fullscreen(self):
         monitor_info = user32.get_monitor_info(
-            user32.monitor_from_window(h_wnd, user32.MONITOR_DEFAULTTOPRIMARY)
+            user32.monitor_from_window(
+                self.window_handler, user32.MONITOR_DEFAULTTOPRIMARY
+            )
         )
-        return user32.get_window_rect(h_wnd) == monitor_info.rc_monitor
+        return (
+            user32.get_window_rect(self.window_handler)
+            == monitor_info.rc_monitor
+        )
 
     def is_tekken_borderless(self, h_wnd):
         style = user32.get_window_long_ptr(h_wnd, user32.GWL_STYLE)
         return not bool(style & user32.WS_CAPTION)
+
+    def is_tekken_minimized(self):
+        window_handler = user32.find_window(
+            lp_class_name='UnrealWindow', lp_window_name='TEKKEN 7 '
+        )
+        return user32.is_iconic(window_handler)
+
+    def get_titlebar_height(self):
+        return (
+            user32.get_system_metrics(user32.SM_CYFRAME)
+            + user32.get_system_metrics(user32.SM_CYCAPTION)
+            + user32.get_system_metrics(user32.SM_CXPADDEDBORDER)
+        )
 
     def adapt_window_rect_to_title_bar(self, rect):
         rect.top += (
@@ -204,8 +253,7 @@ class TekkenGameReader(ProcessIO):
                     lp_class_name='UnrealWindow', lp_window_name='TEKKEN 7 '
                 )
             if window_handler:
-                # self.is_tekken_fullscreen(window_handler)
-                if not self.is_tekken_fullscreen(window_handler):
+                if not self.is_tekken_fullscreen():
                     # Unstyled window + titlebar rect
                     window_rect = actual_rect.get_actual_rect(window_handler)
                     self.adapt_window_rect_to_title_bar(window_rect)
@@ -228,11 +276,18 @@ class TekkenGameReader(ProcessIO):
         """
         """
         if self.is_pid_valid() and self.module_address is not None:
-            game_snapshot = None
+            game_state = [None, None]
             process_handle = kernel32.open_process(
                 kernel32.PROCESS_VM_READ, False, self.pid
             )
             try:
+                if not self.window_handler:
+                    self.window_handler = user32.find_window(
+                        lp_class_name='UnrealWindow', lp_window_name='TEKKEN 7 '
+                    )
+                else:
+                    game_state[0] = self.get_graphic_settings(process_handle)
+
                 player_data_base_address = self.get_value_from_address(
                     process_handle,
                     self.module_address + self.player_data_pointer_offset,
@@ -247,7 +302,6 @@ class TekkenGameReader(ProcessIO):
                     self.reacquire_game_state = True
                     self.reacquire_names = True
                 else:
-
                     last_eight_frames = []
                     second_address_base = self.get_value_from_address(
                         process_handle, player_data_base_address, is_64bit=True)
@@ -372,17 +426,17 @@ class TekkenGameReader(ProcessIO):
 
                             self.reacquire_names = False
 
-                    game_snapshot = GameSnapshot(
+                    game_state[1] = GameSnapshot(
                         p1_bot, p2_bot, best_frame_count, timer_in_frames,
                         bot_facing, self.opponent_name,
                         self.is_player_player_one
                     )
-            except OSError:
+            except (OSError, struct.error, TypeError):
                 self.reacquire_everything()
-                raise
+                raise OSError
             finally:
                 kernel32.close_handle(process_handle)
-            return game_snapshot
+            return game_state
         raise OSError('invalid PID or module address')
 
     def initialize_bots(self, player_data_frame, bot_facing, best_frame_count):

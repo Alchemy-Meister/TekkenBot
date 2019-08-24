@@ -91,7 +91,7 @@ class ProcessIOManager():
             )
         except OSError:
             self.__process_info_update_required = True
-            return None
+            return [None, None]
 
     def read_update(self, rollback_frame=0):
         try:
@@ -128,8 +128,6 @@ class ProcessIOManager():
             self.__print_pid_message = True
             sys.stdout.write('Tekken PID acquired: {}'.format(pid))
 
-            self.__register_for_tekken_terminated_state(pid)
-
             module_address = ProcessIOManager.__get_process_module_address(pid)
             self.process_reader.module_address = module_address
             self.process_writer.module_address = module_address
@@ -156,6 +154,7 @@ class ProcessIOManager():
                 sys.stdout.write(
                     'Found {}'.format(ProcessIOManager.PROCESS_NAME)
                 )
+                self.__register_for_tekken_terminated_state(pid)
                 self.process_writer.update_overwriters()
         else:
             if self.__print_pid_message:
@@ -174,10 +173,8 @@ class ProcessIOManager():
         )
 
     def __tekken_process_terminated(self, _lp_paramenter, _time_or_wait_fired):
-        self.process_reader.pid = -1
-        self.process_writer.pid = -1
-        self.process_reader.module_address = None
-        self.process_writer.module_address = None
+        self.process_writer.reacquire_everything()
+        self.process_reader.reacquire_everything()
         sys.stdout.write(
             '{} process terminated'.format(ProcessIOManager.PROCESS_NAME)
         )

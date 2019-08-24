@@ -27,5 +27,38 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .game_state import GameStateEvent
-from .graphic_settings_change import GraphicSettingsChangeEvent
+"""
+"""
+import struct
+from win32.defines import SIZE_OF, Structure, DWORD
+from win32.utils import type_limits
+
+class GraphicSettingsStruct(Structure):
+    """
+    """
+    _fields_ = [
+        ('horizontal_resolution', DWORD),
+        ('vertial_resolution', DWORD),
+        ('screen_mode', DWORD),
+    ]
+
+    def __init__(self, block_bytes):
+        super().__init__()
+        offset = 0
+        for field in self._fields_:
+            size = offset + SIZE_OF(field[1])
+            t_bytes = block_bytes[offset:size]
+            struct_format = type_limits.C_ALL_TYPES_FORMAT[field[1]]
+            setattr(
+                self,
+                field[0],
+                struct.unpack(struct_format, t_bytes)[0]
+            )
+            offset = size
+
+    def __repr__(self):
+        return 'resolution: ({}, {}), screen_mode: {}'.format(
+            self.horizontal_resolution,
+            self.vertial_resolution,
+            self.screen_mode
+        )

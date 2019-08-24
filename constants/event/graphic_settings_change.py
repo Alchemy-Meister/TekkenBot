@@ -27,5 +27,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .game_state import GameStateEvent
-from .graphic_settings_change import GraphicSettingsChangeEvent
+import enum
+
+class GraphicSettingsChangeEvent(enum.IntEnum):
+    """
+    """
+    RESOLUTION = enum.auto()
+    SCREEN_MODE = enum.auto()
+    POSITION = enum.auto()

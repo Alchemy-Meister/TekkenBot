@@ -90,7 +90,7 @@ class TekkenGameWritter(ProcessIO):
                 try:
                     overwriter.update()
                 except OSError:
-                    self._reacquire_everything()
+                    self.reacquire_everything()
                     raise
         else:
             raise OSError('invalid PID or module address')

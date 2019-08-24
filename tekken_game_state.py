@@ -26,6 +26,11 @@ import MovelistParser
 
 from constants.event import GameStateEvent
 from constants.input import InputAttack, InputDirection
+from constants.event import GraphicSettingsChangeEvent
+from constants.graphic_settings import ScreenMode
+
+from patterns.observer import Publisher
+
 import win32.kernel32 as kernel32
 from tekken.process_io_manager import ProcessIOManager
 
@@ -36,9 +41,12 @@ class TekkenGameState:
         self.game_io_manager = ProcessIOManager()
         self.duplicate_frame_obtained = 0
         self.state_log = []
+        self.graphic_settings = None
         self.mirrored_state_log = []
         self.is_mirrored = False
         self.futurestate_log = None
+
+        self.graphic_settings_publisher = Publisher(GraphicSettingsChangeEvent)
 
     def get_reader(self):
         return self.game_io_manager.process_reader
@@ -54,19 +62,23 @@ class TekkenGameState:
         """
         game_state = self.game_io_manager.update(buffer)
 
-        if game_state is not None:
+        game_graphic_settings = game_state[0]
+        game_battle_state = game_state[1]
+
+        if game_battle_state is not None:
             # we don't run perfectly in sync, if we get back the same frame,
             # throw it away
             if(
                     not self.state_log
-                    or game_state.frame_count != self.state_log[-1].frame_count
+                    or game_battle_state.frame_count
+                    != self.state_log[-1].frame_count
             ):
                 self.duplicate_frame_obtained = 0
 
                 frames_lost = 0
                 if self.state_log:
                     frames_lost = (
-                        game_state.frame_count
+                        game_battle_state.frame_count
                         - self.state_log[-1].frame_count - 1
                     )
 
@@ -74,13 +86,23 @@ class TekkenGameState:
                     dropped_game_state = self.game_io_manager.read_update(
                         min(7, frames_lost + buffer) - i
                     )
-                    if dropped_game_state is not None:
-                        self.append_game_data(dropped_game_state)
+                    dropped_game_graphic_settings = dropped_game_state[0]
+                    dropped_game_battle_state = dropped_game_state[1]
 
-                self.append_game_data(game_state)
+                    if dropped_game_graphic_settings is not None:
+                        self.compare_graphic_settings(
+                            dropped_game_graphic_settings
+                        )
+
+                    if dropped_game_battle_state is not None:
+                        self.append_game_data(dropped_game_battle_state)
+
+                self.append_game_data(game_battle_state)
                 return True
-            if game_state.frame_count == self.state_log[-1].frame_count:
+            if game_battle_state.frame_count == self.state_log[-1].frame_count:
                 self.duplicate_frame_obtained += 1
+        if game_graphic_settings is not None:
+            self.compare_graphic_settings(game_graphic_settings)
         return False
 
     def append_game_data(self, game_data):
@@ -94,6 +116,29 @@ class TekkenGameState:
         if len(self.state_log) > 300:
             self.state_log.pop(0)
             self.mirrored_state_log.pop(0)
+
+    def compare_graphic_settings(self, graphic_settings):
+        graphic_settings_changed = False
+        if not graphic_settings.equal_screen_mode(self.graphic_settings):
+            graphic_settings_changed = True
+            self.graphic_settings_publisher.dispatch(
+                GraphicSettingsChangeEvent.SCREEN_MODE,
+                graphic_settings.screen_mode
+            )
+        if not graphic_settings.equal_resolution(self.graphic_settings):
+            graphic_settings_changed = True
+            self.graphic_settings_publisher.dispatch(
+                GraphicSettingsChangeEvent.RESOLUTION,
+                graphic_settings.resolution
+            )
+        if not graphic_settings.equal_position(self.graphic_settings):
+            graphic_settings_changed = True
+            self.graphic_settings_publisher.dispatch(
+                GraphicSettingsChangeEvent.POSITION,
+                graphic_settings.position
+            )
+        if graphic_settings_changed:
+            self.graphic_settings = graphic_settings
 
     def flip_mirror(self):
         temp_log = self.mirrored_state_log

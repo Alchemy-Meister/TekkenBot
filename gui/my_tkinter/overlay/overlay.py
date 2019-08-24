@@ -38,7 +38,6 @@ import tkinter.font as tkfont
 from constants.overlay import OverlayPosition
 from patterns.observer import Subscriber
 from tekken import Launcher
-from win32.user32 import Rect
 from win32.utils import mouse
 
 class Overlay(ABC):
@@ -50,7 +49,6 @@ class Overlay(ABC):
 
     def __init__(self, launcher: Launcher):
         self.launcher = launcher
-        self._tekken_scale = None
         self.coordinates = {
             'x': 0, 'y': 0, 'width': 0, 'height': 0
         }
@@ -70,6 +68,11 @@ class Overlay(ABC):
 
         self.transparent_color = 'white'
 
+        self.tekken_screen_mode = None
+        self.tekken_resolution = None
+        self.tekken_position = None
+
+        self._tekken_scale = None
         self.__tekken_rect = None
         self.__position = None
 
@@ -83,6 +86,7 @@ class Overlay(ABC):
         self.overlay.bind('<Configure>', self._on_resize_window)
 
         subscriber = Subscriber()
+
         launcher.publisher.register(
             Launcher.Event.UPDATED, subscriber, self.__update
         )
@@ -96,6 +100,29 @@ class Overlay(ABC):
     def off(self):
         self.enabled = False
         self.hide()
+
+    def set_tekken_screen_mode(self, screen_mode):
+        self.tekken_screen_mode = screen_mode
+
+    def set_tekken_resolution(self, resolution):
+        self.tekken_resolution = resolution
+        self._tekken_scale = Overlay.__calculate_scale(
+            resolution,
+            [Overlay.WIDTH, Overlay.HEIGHT]
+        )
+        self.is_resizing = True
+        self._resize_overlay_widgets()
+        self.is_resizing = False
+        self._update_dimensions()
+        self.overlay.geometry(
+            '{}x{}'.format(
+                self.coordinates['width'], self.coordinates['height']
+            )
+        )
+
+    def set_tekken_position(self, position):
+        self.tekken_position = position
+        self.__update_position(position)
 
     def set_position(self, position):
         self.__position = position
@@ -118,7 +145,10 @@ class Overlay(ABC):
 
         try:
             self.is_resizing = True
-            self.__update_coordinates(force_update=True)
+            try:
+                self.__update_position(self.tekken_position)
+            except TypeError:
+                pass
             self.is_resizing = False
         except AttributeError:
             pass
@@ -140,8 +170,14 @@ class Overlay(ABC):
 
     def __update(self, is_state_updated):
         if self.enabled:
-            success = self.__update_coordinates()
-            if self.coordinates_initialized and success:
+            game_reader = self.launcher.game_state.get_reader()
+            if(
+                    self.coordinates_initialized
+                    and (
+                        self.is_draggable
+                        or game_reader.is_tekken_foreground_wnd()
+                    )
+            ):
                 previous_visible_state = self.visible
                 self._update_visible_state()
                 if(
@@ -217,63 +253,38 @@ class Overlay(ABC):
     def _resize_overlay_widgets(self, overlay_scale=None):
         pass
 
-    def __update_coordinates(self, force_update=False):
-        tekken_rect = (
-            self.launcher.game_state.get_reader().get_tekken_window_rect(
-                foreground_only=(
-                    self.dimensions_initialized
-                    and not self.is_draggable
-                    and not force_update
+    def __update_position(self, tekken_position):
+        if not self.is_draggable or not self.coordinates_initialized:
+            self.coordinates['x'] = math.ceil(
+                tekken_position[0]
+                + self.tekken_resolution[0]
+                / 2
+                - self.coordinates['width']
+                / 2
+            )
+            game_reader = self.launcher.game_state.get_reader()
+            # Prevents misbehavior with using borderless-gaming like software.
+            if not game_reader.is_tekken_fullscreen():
+                tekken_position_y = (
+                    tekken_position[1] + game_reader.get_titlebar_height()
+                )
+            else:
+                tekken_position_y = tekken_position[1]
+            if self.__position == OverlayPosition.TOP:
+                self.coordinates['y'] = tekken_position_y
+            elif self.__position == OverlayPosition.BOTTOM:
+                self.coordinates['y'] = (
+                    tekken_position_y
+                    + self.tekken_resolution[1]
+                    - self.coordinates['height']
+                )
+            self.overlay.geometry(
+                '+{}+{}'.format(
+                    self.coordinates['x'],
+                    self.coordinates['y']
                 )
             )
-        )
-        if tekken_rect:
-            if self.__tekken_rect != tekken_rect or force_update:
-                self.dimensions_initialized = True
-                self.__tekken_rect = tekken_rect
-
-                updated_scale = Overlay.__calculate_scale(
-                    [tekken_rect.width, tekken_rect.height],
-                    [Overlay.WIDTH, Overlay.HEIGHT]
-                )
-                if self._tekken_scale != updated_scale or force_update:
-                    self._tekken_scale = updated_scale
-                    self._resize_overlay_widgets()
-                    self._update_dimensions()
-                if not self.is_draggable or not self.coordinates_initialized:
-                    self.__update_location(tekken_rect=tekken_rect)
-
-                if self.is_draggable and self.coordinates_initialized:
-                    self.overlay.geometry(
-                        '{}x{}'.format(
-                            self.coordinates['width'],
-                            self.coordinates['height']
-                        )
-                    )
-                else:
-                    self.overlay.geometry(
-                        '{}x{}+{}+{}'.format(
-                            self.coordinates['width'],
-                            self.coordinates['height'],
-                            self.coordinates['x'],
-                            self.coordinates['y']
-                        )
-                    )
-                    self.coordinates_initialized = True
-            return True
-        return False
-
-    def __update_location(self, tekken_rect: Rect):
-        self.coordinates['x'] = math.ceil(
-            (tekken_rect.left + tekken_rect.right) / 2
-            - self.coordinates['width'] / 2
-        )
-        if self.__position == OverlayPosition.TOP:
-            self.coordinates['y'] = tekken_rect.top
-        elif self.__position == OverlayPosition.BOTTOM:
-            self.coordinates['y'] = (
-                tekken_rect.bottom - self.coordinates['height']
-            )
+            self.coordinates_initialized = True
 
     @abstractmethod
     def _update_dimensions(self):
@@ -292,7 +303,7 @@ class Overlay(ABC):
         self.coordinates_initialized = False
 
     @staticmethod
-    def __calculate_scale(current_size, original_size):  
+    def __calculate_scale(current_size, original_size):
         return (
             current_size[0] / original_size[0],
             current_size[1] / original_size[1]

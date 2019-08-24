@@ -31,9 +31,12 @@
 """
 
 import sys
+
+from constants.event import GraphicSettingsChangeEvent
 from constants.overlay import OverlayMode, OverlayPosition
 from gui.model import OverlayModel
 from patterns.factory import OverlayFactory
+from patterns.observer import Subscriber
 from patterns.singleton import Singleton
 
 from .overlay import Overlay
@@ -47,12 +50,34 @@ class OverlayManager(metaclass=Singleton):
             default_overlay_id=None, default_position=None, default_theme=None
         ):
         self.launcher = launcher
+
+        graphic_settings_publisher = (
+            self.launcher.game_state.graphic_settings_publisher
+        )
+        subscriber = Subscriber()
+        graphic_settings_publisher.register(
+            GraphicSettingsChangeEvent.RESOLUTION, subscriber,
+            self.__resolution_change
+        )
+        graphic_settings_publisher.register(
+            GraphicSettingsChangeEvent.SCREEN_MODE, subscriber,
+            self.__screen_mode_change
+        )
+        graphic_settings_publisher.register(
+            GraphicSettingsChangeEvent.POSITION, subscriber,
+            self.__position_change
+        )
+
         self.overlay_factory = OverlayFactory()
         self.overlays = dict()
 
         sys.stdout.callback = self.write_to_overlay
 
         self.current_theme = None
+
+        self.tekken_position = None
+        self.tekken_resolution = None
+        self.tekken_screen_mode = None
 
         self.current_overlay: Overlay
         self.current_overlay = None
@@ -74,6 +99,27 @@ class OverlayManager(metaclass=Singleton):
             self.change_overlay_theme(default_theme)
         else:
             self.change_overlay_theme(OverlayModel().get_theme(1))
+
+    def __screen_mode_change(self, screen_mode):
+        self.tekken_screen_mode = screen_mode
+        self.current_overlay.set_tekken_screen_mode(screen_mode)
+        for overlay in self.overlays.values():
+            if not isinstance(overlay, type(self.current_overlay)):
+                overlay.set_tekken_screen_mode(screen_mode)
+
+    def __resolution_change(self, resolution):
+        self.tekken_resolution = resolution
+        self.current_overlay.set_tekken_resolution(resolution)
+        for overlay in self.overlays.values():
+            if not isinstance(overlay, type(self.current_overlay)):
+                overlay.set_tekken_resolution(resolution)
+
+    def __position_change(self, position):
+        self.tekken_position = position
+        self.current_overlay.set_tekken_position(position)
+        for overlay in self.overlays.values():
+            if not isinstance(overlay, type(self.current_overlay)):
+                overlay.set_tekken_position(position)
 
     def enable_overlay(self, enable):
         self.overlay_enabled = enable
@@ -121,3 +167,9 @@ class OverlayManager(metaclass=Singleton):
         self.current_overlay = self.overlay_factory.create_class(
             overlay_id, self.launcher
         )
+        if self.tekken_screen_mode:
+            self.current_overlay.set_tekken_screen_mode(self.tekken_screen_mode)
+        if self.tekken_resolution:
+            self.current_overlay.set_tekken_resolution(self.tekken_resolution)
+        if self.tekken_position:
+            self.current_overlay.set_tekken_position(self.tekken_position)
