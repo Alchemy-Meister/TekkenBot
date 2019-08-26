@@ -29,6 +29,7 @@
 
 """
 """
+import math
 import re
 import tkinter as tk
 import tkinter.font as tkfont
@@ -99,7 +100,23 @@ class FrameDataOverlay(WritableOverlay):
         self.attack_log = list()
 
         # TODO Initialize this variable from default config.
-        self.display_columns = [True for column in FrameDataOverlay.Columns]
+        # pylint: disable=no-member
+        display_columns_settings = [
+            FrameDataOverlay.Columns.INPUT_COMMAND.name,
+            # FrameDataOverlay.Columns.MOVE_ID.name,
+            # FrameDataOverlay.Columns.MOVE_NAME.name,
+            FrameDataOverlay.Columns.ATTACK_TYPE.name,
+            FrameDataOverlay.Columns.STARTUP_FRAMES.name,
+            FrameDataOverlay.Columns.ON_BLOCK_FRAMES.name,
+            FrameDataOverlay.Columns.ON_HIT_FRAMES.name,
+            FrameDataOverlay.Columns.ACTIVE_FRAMES.name,
+            FrameDataOverlay.Columns.TRACKING.name,
+            FrameDataOverlay.Columns.TOTAL_FRAMES.name,
+            FrameDataOverlay.Columns.RECOVERY_FRAMES.name,
+            FrameDataOverlay.Columns.OPPONET_FRAMES.name,
+            FrameDataOverlay.Columns.NOTES.name
+        ]
+        self.set_display_columns(display_columns_settings)
 
         # TODO load this dict dynamically
         self.frame_advantage_backgrounds = {
@@ -157,6 +174,13 @@ class FrameDataOverlay(WritableOverlay):
             ),
             self.__generate_visible_column_string(self.attack_log[0])
         )
+
+    def set_display_columns(self, display_columns_settings):
+        self.display_columns = [
+            column_enum.value for item in display_columns_settings
+            for column_enum in FrameDataOverlay.Columns
+            if column_enum.name == item
+        ]
 
     def set_theme(self, theme_dict):
         super().set_theme(theme_dict)
@@ -244,19 +268,17 @@ class FrameDataOverlay(WritableOverlay):
         display_columns = []
         for index, column in column_tuples:
             column_lenght = len(column)
-            column_title_length = len(
-                FrameDataOverlay.Columns(index).printable_name
+            column_title_length = (
+                len(
+                    FrameDataOverlay.Columns(index).printable_name
+                )
+                + 2
             )
             if column_lenght <= column_title_length:
-                spaces_needed = (column_title_length - column_lenght) / 2 + 1
+                spaces_needed = (column_title_length - column_lenght) / 2
                 column = ''.join(
                     [
-                        (
-                            ' ' * int(
-                                spaces_needed
-                                # + 1 if column_lenght % 2 != 0 else 0
-                            )
-                        ),
+                        (' ' * math.ceil(spaces_needed)),
                         column,
                         (' ' * int(spaces_needed))
                     ]
@@ -266,9 +288,8 @@ class FrameDataOverlay(WritableOverlay):
 
     def __generate_visible_column_string(self, column_values):
         visible_columns = [
-            (index, column)
-            for index, column in enumerate(column_values)
-            if self.display_columns[index]
+            (index, column_values[index])
+            for index in self.display_columns
         ]
         return FrameDataOverlay.__generate_column_string(*visible_columns)
 
