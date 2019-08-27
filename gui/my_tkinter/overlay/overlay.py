@@ -114,17 +114,13 @@ class Overlay(ABC):
         self._resize_overlay_widgets()
         self.is_resizing = False
         self._update_dimensions()
-        self.overlay.geometry(
-            '{}x{}'.format(
-                self.coordinates['width'], self.coordinates['height']
-            )
-        )
 
     def set_tekken_position(self, position):
         self.tekken_position = position
-        self.__update_position(position)
+        self._update_position(position)
 
     def set_position(self, position):
+        was_draggable = self.__position == OverlayPosition.DRAGGABLE
         self.__position = position
 
         self.is_draggable = self.__position == OverlayPosition.DRAGGABLE
@@ -144,12 +140,13 @@ class Overlay(ABC):
             )
 
         try:
-            self.is_resizing = True
-            try:
-                self.__update_position(self.tekken_position)
-            except TypeError:
-                pass
-            self.is_resizing = False
+            if was_draggable and not self.is_draggable:
+                self._resize_overlay_widgets()
+                self._update_dimensions()
+                try:
+                    self._update_position(self.tekken_position)
+                except TypeError:
+                    pass
         except AttributeError:
             pass
 
@@ -253,7 +250,7 @@ class Overlay(ABC):
     def _resize_overlay_widgets(self, overlay_scale=None):
         pass
 
-    def __update_position(self, tekken_position):
+    def _update_position(self, tekken_position):
         if not self.is_draggable or not self.coordinates_initialized:
             self.coordinates['x'] = math.ceil(
                 tekken_position[0]

@@ -83,9 +83,11 @@ class OverlayManager(metaclass=Singleton):
         self.current_overlay = None
 
         if default_overlay_id is not None:
-            self.__add_overlay(default_overlay_id)
+            self.current_overlay = self.__add_overlay(default_overlay_id)
         else:
-            self.__add_overlay(OverlayMode.FRAMEDATA.value)
+            self.current_overlay = self.__add_overlay(
+                OverlayMode.FRAMEDATA.value
+            )
 
         self.overlay_enabled = default_overlay_enabled
         self.enable_overlay(self.overlay_enabled)
@@ -135,12 +137,11 @@ class OverlayManager(metaclass=Singleton):
             self.current_overlay
         )
         change_overlay = self.overlays.get(mode.value)
-        if change_overlay:
-            sys.stdout.write('changing overlay')
-            self.current_overlay = change_overlay
-        else:
+        if not change_overlay:
             sys.stdout.write('creating new overlay')
-            self.__add_overlay(mode.value)
+            change_overlay = self.__add_overlay(mode.value)
+        sys.stdout.write('changing overlay')
+        self.current_overlay = change_overlay
         sys.stdout.write('Turning overlay on')
         self.current_overlay.set_position(self.current_position)
         self.current_overlay.set_theme(self.current_theme)
@@ -164,12 +165,23 @@ class OverlayManager(metaclass=Singleton):
             self.current_overlay.write(string)
 
     def __add_overlay(self, overlay_id):
-        self.current_overlay = self.overlay_factory.create_class(
+        self.overlays[overlay_id] = self.overlay_factory.create_class(
             overlay_id, self.launcher
         )
         if self.tekken_screen_mode:
-            self.current_overlay.set_tekken_screen_mode(self.tekken_screen_mode)
+            self.overlays[overlay_id].set_tekken_screen_mode(
+                self.tekken_screen_mode
+            )
         if self.tekken_resolution:
-            self.current_overlay.set_tekken_resolution(self.tekken_resolution)
+            self.overlays[overlay_id].set_tekken_resolution(
+                self.tekken_resolution
+            )
         if self.tekken_position:
-            self.current_overlay.set_tekken_position(self.tekken_position)
+            self.overlays[overlay_id].set_tekken_position(self.tekken_position)
+        return self.overlays[overlay_id]
+
+    def set_framedata_overlay_column_settings(self, column_settings):
+        frame_data_overlay = self.overlays.get(OverlayMode.FRAMEDATA.value)
+        if not frame_data_overlay:
+            frame_data_overlay = self.__add_overlay(OverlayMode.FRAMEDATA.value)
+        frame_data_overlay.set_display_columns(column_settings)

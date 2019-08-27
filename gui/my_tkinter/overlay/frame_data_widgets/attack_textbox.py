@@ -29,7 +29,6 @@
 
 """
 """
-import math
 import tkinter as tk
 from gui.my_tkinter import Textbox
 

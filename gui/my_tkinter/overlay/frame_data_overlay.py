@@ -98,6 +98,8 @@ class FrameDataOverlay(WritableOverlay):
 
         self.max_attack_log_length = 5
         self.attack_log = list()
+        self.longest_log_line = ''
+        self.longest_log_font_size = None
 
         # TODO Initialize this variable from default config.
         # pylint: disable=no-member
@@ -116,7 +118,6 @@ class FrameDataOverlay(WritableOverlay):
             FrameDataOverlay.Columns.OPPONET_FRAMES.name,
             FrameDataOverlay.Columns.NOTES.name
         ]
-        self.set_display_columns(display_columns_settings)
 
         # TODO load this dict dynamically
         self.frame_advantage_backgrounds = {
@@ -145,14 +146,11 @@ class FrameDataOverlay(WritableOverlay):
             foreground='lawn green'
         )
 
-        all_title_columns = (
+        self.insert_columns_to_log(
             [column.printable_name for column in FrameDataOverlay.Columns]
         )
 
-        self.insert_columns_to_log(all_title_columns)
-        column_titles = self.__generate_visible_column_string(all_title_columns)
-        self.textbox.insert('1.0', '{}\n'.format(column_titles))
-        self.textbox.fit_to_content()
+        self.display_columns = None
 
         self.__create_padding(self.transparent_color).grid(column=0, row=0)
         self.__create_padding(self.transparent_color).grid(column=2, row=0)
@@ -161,26 +159,67 @@ class FrameDataOverlay(WritableOverlay):
         self.textbox.grid(column=1, row=0, rowspan=2, sticky=tk.N + tk.E + tk.W)
         self.p2_frame_panel.grid(column=2, row=1, sticky=tk.N + tk.S + tk.E)
 
-        self.overlay.update_idletasks()
+        self.set_display_columns(display_columns_settings)
 
-        self._set_dimensions(
-            self.overlay.winfo_width(), self.overlay.winfo_height()
-        )
-
-        self.initial_font_size = WritableOverlay._get_font_text_dimensions(
-            tkfont.Font(
-                family=self.initial_textbox_font[0],
-                size=self.initial_textbox_font[1]
-            ),
-            self.__generate_visible_column_string(self.attack_log[0])
-        )
-
-    def set_display_columns(self, display_columns_settings):
+    def set_display_columns(
+            self, display_columns_settings
+    ):
+        had_visible_columns = bool(self.display_columns)
         self.display_columns = [
             column_enum.value for item in display_columns_settings
             for column_enum in FrameDataOverlay.Columns
             if column_enum.name == item
         ]
+
+        if self.display_columns and not had_visible_columns:
+            self.is_resizing = True
+            self.textbox.grid()
+            self.is_resizing = False
+        elif not self.display_columns and had_visible_columns:
+            self.is_resizing = True
+            self.textbox.grid_remove()
+            self.is_resizing = False
+
+        self.is_resizing = True
+        self.__update_textbox_info()
+        self._update_dimensions()
+        try:
+            self._update_position(self.tekken_position)
+        except TypeError:
+            pass
+        self.is_resizing = False
+
+    def __update_textbox_info(self):
+        self.__clear(clear_header=True)
+        max_log_line_length = 0
+        for tag, values in self.attack_log:
+            log_line = ''.join(
+                [
+                    self.__generate_visible_column_string(
+                        values
+                    ),
+                    '\n'
+                ]
+            )
+            log_line_length = len(log_line)
+            if log_line_length > max_log_line_length:
+                self.longest_log_line = log_line
+                max_log_line_length = log_line_length
+            self.textbox.insert(
+                tk.END,
+                log_line,
+                tag
+            )
+        self.longest_log_font_size = (
+            WritableOverlay._get_font_text_dimensions(
+                tkfont.Font(
+                    family=self.initial_textbox_font[0],
+                    size=self.initial_textbox_font[1]
+                ),
+                self.longest_log_line
+            )
+        )
+        self.textbox.fit_to_content()
 
     def set_theme(self, theme_dict):
         super().set_theme(theme_dict)
@@ -210,9 +249,9 @@ class FrameDataOverlay(WritableOverlay):
             if display_string:
                 self.textbox.insert(tk.END, display_string, player_tag)
 
-    def __clear(self):
-        if not self.textbox.is_clear():
-            self.textbox.clear()
+    def __clear(self, clear_header=False):
+        if not self.textbox.is_clear(include_header=clear_header):
+            self.textbox.clear(clear_header=clear_header)
 
     def __create_padding(self, color):
         padding = tk.Frame(
@@ -293,10 +332,10 @@ class FrameDataOverlay(WritableOverlay):
         ]
         return FrameDataOverlay.__generate_column_string(*visible_columns)
 
-    def insert_columns_to_log(self, columns):
+    def insert_columns_to_log(self, columns, tag=None):
         if len(self.attack_log) >= self.max_attack_log_length:
             self.attack_log.pop(1)
-        self.attack_log.append(columns)
+        self.attack_log.append([tag, columns])
 
     def __update_frame_advantage(self, frame_advantage, player_1=True):
         if '?' not in frame_advantage:
@@ -332,13 +371,13 @@ class FrameDataOverlay(WritableOverlay):
 
         scaled_frame_panel_width, _ = self.p1_frame_panel.resize_to_scale(scale)
         self.p2_frame_panel.resize_to_scale(scale)
-    
+
         scaled_textbot_font, font_width, _ = WritableOverlay._get_fitting_font(
             scale,
             self.initial_textbox_font,
-            self.__generate_visible_column_string(self.attack_log[0]),
-            self.initial_font_size[0] * scale[0],
-            self.initial_font_size[1] * scale[1]
+            self.longest_log_line,
+            self.longest_log_font_size[0] * scale[0],
+            self.longest_log_font_size[1] * scale[1]
             )
 
         self.textbox.configure(font=scaled_textbot_font)
@@ -353,12 +392,19 @@ class FrameDataOverlay(WritableOverlay):
         self.overlay.update_idletasks()
         self.coordinates['width'] = (
             self.p1_frame_panel.winfo_width()
-            + self.textbox.winfo_width()
             + self.p2_frame_panel.winfo_width()
         )
+        if self.display_columns:
+            self.coordinates['width'] += self.textbox.winfo_width()
+
         self.coordinates['height'] = self.textbox.winfo_height()
         self.window_proportion = (
             self.coordinates['width'] / self.coordinates['height']
+        )
+        self.overlay.geometry(
+            '{}x{}'.format(
+                self.coordinates['width'], self.coordinates['height']
+            )
         )
 
     def _update_visible_state(self):
