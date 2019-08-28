@@ -34,9 +34,9 @@ import re
 import tkinter as tk
 import tkinter.font as tkfont
 
-from constants.printable_enum import PrintableEnum, PrintableValue
 from constants.battle import FrameAdvantage
 from constants.overlay import OverlayMode
+from constants.overlay.frame_data import Columns
 
 from .writable_overlay import WritableOverlay
 from .frame_data_widgets import AttackTextbox, FrameAdvantagePanel
@@ -44,49 +44,6 @@ from .frame_data_widgets import AttackTextbox, FrameAdvantagePanel
 class FrameDataOverlay(WritableOverlay):
     """
     """
-    class GUIColumns(PrintableEnum):
-        INPUT_COMMAND = PrintableValue(0, 'input command')
-        MOVE_ID = PrintableValue(1, 'internal move id number')
-        MOVE_NAME = PrintableValue(2, 'internal move name')
-        ATTACK_TYPE = PrintableValue(3, 'attack type')
-        STARTUP_FRAMES = PrintableValue(4, 'startup frames')
-        ON_BLOCK_FRAMES = PrintableValue(5, 'frame advantage on block')
-        ON_HIT_FRAMES = PrintableValue(6, 'frame advantage on hit')
-        COUNTER_HIT_FRAMES = PrintableValue(7, 'frame advantage on counter hit')
-        ACTIVE_FRAMES = PrintableValue(
-            8, 'active frame connected on/total active frames'
-        )
-        TRACKING = PrintableValue(9, 'how well move tracks during startup')
-        TOTAL_FRAMES = PrintableValue(10, 'total number of frames in move')
-        REACTION_FRAMES = PrintableValue(11, 'frames before attacker can act')
-        OPPONET_FRAMES = PrintableValue(12, 'frames before defender can act')
-        NOTES = PrintableValue(13, 'additional move properties')
-
-    class Columns(PrintableEnum):
-        INPUT_COMMAND = PrintableValue(0, 'command')
-        MOVE_ID = PrintableValue(1, 'id')
-        MOVE_NAME = PrintableValue(2, 'name')
-        ATTACK_TYPE = PrintableValue(3, 'type')
-        STARTUP_FRAMES = PrintableValue(4, 'startup')
-        ON_BLOCK_FRAMES = PrintableValue(5, 'block')
-        ON_HIT_FRAMES = PrintableValue(6, 'hit')
-        COUNTER_HIT_FRAMES = PrintableValue(7, 'counter')
-        ACTIVE_FRAMES = PrintableValue(8, 'active')
-        TRACKING = PrintableValue(9, 'track')
-        TOTAL_FRAMES = PrintableValue(10, 'total')
-        RECOVERY_FRAMES = PrintableValue(11, 'recovery')
-        OPPONET_FRAMES = PrintableValue(12, 'opponent')
-        NOTES = PrintableValue(13, 'notes')
-
-        @staticmethod
-        def max_column_lenght():
-            return max(
-                [
-                    len(column.printable_name)
-                    for column in FrameDataOverlay.Columns
-                ]
-            )
-
     CLASS_ID = OverlayMode.FRAMEDATA.value
 
     def __init__(self, launcher):
@@ -101,22 +58,19 @@ class FrameDataOverlay(WritableOverlay):
         self.longest_log_line = ''
         self.longest_log_font_size = None
 
-        # TODO Initialize this variable from default config.
         # pylint: disable=no-member
-        display_columns_settings = [
-            FrameDataOverlay.Columns.INPUT_COMMAND.name,
-            # FrameDataOverlay.Columns.MOVE_ID.name,
-            # FrameDataOverlay.Columns.MOVE_NAME.name,
-            FrameDataOverlay.Columns.ATTACK_TYPE.name,
-            FrameDataOverlay.Columns.STARTUP_FRAMES.name,
-            FrameDataOverlay.Columns.ON_BLOCK_FRAMES.name,
-            FrameDataOverlay.Columns.ON_HIT_FRAMES.name,
-            FrameDataOverlay.Columns.ACTIVE_FRAMES.name,
-            FrameDataOverlay.Columns.TRACKING.name,
-            FrameDataOverlay.Columns.TOTAL_FRAMES.name,
-            FrameDataOverlay.Columns.RECOVERY_FRAMES.name,
-            FrameDataOverlay.Columns.OPPONET_FRAMES.name,
-            FrameDataOverlay.Columns.NOTES.name
+        initial_column_settings = [
+            Columns.INPUT_COMMAND.name,
+            Columns.ATTACK_TYPE.name,
+            Columns.STARTUP_FRAMES.name,
+            Columns.ON_BLOCK_FRAMES.name,
+            Columns.ON_HIT_FRAMES.name,
+            Columns.ACTIVE_FRAMES.name,
+            Columns.TRACKING.name,
+            Columns.TOTAL_FRAMES.name,
+            Columns.RECOVERY_FRAMES.name,
+            Columns.OPPONET_FRAMES.name,
+            Columns.NOTES.name
         ]
 
         # TODO load this dict dynamically
@@ -147,7 +101,7 @@ class FrameDataOverlay(WritableOverlay):
         )
 
         self.insert_columns_to_log(
-            [column.printable_name for column in FrameDataOverlay.Columns]
+            [column.printable_name for column in Columns]
         )
 
         self.display_columns = None
@@ -159,16 +113,16 @@ class FrameDataOverlay(WritableOverlay):
         self.textbox.grid(column=1, row=0, rowspan=2, sticky=tk.N + tk.E + tk.W)
         self.p2_frame_panel.grid(column=2, row=1, sticky=tk.N + tk.S + tk.E)
 
-        self.set_display_columns(display_columns_settings)
+        self.set_display_columns(initial_column_settings)
 
     def set_display_columns(
             self, display_columns_settings
     ):
         had_visible_columns = bool(self.display_columns)
         self.display_columns = [
-            column_enum.value for item in display_columns_settings
-            for column_enum in FrameDataOverlay.Columns
-            if column_enum.name == item
+            column_enum.value for column_name in display_columns_settings
+            for column_enum in Columns
+            if column_enum.name == column_name
         ]
 
         if self.display_columns and not had_visible_columns:
@@ -307,12 +261,7 @@ class FrameDataOverlay(WritableOverlay):
         display_columns = []
         for index, column in column_tuples:
             column_lenght = len(column)
-            column_title_length = (
-                len(
-                    FrameDataOverlay.Columns(index).printable_name
-                )
-                + 2
-            )
+            column_title_length = len(Columns(index).printable_name) + 2
             if column_lenght <= column_title_length:
                 spaces_needed = (column_title_length - column_lenght) / 2
                 column = ''.join(
