@@ -46,7 +46,7 @@ class Columns(PrintableEnum):
     TRACKING = PrintableValue(9, 'track')
     TOTAL_FRAMES = PrintableValue(10, 'total')
     RECOVERY_FRAMES = PrintableValue(11, 'recovery')
-    OPPONET_FRAMES = PrintableValue(12, 'opponent')
+    OPPONENT_FRAMES = PrintableValue(12, 'opponent')
     NOTES = PrintableValue(13, 'notes')
 
     @staticmethod
