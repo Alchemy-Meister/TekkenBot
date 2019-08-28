@@ -11,10 +11,10 @@ Created by roguelike2d. Maintained by the community.
 ### GUI
 - [x] Menu-bar has been re-organized to make its usage more intuituve.
 - [x] New custom themes can be added by placing new theme files under *./data/themes/overlay/*
-- [x] Changes in themes can be dynamically reloaded by restarting the app *Tekken Bot > restart*. (No need to close the App)
+- [x] Changes in themes and overlay settings can be dynamically reloaded by restarting the app *Tekken Bot > restart*. (No need to close the App)
 - [x] Automatic scrolling can be now disabled to read previous log files with ease *Tekken Bot > Preferences > Scroll on Output*
 - [x] A tekkenbotprime.log file is created/overwritten every time the app is run.
-- [x] Added the possibility to write into the Tekken's process memory to overwrite characters, stages, among other settings. (Includes non-playable and DLC characters and stages)
+- [x] Added the possibility to write into the Tekken's process memory to overwrite characters, stages, among other settings. (Includes *non-playable* characters and stages)
 
 ### Overlays
 - [x] Overlays show and hide automatically on battle's start and end.
@@ -23,6 +23,7 @@ Created by roguelike2d. Maintained by the community.
 
 #### Frame data overlay
 - [x] Frame data text widget width fits to its content.
+- [x] Custom column ordering.
 
 #### Command input overlay
 - [x] Input arrows and buttons mimic Tekken GUI's style. (Credits to: [mspkvp](https://github.com/mspkvp/tk7movespretty))
@@ -42,7 +43,7 @@ Created by roguelike2d. Maintained by the community.
 - [ ] Complete this list :P
 
 ## Disclaimer
-**Tekken's process memory overwrite has only been tested in offline mode, it probably won't work in online mode, nor I intend to make it work. Its only purpose is for debugging or for training with specific character/stages. No DLC piracy is intended. Use at your own risk, please support BANDAI NAMCO Entertainment and buy the DLC content**
+**Tekken's process memory overwrite has only been tested in offline mode, it probably won't work in online mode, nor I intend to make it work. Its only purpose is for debugging or for training with specific character/stages. No piracy is intended. Use at your own risk, please support BANDAI NAMCO Entertainment and buy the DLC content**
 
 ## Screenshot
 ![Memory Overwrite](Screenshots/memory_overwrite.png?raw=true)
