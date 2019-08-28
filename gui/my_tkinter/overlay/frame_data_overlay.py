@@ -69,7 +69,7 @@ class FrameDataOverlay(WritableOverlay):
             Columns.TRACKING.name,
             Columns.TOTAL_FRAMES.name,
             Columns.RECOVERY_FRAMES.name,
-            Columns.OPPONET_FRAMES.name,
+            Columns.OPPONENT_FRAMES.name,
             Columns.NOTES.name
         ]
 
