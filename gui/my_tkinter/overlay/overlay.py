@@ -143,10 +143,10 @@ class Overlay(ABC):
             if was_draggable and not self.is_draggable:
                 self._resize_overlay_widgets()
                 self._update_dimensions()
-                try:
-                    self._update_position(self.tekken_position)
-                except TypeError:
-                    pass
+            try:
+                self._update_position(self.tekken_position)
+            except TypeError:
+                pass
         except AttributeError:
             pass
 

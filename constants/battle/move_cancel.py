@@ -32,8 +32,10 @@
 
 import enum
 
-class MoveCancel(enum.IntEnum):
+class MoveProperty(enum.IntEnum):
     PARRY_1 = enum.auto()
     PARRY_2 = enum.auto()
     BUFFERABLE = enum.auto()
     CANCELABLE = enum.auto()
+    STARTING = enum.auto()
+    RECOVERING = enum.auto()

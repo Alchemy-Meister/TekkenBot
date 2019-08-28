@@ -29,7 +29,7 @@
 
 from .frame_advantage import FrameAdvantage
 from .health import BattleHealth
-from .move_cancel import MoveCancel
+from .move_cancel import MoveProperty
 from .rounds import BattleRounds
 from .stages import BattleStages
 from .timer import BattleTime

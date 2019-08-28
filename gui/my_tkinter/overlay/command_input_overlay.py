@@ -37,7 +37,7 @@ from PIL import Image, ImageTk
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 
-from constants.battle import MoveCancel
+from constants.battle import MoveProperty
 from constants.input import InputAttack, InputDirection
 from constants.overlay import OverlayMode
 
@@ -62,11 +62,13 @@ class CommandInputOverlay(Overlay):
     }
 
     __CANCEL_PROPERTY_COLORS = {
-        MoveCancel.PARRY_1: 'orange',
-        MoveCancel.PARRY_2: 'yellow',
-        MoveCancel.BUFFERABLE: 'MediumOrchid1',
-        MoveCancel.CANCELABLE: 'SteelBlue1',
-        'other': 'firebrick'
+        MoveProperty.STARTING: 'green4',
+        MoveProperty.RECOVERING: 'red4',
+        MoveProperty.PARRY_1: 'orange',
+        MoveProperty.PARRY_2: 'yellow',
+        MoveProperty.BUFFERABLE: 'MediumOrchid1',
+        MoveProperty.CANCELABLE: 'SteelBlue1',
+        'other': 'snow'
     }
 
     def __init__(self, launcher):
@@ -94,7 +96,7 @@ class CommandInputOverlay(Overlay):
         self.cancel_rect_coordinate_y0 = None
 
         self.frame_inputs = list()
-        self.frame_cancels = list()
+        self.frame_move_property = list()
         self.last_frame_inputs = list()
         self.last_frame_cancels = list()
 
@@ -284,24 +286,26 @@ class CommandInputOverlay(Overlay):
 
         input_state = player.get_input_state()
 
-        cancel_properties = [
-            [MoveCancel.PARRY_1, player.is_parry1],
-            [MoveCancel.PARRY_2, player.is_parry2],
-            [MoveCancel.BUFFERABLE, player.is_bufferable],
-            [MoveCancel.CANCELABLE, player.is_cancelable]
+        move_properties = [
+            [MoveProperty.STARTING, player.is_starting],
+            [MoveProperty.RECOVERING, player.is_recovering],
+            [MoveProperty.PARRY_1, player.is_parry1],
+            [MoveProperty.PARRY_2, player.is_parry2],
+            [MoveProperty.BUFFERABLE, player.is_bufferable],
+            [MoveProperty.CANCELABLE, player.is_cancelable]
         ]
 
-        cancel_color = None
-        for cancel_property in cancel_properties:
+        move_color = None
+        for cancel_property in move_properties:
             if cancel_property[1]:
-                cancel_color = CommandInputOverlay.__CANCEL_PROPERTY_COLORS[
+                move_color = CommandInputOverlay.__CANCEL_PROPERTY_COLORS[
                     cancel_property[0]
                 ]
                 break
-        if cancel_color is None:
-            cancel_color = CommandInputOverlay.__CANCEL_PROPERTY_COLORS['other']
+        if move_color is None:
+            move_color = CommandInputOverlay.__CANCEL_PROPERTY_COLORS['other']
 
-        self._update_input(input_state, cancel_color)
+        self._update_input(input_state, move_color)
 
     def _update_visible_state(self):
         previous_visible_state = self.visible
@@ -309,7 +313,7 @@ class CommandInputOverlay(Overlay):
         if previous_visible_state != self.visible and not self.visible:
             self.command_input_canvas.delete(self.input_tag)
             self.frame_inputs.clear()
-            self.frame_cancels.clear()
+            self.frame_move_property.clear()
 
     def _load_resources(self):
         for printable_value in InputDirection:
@@ -382,17 +386,19 @@ class CommandInputOverlay(Overlay):
                 image_dict[key] = ImageTk.PhotoImage(Image.open(image_stream))
         return image_dict
 
-    def _update_input(self, input_state, cancel_color):
+    def _update_input(self, input_state, move_color):
         self.frame_inputs.append(input_state)
-        self.frame_cancels.append(cancel_color)
+        self.frame_move_property.append(move_color)
 
         if len(self.frame_inputs) >= self.canvas_step_number:
             self.frame_inputs = self.frame_inputs[-self.canvas_step_number:]
-            self.frame_cancels = self.frame_cancels[-self.canvas_step_number:]
+            self.frame_move_property = self.frame_move_property[
+                -self.canvas_step_number:
+            ]
 
             if input_state != self.frame_inputs[-2]:
                 self.last_frame_inputs = self.frame_inputs.copy()
-                self.last_frame_cancels = self.frame_cancels.copy()
+                self.last_frame_cancels = self.frame_move_property.copy()
 
                 self.command_input_canvas.delete(self.input_tag)
                 self.__paint_input()
@@ -403,7 +409,7 @@ class CommandInputOverlay(Overlay):
             frame_cancels = self.last_frame_cancels
         else:
             frame_inputs = self.frame_inputs
-            frame_cancels = self.frame_cancels
+            frame_cancels = self.frame_move_property
 
         for index, (direction_code, input_code, _) in enumerate(frame_inputs):
             coordinate_x = (

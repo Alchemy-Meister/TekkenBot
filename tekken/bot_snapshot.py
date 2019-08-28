@@ -81,6 +81,7 @@ class BotSnapshot:
         self.is_power_crush = data_dict['PlayerDataAddress.power_crush'] > 0
 
         cancel_window_bitmask = data_dict['PlayerDataAddress.cancel_window']
+        recovery_window_bitmask = data_dict['PlayerDataAddress.recovery']
 
         self.is_cancelable = (
             (CancelStatesBitmask.CANCELABLE.value & cancel_window_bitmask)
@@ -98,6 +99,11 @@ class BotSnapshot:
             (CancelStatesBitmask.PARRYABLE_2.value & cancel_window_bitmask)
             == CancelStatesBitmask.PARRYABLE_2.value
         )
+        self.is_recovering = (
+            (ComplexMoveStates.RECOVERING.value & recovery_window_bitmask)
+            == ComplexMoveStates.RECOVERING.value
+        )
+        self.is_starting = self.startup > 0 and self.move_timer <= self.startup
         self.throw_tech = ThrowTechs(data_dict['PlayerDataAddress.throw_tech'])
 
         #self.highest_y = max(data_dict['PlayerDataAddress.y'])
