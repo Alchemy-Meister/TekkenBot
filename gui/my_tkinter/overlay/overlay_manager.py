@@ -45,10 +45,7 @@ from .writable_overlay import WritableOverlay
 class OverlayManager(metaclass=Singleton):
     """
     """
-    def __init__(
-            self, launcher, default_overlay_enabled=False,
-            default_overlay_id=None, default_position=None, default_theme=None
-        ):
+    def __init__(self, launcher, initial_settings=None):
         self.launcher = launcher
 
         graphic_settings_publisher = (
@@ -82,25 +79,17 @@ class OverlayManager(metaclass=Singleton):
         self.current_overlay: Overlay
         self.current_overlay = None
 
-        if default_overlay_id is not None:
-            self.current_overlay = self.__add_overlay(default_overlay_id)
+        self.overlay_model = OverlayModel()
+
+        self.reloadable_initial_settings = initial_settings
+        if initial_settings:
+            self.reload()
         else:
             self.current_overlay = self.__add_overlay(
                 OverlayMode.FRAMEDATA.value
             )
-
-        self.overlay_enabled = default_overlay_enabled
-        self.enable_overlay(self.overlay_enabled)
-
-        if default_position:
-            self.change_overlay_position(default_position)
-        else:
             self.change_overlay_position(OverlayPosition.TOP)
-
-        if default_theme:
-            self.change_overlay_theme(default_theme)
-        else:
-            self.change_overlay_theme(OverlayModel().get_theme(1))
+            self.change_overlay_theme(self.overlay_model.get_theme(1))
 
     def __screen_mode_change(self, screen_mode):
         self.tekken_screen_mode = screen_mode
@@ -143,24 +132,21 @@ class OverlayManager(metaclass=Singleton):
         sys.stdout.write('changing overlay')
         self.current_overlay = change_overlay
         sys.stdout.write('Turning overlay on')
-        self.current_overlay.set_position(self.current_position)
-        self.current_overlay.set_theme(self.current_theme)
         if self.overlay_enabled:
             self.current_overlay.on()
 
     def change_overlay_position(self, position):
-        self.current_position = position
-        self.current_overlay.set_position(position)
+        for overlay_id in self.overlays:
+            self.overlays[overlay_id].set_position(position)
 
     def change_overlay_theme(self, theme_dict):
-        self.current_theme = theme_dict
-        self.current_overlay.set_theme(theme_dict)
+        for overlay_id in self.overlays:
+            self.overlays[overlay_id].set_theme(theme_dict)
 
     def write_to_overlay(self, string):
         if(
                 isinstance(self.current_overlay, WritableOverlay)
                 and self.current_overlay.enabled
-                and self.current_overlay.visible
         ):
             self.current_overlay.write(string)
 
@@ -185,3 +171,29 @@ class OverlayManager(metaclass=Singleton):
         if not frame_data_overlay:
             frame_data_overlay = self.__add_overlay(OverlayMode.FRAMEDATA.value)
         frame_data_overlay.set_display_columns(column_settings)
+
+    def reload(self):
+        initial_settings = self.reloadable_initial_settings.config['DEFAULT']
+        if self.current_overlay:
+            self.current_overlay.off()
+            self.change_overlay(
+                OverlayMode[initial_settings.get('overlay_mode')]
+            )
+        else:
+            self.current_overlay = self.__add_overlay(
+                OverlayMode[initial_settings.get('overlay_mode')].value
+            )
+        self.enable_overlay(initial_settings.get('overlay_enable'))
+        self.change_overlay_position(
+            OverlayPosition[initial_settings.get('overlay_position')]
+        )
+        self.change_overlay_theme(
+            self.overlay_model.get_theme(
+                self.overlay_model.get_index_by_filename(
+                    initial_settings.get('overlay_theme')
+                )
+            )
+        )
+        self.set_framedata_overlay_column_settings(
+            initial_settings.get('framedata_overlay_columns')
+        )

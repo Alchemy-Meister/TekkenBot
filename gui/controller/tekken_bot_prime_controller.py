@@ -57,6 +57,8 @@ class TekkenBotPrimeController():
         self.original_stderr = sys.stderr
 
         self.root = tk.Tk()
+        self.config_manager = ReloadableConfigManager()
+        self.reloadable_initial_settings = None
         self.model = OverlayModel()
 
         self.save_to_file = True
@@ -81,11 +83,14 @@ class TekkenBotPrimeController():
         self.root.mainloop()
 
     def restart(self):
+        sys.stdout.write('restart')
+        self.config_manager.reload_all()
         self.model.reload()
         self.view.load_overlay_themes(
             enumerate(self.model.get_overlay_themes_names())
         )
-        sys.stdout.write('restart')
+        self.__update_overlay_gui_settings()
+        self.overlay_manager.reload()
 
     def enable_save_to_file(self, enable):
         sys.stdout.enable_save_to_file(enable)
@@ -192,32 +197,32 @@ class TekkenBotPrimeController():
         self.show_memory_override(False)
 
     def __intialize_overlay_settings(self):
-        settings = ReloadableConfigManager().add_config(
-            'settings.ini', parse=True, default_writer_class=DefaultSettings
-        ).config['DEFAULT']
-
-        default_overlay_enabled = settings.get('overlay_enable')
-        default_overlay_mode = OverlayMode[settings.get('overlay_mode')]
-        default_overlay_position = OverlayPosition[
-            settings.get('overlay_position')
-        ]
-        default_overlay_theme_index, default_overlay_theme = (
-            self.model.get_theme_tuple_by_filename(
-                settings.get('overlay_theme')
-            )
+        self.reloadable_initial_settings = self.config_manager.add_config(
+            'settings.ini', parse=True, config_model_class=DefaultSettings
         )
+        self.__update_overlay_gui_settings()
+
+        self.overlay_manager = OverlayManager(
+            self.launcher,
+            initial_settings=self.reloadable_initial_settings
+        )
+
+    def __update_overlay_gui_settings(self):
+        initial_settings = self.reloadable_initial_settings.config['DEFAULT']
+
+        default_overlay_enabled = initial_settings.get('overlay_enable')
+        default_overlay_mode = OverlayMode[initial_settings.get('overlay_mode')]
+        default_overlay_position = OverlayPosition[
+            initial_settings.get('overlay_position')
+        ]
+        default_overlay_theme_index = self.model.get_index_by_filename(
+            initial_settings.get('overlay_theme')
+        )
+
         self.view.enable_overlay.set(default_overlay_enabled)
         self.view.overlay_mode.set(default_overlay_mode.name)
         self.view.overlay_position.set(default_overlay_position.name)
         self.view.overlay_theme.set(default_overlay_theme_index)
-
-        self.overlay_manager = OverlayManager(
-            self.launcher,
-            default_overlay_enabled=default_overlay_enabled,
-            default_overlay_id=default_overlay_mode.value,
-            default_position=default_overlay_position,
-            default_theme=default_overlay_theme
-        )
 
     def __update_check_success(self, available):
         if available:

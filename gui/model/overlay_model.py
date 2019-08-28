@@ -32,8 +32,9 @@
 import os
 from config import ReloadableConfigManager
 from constants.overlay import OverlayMode, OverlayPosition
+from patterns.singleton import Singleton
 
-class OverlayModel():
+class OverlayModel(metaclass=Singleton):
     """
     """
     def __init__(self):
@@ -55,15 +56,15 @@ class OverlayModel():
     def get_theme(self, theme_index):
         return self.overlay_themes[theme_index].config['theme']
 
-    def get_theme_tuple_by_filename(self, theme_filename):
+    def get_index_by_filename(self, theme_filename):
         for index, theme_config in enumerate(self.overlay_themes):
             if(
                     theme_filename
                     == str(os.path.basename(theme_config.path)).split('.theme')
                     [0]
             ):
-                return index, theme_config.config['theme']
-        return None, None
+                return index
+        return None
 
     @staticmethod
     def __enum_to_list(printable_enum_class):
@@ -94,7 +95,6 @@ class OverlayModel():
         ]
 
     def reload(self):
-        self.__config_manager.reload_all()
         self.overlay_themes = self.__config_manager.get_config_group(
             'overlay_themes'
         )
