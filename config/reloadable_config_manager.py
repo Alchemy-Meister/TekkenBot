@@ -32,6 +32,8 @@
 import os
 
 from patterns.singleton import Singleton
+
+from .model_based_reloadable_config import ModelBasedReloadableConfig
 from .reloadable_config import ReloadableConfig
 
 class ReloadableConfigManager(metaclass=Singleton):
@@ -43,21 +45,37 @@ class ReloadableConfigManager(metaclass=Singleton):
         self.__config_groups = dict()
 
     def add_config(
-        self, file_name, sub_dir=None, parse=False, default_writer_class=None
+            self,
+            file_name,
+            sub_dir=None,
+            parse=False,
+            config_model_class=None
     ):
         path = self.__get_file_path(file_name, sub_dir)
         if not os.path.exists(path):
-            if default_writer_class:
-                default_writer_class()
+            if config_model_class:
+                config_model = config_model_class()
+                if config_model.update_required:
+                    config_model.write()
             else:
                 raise ValueError('{} does not exist'.format(path))
-        config = self.__configs.get(path)
-        if config:
+        reloadable_config = self.__configs.get(path)
+        if reloadable_config:
             raise ValueError('config already exists')
-        config = ReloadableConfig(path, parse)
-        self.__configs[path] = config
+        if config_model_class:
+            reloadable_config = ModelBasedReloadableConfig(config_model_class)
+            config_model = config_model_class(
+                file_settings=reloadable_config.config
+            )
+            if config_model.update_required:
+                config_model.write()
+            reloadable_config.config = config_model.parse(
+                config_model.settings
+            )
+        else:
+            reloadable_config = ReloadableConfig(path, parse)
+        self.__configs[path] = reloadable_config
         return self.__configs[path]
-
 
     def remove_config(self, file_name, sub_dir=None):
         path = self.__get_file_path(file_name, sub_dir)

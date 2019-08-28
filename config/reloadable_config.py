@@ -33,14 +33,17 @@ import configparser
 import distutils.util as util
 import sys
 
-class ReloadableConfig():
+from .abstract_reloadable_config import AbstractReloadableConfig
+
+class ReloadableConfig(AbstractReloadableConfig):
     def __init__(self, path, parse=False):
+        super().__init__()
         self.path = path
         self.parse = parse
-        self.config = ReloadableConfig.__generate_config(path, parse)
+        self.config = self._read_config()
 
     def reload(self):
-        self.config = ReloadableConfig.__generate_config(self.path, self.parse)
+        self.config = self._read_config()
 
     def __getitem__(self, key):
         return self.config.get(key)
@@ -50,21 +53,18 @@ class ReloadableConfig():
             self.path, self.parse, self.config
         )
 
-    @staticmethod
-    def __generate_config(path, parse=False):
+    def _read_config(self):
         input_dict = dict()
 
         config_data = configparser.ConfigParser(
             inline_comment_prefixes=(';')
         )
-        config_data.read(path)
+        config_data.read(self.path)
         for section, proxy in config_data.items():
-            # if section == 'DEFAULT':
-            #     continue
             if section not in input_dict:
                 input_dict[section] = dict()
             for key, value in proxy.items():
-                if parse:
+                if self.parse:
                     value = ReloadableConfig.__parse_numbers(
                         value
                     )
@@ -93,7 +93,7 @@ class ReloadableConfig():
                     value = int(value)
                 except ValueError:
                     try:
-                        value = util.strtobool(value)
+                        value = bool(util.strtobool(value))
                     except ValueError:
                         pass
         except ValueError as exception:
