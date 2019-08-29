@@ -81,6 +81,8 @@ class OverlayManager(metaclass=Singleton):
 
         self.overlay_model = OverlayModel()
 
+        self.overlay_enabled = False
+
         self.reloadable_initial_settings = initial_settings
         if initial_settings:
             self.reload()
