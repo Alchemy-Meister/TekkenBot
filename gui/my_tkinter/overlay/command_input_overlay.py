@@ -287,12 +287,12 @@ class CommandInputOverlay(Overlay):
         input_state = player.get_input_state()
 
         move_properties = [
-            [MoveProperty.STARTING, player.is_starting],
-            [MoveProperty.RECOVERING, player.is_recovering],
             [MoveProperty.PARRY_1, player.is_parry1],
             [MoveProperty.PARRY_2, player.is_parry2],
             [MoveProperty.BUFFERABLE, player.is_bufferable],
-            [MoveProperty.CANCELABLE, player.is_cancelable]
+            [MoveProperty.CANCELABLE, player.is_cancelable],
+            [MoveProperty.STARTING, player.is_starting],
+            [MoveProperty.RECOVERING, player.is_recovering]
         ]
 
         move_color = None
