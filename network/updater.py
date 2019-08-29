@@ -150,7 +150,7 @@ class Updater(metaclass=Singleton):
                 if use_queue:
                     self.queue.put(True)
                 return True
-            elif use_queue:
+            if use_queue:
                 self.queue.put(False)
             return False
         except NoInternetConnectionError:
