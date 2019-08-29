@@ -324,7 +324,7 @@ class CommandInputOverlay(Overlay):
             ):
                 str_arrow = printable_value.printable_name['symbol']
                 svg_drawing = svg2rlg(
-                    'data/resources/arrows/{}.svg'.format(
+                    'data/images/arrows/{}.svg'.format(
                         str_arrow
                     )
                 )
@@ -334,7 +334,7 @@ class CommandInputOverlay(Overlay):
             str_button = printable_value.printable_name
             if str_button:
                 svg_drawing = svg2rlg(
-                    'data/resources/buttons/steam_arcade/{}.svg'.format(
+                    'data/images/buttons/steam_arcade/{}.svg'.format(
                         str_button
                     )
                 )
