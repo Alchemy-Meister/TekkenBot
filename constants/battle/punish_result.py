@@ -4,7 +4,7 @@
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# modification, are permitted provided that the following conditions are met =
 #
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
@@ -27,10 +27,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .frame_advantage import FrameAdvantage
-from .health import BattleHealth
-from .move_cancel import MoveProperty
-from .punish_result import PunishResult
-from .rounds import BattleRounds
-from .stages import BattleStages
-from .timer import BattleTime
+"""
+"""
+
+import enum
+
+class PunishResult(enum.Enum):
+    """
+    """
+    NO_WINDOW = 0
+    NO_PUNISH = 1
+    PERFECT_PUNISH = 2
+    NO_LAUNCH_ON_LAUNCHABLE = 3
+    LAUNCH_ON_LAUNCHABLE = 4
+    JAB_ON_NOT_LAUNCHABLE = 5
+
+    NOT_YET_CLOSED = 99

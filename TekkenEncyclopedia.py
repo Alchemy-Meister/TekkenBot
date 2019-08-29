@@ -6,6 +6,8 @@ it and presenting it in a more useful way.
 from enum import Enum
 import sys
 import time
+
+from constants.battle import PunishResult
 from MoveInfoEnums import AttackType
 from MoveInfoEnums import ThrowTechs
 from MoveInfoEnums import ComplexMoveStates
@@ -134,7 +136,7 @@ class TekkenEncyclopedia:
 
             if self.current_punish_window is not None:
                 self.close_punish_window(
-                    PunishWindow.Result.NO_WINDOW,
+                    PunishResult.NO_WINDOW,
                     do_close_frame_data_entries=False
                 )
 
@@ -185,16 +187,12 @@ class TekkenEncyclopedia:
                         and startup <= BAD_PUNISH_THRESHOLD
                 ):
                     self.close_punish_window(
-                        PunishWindow.Result.NO_LAUNCH_ON_LAUNCHABLE
+                        PunishResult.NO_LAUNCH_ON_LAUNCHABLE
                     )
                 elif frame_advantage >= LAUNCH_PUNISHIBLE:
-                    self.close_punish_window(
-                        PunishWindow.Result.LAUNCH_ON_LAUNCHABLE
-                    )
+                    self.close_punish_window(PunishResult.LAUNCH_ON_LAUNCHABLE)
                 else:
-                    self.close_punish_window(
-                        PunishWindow.Result.JAB_ON_NOT_LAUNCHABLE
-                    )
+                    self.close_punish_window(PunishResult.JAB_ON_NOT_LAUNCHABLE)
             elif(
                     game_state.has_opp_returned_to_neutral_from_move_id(
                         self.current_punish_window.move_id
@@ -202,9 +200,9 @@ class TekkenEncyclopedia:
                     >= self.current_punish_window.hit_recovery
                 ):
                 if self.current_punish_window.get_frame_advantage() <= -10:
-                    self.close_punish_window(PunishWindow.Result.NO_PUNISH)
+                    self.close_punish_window(PunishResult.NO_PUNISH)
                 else:
-                    self.close_punish_window(PunishWindow.Result.NO_WINDOW)
+                    self.close_punish_window(PunishResult.NO_WINDOW)
             if self.current_punish_window is not None:
                 self.current_punish_window.adjust_window(
                     game_state.get_opp_frames_till_next_move(),
@@ -780,16 +778,8 @@ class RoundSummary:
         pass
 
 class PunishWindow:
-    class Result(Enum):
-        NO_WINDOW = 0
-        NO_PUNISH = 1
-        PERFECT_PUNISH = 2
-        NO_LAUNCH_ON_LAUNCHABLE = 3
-        LAUNCH_ON_LAUNCHABLE = 4
-        JAB_ON_NOT_LAUNCHABLE = 5
-
-        NOT_YET_CLOSED = 99
-
+    """
+    """
     def __init__(
             self, prefix, move_id, string_name, hit_recovery, block_recovery,
             active_frames
@@ -804,7 +794,7 @@ class PunishWindow:
         self.original_diff = self.get_frame_advantage()
         self.upcoming_lock = False
         self.frames_locked = 0
-        self.result = PunishWindow.Result.NOT_YET_CLOSED
+        self.result = PunishResult.NOT_YET_CLOSED
 
     def get_frame_advantage(self):
         if not self.is_window_locked:
@@ -837,9 +827,9 @@ class PunishWindow:
             )
             self.original_diff = self.get_frame_advantage()
 
-    def close_window(self, result: Result):
+    def close_window(self, result: PunishResult):
         self.result = result
-        if result != PunishWindow.Result.NO_WINDOW:
+        if result != PunishResult.NO_WINDOW:
             sys.stdout.write(
                 'Closing punish window, result: {}'.format(self.result.name)
             )
