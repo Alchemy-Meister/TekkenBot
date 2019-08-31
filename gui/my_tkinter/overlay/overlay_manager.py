@@ -32,6 +32,7 @@
 
 import sys
 
+from config import DefaultSettings
 from constants.event import GraphicSettingsChangeEvent
 from constants.overlay import OverlayMode, OverlayPosition
 from gui.model import OverlayModel
@@ -84,14 +85,7 @@ class OverlayManager(metaclass=Singleton):
         self.overlay_enabled = False
 
         self.reloadable_initial_settings = initial_settings
-        if initial_settings:
-            self.reload()
-        else:
-            self.current_overlay = self.__add_overlay(
-                OverlayMode.FRAMEDATA.value
-            )
-            self.change_overlay_position(OverlayPosition.TOP)
-            self.change_overlay_theme(self.overlay_model.get_theme(1))
+        self.reload()
 
     def __screen_mode_change(self, screen_mode):
         self.tekken_screen_mode = screen_mode
@@ -175,7 +169,13 @@ class OverlayManager(metaclass=Singleton):
         frame_data_overlay.set_display_columns(column_settings)
 
     def reload(self):
-        initial_settings = self.reloadable_initial_settings.config['DEFAULT']
+        if self.reloadable_initial_settings:
+            initial_settings = self.reloadable_initial_settings.config[
+                'DEFAULT'
+            ]
+        else:
+            initial_settings = DefaultSettings.SETTINGS['DEFAULT']
+
         if self.current_overlay:
             self.current_overlay.off()
             self.change_overlay(
