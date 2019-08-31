@@ -29,7 +29,6 @@
 
 """
 """
-import sys
 from enum import Enum, EnumMeta
 from .subscriber import Subscriber
 
