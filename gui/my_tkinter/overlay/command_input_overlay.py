@@ -316,22 +316,21 @@ class CommandInputOverlay(Overlay):
             self.frame_move_property.clear()
 
     def _load_resources(self):
-        for printable_value in InputDirection:
+        for enum_member in InputDirection:
             if(
                     InputDirection.NULL
-                    != printable_value
+                    != enum_member
                     != InputDirection.NEUTRAL
             ):
-                str_arrow = printable_value.printable_name['symbol']
                 svg_drawing = svg2rlg(
                     'data/images/arrows/{}.svg'.format(
-                        str_arrow
+                        enum_member.symbol
                     )
                 )
-                self.svg_arrow_images[str_arrow] = svg_drawing
+                self.svg_arrow_images[enum_member.symbol] = svg_drawing
 
-        for printable_value in InputAttack:
-            str_button = printable_value.printable_name
+        for enum_member in InputAttack:
+            str_button = enum_member.printable_name
             if str_button:
                 svg_drawing = svg2rlg(
                     'data/images/buttons/steam_arcade/{}.svg'.format(
@@ -425,27 +424,21 @@ class CommandInputOverlay(Overlay):
                     != direction_code
                     != InputDirection.NULL
             ):
-                image = self.arrow_images[
-                    direction_code.printable_name['symbol']
-                ]
                 self.command_input_canvas.create_image(
                     coordinate_x
                     + self.step_length / 2,
                     self.arrow_image_coordinate_y0,
-                    image=image,
+                    image=self.arrow_images[direction_code.symbol],
                     tag=self.input_tag
                 )
 
             input_code = InputAttack(input_code)
             if input_code != InputAttack.NULL:
-                image = self.button_images[
-                    input_code.printable_name
-                ]
                 self.command_input_canvas.create_image(
                     coordinate_x
                     + self.step_length / 2,
                     self.button_image_coordinate_y0,
-                    image=image,
+                    image=self.button_images[input_code.printable_name],
                     tag=self.input_tag
                 )
 

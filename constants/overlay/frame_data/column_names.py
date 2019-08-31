@@ -29,25 +29,25 @@
 
 """
 """
-from constants.printable_enum import PrintableEnum, PrintableValue
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class Columns(PrintableEnum):
+class Columns(ComplexEnum):
     """
     """
-    INPUT_COMMAND = PrintableValue(0, 'command')
-    MOVE_ID = PrintableValue(1, 'id')
-    MOVE_NAME = PrintableValue(2, 'name')
-    ATTACK_TYPE = PrintableValue(3, 'type')
-    STARTUP_FRAMES = PrintableValue(4, 'startup')
-    ON_BLOCK_FRAMES = PrintableValue(5, 'block')
-    ON_HIT_FRAMES = PrintableValue(6, 'hit')
-    COUNTER_HIT_FRAMES = PrintableValue(7, 'counter')
-    ACTIVE_FRAMES = PrintableValue(8, 'active')
-    TRACKING = PrintableValue(9, 'track')
-    TOTAL_FRAMES = PrintableValue(10, 'total')
-    RECOVERY_FRAMES = PrintableValue(11, 'recovery')
-    OPPONENT_FRAMES = PrintableValue(12, 'opponent')
-    NOTES = PrintableValue(13, 'notes')
+    INPUT_COMMAND = ComplexEnumMember(0, printable_name='command')
+    MOVE_ID = ComplexEnumMember(1, printable_name='id')
+    MOVE_NAME = ComplexEnumMember(2, printable_name='name')
+    ATTACK_TYPE = ComplexEnumMember(3, printable_name='type')
+    STARTUP_FRAMES = ComplexEnumMember(4, printable_name='startup')
+    ON_BLOCK_FRAMES = ComplexEnumMember(5, printable_name='block')
+    ON_HIT_FRAMES = ComplexEnumMember(6, printable_name='hit')
+    COUNTER_HIT_FRAMES = ComplexEnumMember(7, printable_name='counter')
+    ACTIVE_FRAMES = ComplexEnumMember(8, printable_name='active')
+    TRACKING = ComplexEnumMember(9, printable_name='track')
+    TOTAL_FRAMES = ComplexEnumMember(10, printable_name='total')
+    RECOVERY_FRAMES = ComplexEnumMember(11, printable_name='recovery')
+    OPPONENT_FRAMES = ComplexEnumMember(12, printable_name='opponent')
+    NOTES = ComplexEnumMember(13, printable_name='notes')
 
     @staticmethod
     def max_column_lenght():

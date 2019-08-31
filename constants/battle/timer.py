@@ -30,13 +30,13 @@
 """
 """
 
-from constants.printable_enum import PrintableEnum, PrintableValue
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class BattleTime(PrintableEnum):
+class BattleTime(ComplexEnum):
     """
     """
-    THRITY = PrintableValue(30, '30')
-    SIXTY = PrintableValue(60, '60')
-    EIGHTY = PrintableValue(80, '80')
-    NINTY_NINE = PrintableValue(99, '99')
-    INFINITY = PrintableValue(0, 'Infinity')
+    THRITY = ComplexEnumMember(30, printable_name='30')
+    SIXTY = ComplexEnumMember(60, printable_name='60')
+    EIGHTY = ComplexEnumMember(80, printable_name='80')
+    NINTY_NINE = ComplexEnumMember(99, printable_name='99')
+    INFINITY = ComplexEnumMember(0, printable_name='Infinity')

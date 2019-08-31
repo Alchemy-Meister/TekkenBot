@@ -29,3 +29,4 @@
 
 from .game_state import GameStateEvent
 from .graphic_settings_change import GraphicSettingsChangeEvent
+from .punish_window import PunishWindowEvent

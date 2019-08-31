@@ -27,24 +27,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
-"""
-
 import enum
 
-class PrintableValue():
+class PunishWindowEvent(enum.IntEnum):
     """
     """
-    def __init__(self, value, printable_name):
-        self.value = value
-        self.printable_name = printable_name
-
-class PrintableEnum(enum.Enum):
-    """
-    """
-    def __new__(cls, printable_value):
-        enum_instance = object.__new__(cls)
-        # pylint: disable=protected-access
-        enum_instance._value_ = printable_value.value
-        enum_instance.printable_name = printable_value.printable_name
-        return enum_instance
+    CHANGED = enum.auto()
+    SAME = enum.auto()

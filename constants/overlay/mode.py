@@ -30,14 +30,16 @@
 """
 """
 
-from constants.printable_enum import PrintableEnum, PrintableValue
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class OverlayMode(PrintableEnum):
+class OverlayMode(ComplexEnum):
     """
     """
-    FRAMEDATA = PrintableValue(0, 'Frame Data')
-    # TIMELINE = PrintableValue(1, 'Timeline')
-    COMMAND_INPUT = PrintableValue(2, 'Command Inputs (and cancel window)')
-    PUNISH_COACH = PrintableValue(3, 'Punish Alarm (loud!)')
-    MATCHUP_RECORD = PrintableValue(4, 'Matchup Stats')
-    DEGUG_INFO = PrintableValue(5, 'Debugging Variables')
+    FRAMEDATA = ComplexEnumMember(0, printable_name='Frame Data')
+    # TIMELINE = ComplexEnumMember(1, printable_name='Timeline')
+    COMMAND_INPUT = ComplexEnumMember(
+        2, printable_name='Command Inputs (and cancel window)'
+    )
+    PUNISH_COACH = ComplexEnumMember(3, printable_name='Punish Alarm (loud!)')
+    MATCHUP_RECORD = ComplexEnumMember(4, printable_name='Matchup Stats')
+    DEGUG_INFO = ComplexEnumMember(5, printable_name='Debugging Variables')

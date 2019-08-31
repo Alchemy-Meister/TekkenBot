@@ -30,23 +30,24 @@
 """
 """
 
-from constants.complex_enum import ComplexEnum, ComplexEnumMember
-from patterns.singleton import Singleton
+import enum
 
-class PrintableEnumModel(metaclass=Singleton):
-    def __init__(self, printable_enum: ComplexEnum):
-        self.names = list()
-        self.values = list()
+class ComplexEnumMember():
+    """
+    """
+    def __init__(self, value, **kwargs):
+        self.value = value
+        for attribute_name, attribute_value in kwargs.items():
+            setattr(self, attribute_name, attribute_value)
 
-        printable_member: ComplexEnumMember
-        for printable_member in printable_enum:
-            if printable_member.printable_name is not None:
-                self.names.append(printable_member.printable_name)
-                self.values.append(printable_member.value)
-
-    def get_name_values(self, sort=False):
-        if sort:
-            return zip(
-                *sorted(zip(self.names, self.values), key=lambda x: x[0])
-            )
-        return self.names, self.values
+class ComplexEnum(enum.Enum):
+    """
+    """
+    def __new__(cls, complex_enum_member):
+        enum_instance = object.__new__(cls)
+        # pylint: disable=protected-access
+        enum_instance._value_ = complex_enum_member.value
+        for attrib_name, attrib_value in vars(complex_enum_member).items():
+            if attrib_name != 'value':
+                setattr(enum_instance, attrib_name, attrib_value)
+        return enum_instance

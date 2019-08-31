@@ -30,11 +30,11 @@
 """
 """
 
-from constants.printable_enum import PrintableEnum, PrintableValue
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class OverlayPosition(PrintableEnum):
+class OverlayPosition(ComplexEnum):
     """
     """
-    TOP = PrintableValue(0, 'Top')
-    BOTTOM = PrintableValue(1, 'Bottom')
-    DRAGGABLE = PrintableValue(2, 'Draggable')
+    TOP = ComplexEnumMember(0, printable_name='Top')
+    BOTTOM = ComplexEnumMember(1, printable_name='Bottom')
+    DRAGGABLE = ComplexEnumMember(2, printable_name='Draggable')

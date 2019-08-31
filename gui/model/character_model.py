@@ -41,8 +41,8 @@ class CharacterModel(PrintableEnumModel):
 
     @staticmethod
     def get_p1_default_character():
-        return CharacterIDs.KAZUYA.printable_name
+        return getattr(CharacterIDs.KAZUYA, 'printable_name', None)
 
     @staticmethod
     def get_p2_default_character():
-        return CharacterIDs.HEIHACHI.printable_name
+        return getattr(CharacterIDs.HEIHACHI, 'printable_name', None)

@@ -30,35 +30,45 @@
 """
 """
 
-from constants.printable_enum import PrintableEnum, PrintableValue
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class BattleStages(PrintableEnum):
+class BattleStages(ComplexEnum):
     """
     """
-    MISHIMA_DOJO = PrintableValue(0, 'Mishima Dojo')
-    FORGOTTEN_REALM = PrintableValue(1, 'Forgotten Realm')
-    JUNGLE_OUTPOST = PrintableValue(2, 'Jungle Outpost')
-    ARCTIC_SNOWFALL = PrintableValue(3, 'Arctic Snowfall')
-    TWILIGHT_CONFLICT = PrintableValue(4, 'Twilight Conflict')
-    DRAGON_NEST = PrintableValue(5, 'Dragon Nest')
-    SOUQ = PrintableValue(6, 'Souq')
-    DEVILS_PIT = PrintableValue(7, "Devil's Pit")
-    MISHIMA_BUILDING = PrintableValue(8, 'Mishima Building')
-    ABANDONED_TEMPLE = PrintableValue(9, 'Abandoned Temple')
-    DUOMO_DI_SIRIO = PrintableValue(30, 'Duomo di Sirio')
-    ARENA = PrintableValue(31, 'Arena')
-    G_CORP_HELIPAD = PrintableValue(32, 'G. Corp Helipad')
-    G_CORP_HELIPAD_NIGHT = PrintableValue(33, 'G. Corp Helipad Night')
-    BRIMSTONE_AND_FIRE = PrintableValue(35, 'Brimstone & Fire')
-    PRECIPICE_OF_FATE = PrintableValue(36, 'Precipice of Fate')
-    VIOLET_SYSTEMS = PrintableValue(37, 'Violet Systems')
-    KINDER_GYM = PrintableValue(39, 'Kinder Gym')
-    INFINITE_AZURE = PrintableValue(40, 'Infinite Azure')
-    GEOMETRIC_PLANE = PrintableValue(41, 'Geometric Plane')
-    WARM_UP = PrintableValue(42, 'Warm Up') # Not selectable
-    HOWARD_ESTATE = PrintableValue(51, 'Howard Estate')
-    HAMMERHEAD = PrintableValue(52, 'Hammerhead')
-    JUNGLE_OUTPOST_2 = PrintableValue(53, 'Jungle Outpost 2')
-    TWILIGHT_CONFLICT_2 = PrintableValue(54, 'Twilight Conflict 2')
-    INFINITE_AZURE_2 = PrintableValue(55, 'Infinite Azure 2')
-    LAST_DAY_ON_EARTH = PrintableValue(56, 'Last Day on Earth') # DLC
+    MISHIMA_DOJO = ComplexEnumMember(0, printable_name='Mishima Dojo')
+    FORGOTTEN_REALM = ComplexEnumMember(1, printable_name='Forgotten Realm')
+    JUNGLE_OUTPOST = ComplexEnumMember(2, printable_name='Jungle Outpost')
+    ARCTIC_SNOWFALL = ComplexEnumMember(3, printable_name='Arctic Snowfall')
+    TWILIGHT_CONFLICT = ComplexEnumMember(4, printable_name='Twilight Conflict')
+    DRAGON_NEST = ComplexEnumMember(5, printable_name='Dragon Nest')
+    SOUQ = ComplexEnumMember(6, printable_name='Souq')
+    DEVILS_PIT = ComplexEnumMember(7, printable_name="Devil's Pit")
+    MISHIMA_BUILDING = ComplexEnumMember(8, printable_name='Mishima Building')
+    ABANDONED_TEMPLE = ComplexEnumMember(9, printable_name='Abandoned Temple')
+    DUOMO_DI_SIRIO = ComplexEnumMember(30, printable_name='Duomo di Sirio')
+    ARENA = ComplexEnumMember(31, printable_name='Arena')
+    G_CORP_HELIPAD = ComplexEnumMember(32, printable_name='G. Corp Helipad')
+    G_CORP_HELIPAD_NIGHT = ComplexEnumMember(
+        33, printable_name='G. Corp Helipad Night'
+    )
+    BRIMSTONE_AND_FIRE = ComplexEnumMember(
+        35, printable_name='Brimstone & Fire'
+    )
+    PRECIPICE_OF_FATE = ComplexEnumMember(
+        36, printable_name='Precipice of Fate'
+    )
+    VIOLET_SYSTEMS = ComplexEnumMember(37, printable_name='Violet Systems')
+    KINDER_GYM = ComplexEnumMember(39, printable_name='Kinder Gym')
+    INFINITE_AZURE = ComplexEnumMember(40, printable_name='Infinite Azure')
+    GEOMETRIC_PLANE = ComplexEnumMember(41, printable_name='Geometric Plane')
+    WARM_UP = ComplexEnumMember(42, printable_name='Warm Up') # Not selectable
+    HOWARD_ESTATE = ComplexEnumMember(51, printable_name='Howard Estate')
+    HAMMERHEAD = ComplexEnumMember(52, printable_name='Hammerhead')
+    JUNGLE_OUTPOST_2 = ComplexEnumMember(53, printable_name='Jungle Outpost 2')
+    TWILIGHT_CONFLICT_2 = ComplexEnumMember(
+        54, printable_name='Twilight Conflict 2'
+    )
+    INFINITE_AZURE_2 = ComplexEnumMember(55, printable_name='Infinite Azure 2')
+    LAST_DAY_ON_EARTH = ComplexEnumMember(
+        56, printable_name='Last Day on Earth'
+    ) # DLC

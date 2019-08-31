@@ -30,23 +30,25 @@
 """
 """
 
-from constants.printable_enum import PrintableEnum, PrintableValue
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class InputAttack(PrintableEnum):
-    NULL = PrintableValue(0, '')
-    ONE = PrintableValue(512, '1')
-    TWO = PrintableValue(1024, '2')
-    THREE = PrintableValue(2048, '3')
-    FOUR = PrintableValue(4096, '4')
-    ONE_PLUS_TWO = PrintableValue(1536, '1+2')
-    ONE_PLUS_THREE = PrintableValue(2560, '1+3')
-    ONE_PLUS_FOUR = PrintableValue(4608, '1+4')
-    TWO_PLUS_THREE = PrintableValue(3072, '2+3')
-    TWO_PLUS_FOUR = PrintableValue(5120, '2+4')
-    THREE_PLUS_FOUR = PrintableValue(6144, '3+4')
-    ONE_PLUS_TWO_PLUSTHREE = PrintableValue(3584, '1+2+3')
-    ONE_PLUS_TWO_PLUS_FOUR = PrintableValue(5632, '1+2+4')
-    ONE_PLUS_THREE_PLUS_FOUR = PrintableValue(6656, '1+3+4')
-    TWO_PLUS_THREE_PLUS_FOUR = PrintableValue(7168, '2+3+4')
-    ONE_PLUS_TWO_PLUS_THREE_PLUS_FOUR = PrintableValue(7680, '1+2+3+4')
-    RAGE = PrintableValue(8192, 'rage')
+class InputAttack(ComplexEnum):
+    NULL = ComplexEnumMember(0, printable_name='')
+    ONE = ComplexEnumMember(512, printable_name='1')
+    TWO = ComplexEnumMember(1024, printable_name='2')
+    THREE = ComplexEnumMember(2048, printable_name='3')
+    FOUR = ComplexEnumMember(4096, printable_name='4')
+    ONE_PLUS_TWO = ComplexEnumMember(1536, printable_name='1+2')
+    ONE_PLUS_THREE = ComplexEnumMember(2560, printable_name='1+3')
+    ONE_PLUS_FOUR = ComplexEnumMember(4608, printable_name='1+4')
+    TWO_PLUS_THREE = ComplexEnumMember(3072, printable_name='2+3')
+    TWO_PLUS_FOUR = ComplexEnumMember(5120, printable_name='2+4')
+    THREE_PLUS_FOUR = ComplexEnumMember(6144, printable_name='3+4')
+    ONE_PLUS_TWO_PLUSTHREE = ComplexEnumMember(3584, printable_name='1+2+3')
+    ONE_PLUS_TWO_PLUS_FOUR = ComplexEnumMember(5632, printable_name='1+2+4')
+    ONE_PLUS_THREE_PLUS_FOUR = ComplexEnumMember(6656, printable_name='1+3+4')
+    TWO_PLUS_THREE_PLUS_FOUR = ComplexEnumMember(7168, printable_name='2+3+4')
+    ONE_PLUS_TWO_PLUS_THREE_PLUS_FOUR = ComplexEnumMember(
+        7680, printable_name='1+2+3+4'
+    )
+    RAGE = ComplexEnumMember(8192, printable_name='rage')

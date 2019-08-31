@@ -114,10 +114,12 @@ class MemoryOverwritePanelController():
         default_time_limit = TimerModel.get_default_time_limit()
         self.view.get_time_limit_index().set(
             self.timer_model.timer_name_to_index(
-                default_time_limit.printable_name
+                getattr(default_time_limit, 'printable_name', None)
             )
         )
-        self.view.get_time_limit_name().set(default_time_limit.printable_name)
+        self.view.get_time_limit_name().set(
+            getattr(default_time_limit, 'printable_name', None)
+        )
         time_limit_label = self.view.get_time_limit_label()
         time_limit_label.set_enum_class(TimerModel.get_time_limit_enum())
         self.view.columnconfigure(

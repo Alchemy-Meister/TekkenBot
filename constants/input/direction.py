@@ -30,18 +30,18 @@
 """
 """
 
-from constants.printable_enum import PrintableEnum, PrintableValue
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class InputDirection(PrintableEnum):
+class InputDirection(ComplexEnum):
     """
     """
-    NULL = PrintableValue(0, {'abbreviation': '', 'symbol': '!'})
-    DOWN_BACK = PrintableValue(2, {'abbreviation': 'd/b', 'symbol': '↙'})
-    DOWN = PrintableValue(4, {'abbreviation': 'd', 'symbol': '↓'})
-    DOWN_FORWARD = PrintableValue(8, {'abbreviation': 'd/f', 'symbol': '↘'})
-    BACK = PrintableValue(0x10, {'abbreviation': 'b', 'symbol': '←'})
-    NEUTRAL = PrintableValue(0x20, {'abbreviation': 'N', 'symbol': '★'})
-    FORWARD = PrintableValue(0x40, {'abbreviation': 'f', 'symbol': '→'})
-    UP_BACK = PrintableValue(0x80, {'abbreviation': 'u/b', 'symbol': '↖'})
-    UP = PrintableValue(0x100, {'abbreviation': 'u', 'symbol': '↑'})
-    UP_FORWARD = PrintableValue(0x200, {'abbreviation': 'u/f', 'symbol': '↗'})
+    NULL = ComplexEnumMember(0, abbreviation='', symbol='!')
+    DOWN_BACK = ComplexEnumMember(2, abbreviation='d/b', symbol='↙')
+    DOWN = ComplexEnumMember(4, abbreviation='d', symbol='↓')
+    DOWN_FORWARD = ComplexEnumMember(8, abbreviation='d/f', symbol='↘')
+    BACK = ComplexEnumMember(0x10, abbreviation='b', symbol='←')
+    NEUTRAL = ComplexEnumMember(0x20, abbreviation='N', symbol='★')
+    FORWARD = ComplexEnumMember(0x40, abbreviation='f', symbol='→')
+    UP_BACK = ComplexEnumMember(0x80, abbreviation='u/b', symbol='↖')
+    UP = ComplexEnumMember(0x100, abbreviation='u', symbol='↑')
+    UP_FORWARD = ComplexEnumMember(0x200, abbreviation='u/f', symbol='↗')

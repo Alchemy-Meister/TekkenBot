@@ -30,63 +30,69 @@
 """
 """
 
-from constants.printable_enum import PrintableEnum, PrintableValue
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class CharacterIDs(PrintableEnum):
+class CharacterIDs(ComplexEnum):
     """
     """
-    PAUL = PrintableValue(0, 'Paul')
-    LAW = PrintableValue(1, 'Law')
-    KING = PrintableValue(2, 'King')
-    YOSHIMITSU = PrintableValue(3, 'Yoshimitsu')
-    HWOARANG = PrintableValue(4, 'Hwoarang')
-    XIAOYU = PrintableValue(5, 'Xiaoyu')
-    JIN = PrintableValue(6, 'Jin')
-    BRYAN = PrintableValue(7, 'Bryan')
-    HEIHACHI = PrintableValue(8, 'Heihachi')
-    KAZUYA = PrintableValue(9, 'Kazuya') # Also True Devil Kayuza
-    STEVE = PrintableValue(10, 'Steve')
-    JACK_7 = PrintableValue(11, 'Jack 7')
-    ASUKA = PrintableValue(12, 'Asuka')
-    DEVIL_JIN = PrintableValue(13, 'Devil Jin')
-    FENG = PrintableValue(14, 'Feng')
-    LILI = PrintableValue(15, 'Lili')
-    DRAGUNOV = PrintableValue(16, 'Dragunov')
-    LEO = PrintableValue(17, 'Leo')
-    LARS = PrintableValue(18, 'Lars')
-    ALISA = PrintableValue(19, 'Alisa')
-    CLAUDIO = PrintableValue(20, 'Claudio')
-    KATARINA = PrintableValue(21, 'Katarina')
-    LUCKY_CHLOE = PrintableValue(22, 'Lucky Chloe')
-    SHAHEEN = PrintableValue(23, 'Shaheen')
-    JOSIE = PrintableValue(24, 'Josie')
-    GIGAS = PrintableValue(25, 'Gigas')
-    KAZUMI = PrintableValue(26, 'Kazumi')
-    DEVIL_KAZUMI = PrintableValue(27, 'Devil Kazumi') # Not selectable
-    NINA = PrintableValue(28, 'Nina')
-    MASTER_RAVEN = PrintableValue(29, 'Master Raven')
-    LEE = PrintableValue(30, 'Lee')
-    BOB = PrintableValue(31, 'Bob')
-    AKUMA = PrintableValue(32, 'Akuma')
-    KUMA = PrintableValue(33, 'Kuma')
-    PANDA = PrintableValue(34, 'Panda')
-    EDDY = PrintableValue(35, 'Eddy')
-    ELIZA = PrintableValue(36, 'Eliza') # DLC
-    MIGUEL = PrintableValue(37, 'Miguel')
-    TEKKEN_FORCE = PrintableValue(38, 'Tekken Force') # Not selectable
-    KID_KAZUYA = PrintableValue(39, 'Kid Kazuya') # Not selectable
-    JACK_4 = PrintableValue(40, 'Jack 4') # Not selectable
-    YOUNG_HEIHACHI = PrintableValue(41, 'Young Heihachi') # Not selectable
-    TRAINING_DUMMY = PrintableValue(42, 'Training Dummy') # Not selectable
-    GEESE = PrintableValue(43, 'Geese') # DLC
-    NOCTIS = PrintableValue(44, 'Noctis') # DLC
-    ANNA = PrintableValue(45, 'Anna') # DLC
-    LEI = PrintableValue(46, 'Lei') # DLC
-    MARDUK = PrintableValue(47, 'Marduk') # DLC
-    ARMOR_KING = PrintableValue(48, 'Armor King') # DLC
-    JULIA = PrintableValue(49, 'Julia') # DLC
-    NEGAN = PrintableValue(50, 'Negan') # DLC
-
-    NOT_YET_LOADED = PrintableValue(71, None)
-
-    NO_SELECTION = PrintableValue(255, None) # Value if cursor is not shown
+    PAUL = ComplexEnumMember(0, printable_name='Paul')
+    LAW = ComplexEnumMember(1, printable_name='Law')
+    KING = ComplexEnumMember(2, printable_name='King')
+    YOSHIMITSU = ComplexEnumMember(3, printable_name='Yoshimitsu')
+    HWOARANG = ComplexEnumMember(4, printable_name='Hwoarang')
+    XIAOYU = ComplexEnumMember(5, printable_name='Xiaoyu')
+    JIN = ComplexEnumMember(6, printable_name='Jin')
+    BRYAN = ComplexEnumMember(7, printable_name='Bryan')
+    HEIHACHI = ComplexEnumMember(8, printable_name='Heihachi')
+    KAZUYA = ComplexEnumMember(9, printable_name='Kazuya') # + True Devil Kayuza
+    STEVE = ComplexEnumMember(10, printable_name='Steve')
+    JACK_7 = ComplexEnumMember(11, printable_name='Jack 7')
+    ASUKA = ComplexEnumMember(12, printable_name='Asuka')
+    DEVIL_JIN = ComplexEnumMember(13, printable_name='Devil Jin')
+    FENG = ComplexEnumMember(14, printable_name='Feng')
+    LILI = ComplexEnumMember(15, printable_name='Lili')
+    DRAGUNOV = ComplexEnumMember(16, printable_name='Dragunov')
+    LEO = ComplexEnumMember(17, printable_name='Leo')
+    LARS = ComplexEnumMember(18, printable_name='Lars')
+    ALISA = ComplexEnumMember(19, printable_name='Alisa')
+    CLAUDIO = ComplexEnumMember(20, printable_name='Claudio')
+    KATARINA = ComplexEnumMember(21, printable_name='Katarina')
+    LUCKY_CHLOE = ComplexEnumMember(22, printable_name='Lucky Chloe')
+    SHAHEEN = ComplexEnumMember(23, printable_name='Shaheen')
+    JOSIE = ComplexEnumMember(24, printable_name='Josie')
+    GIGAS = ComplexEnumMember(25, printable_name='Gigas')
+    KAZUMI = ComplexEnumMember(26, printable_name='Kazumi')
+    # --- Not selectable character --------------------------------------------
+    DEVIL_KAZUMI = ComplexEnumMember(27, printable_name='Devil Kazumi')
+    # -------------------------------------------------------------------------
+    NINA = ComplexEnumMember(28, printable_name='Nina')
+    MASTER_RAVEN = ComplexEnumMember(29, printable_name='Master Raven')
+    LEE = ComplexEnumMember(30, printable_name='Lee')
+    BOB = ComplexEnumMember(31, printable_name='Bob')
+    AKUMA = ComplexEnumMember(32, printable_name='Akuma')
+    KUMA = ComplexEnumMember(33, printable_name='Kuma')
+    PANDA = ComplexEnumMember(34, printable_name='Panda')
+    EDDY = ComplexEnumMember(35, printable_name='Eddy')
+    # --- DLC character -------------------------------------------------------
+    ELIZA = ComplexEnumMember(36, printable_name='Eliza')
+     # -------------------------------------------------------------------------
+    MIGUEL = ComplexEnumMember(37, printable_name='Miguel')
+    # --- Not selectable characters -------------------------------------------
+    TEKKEN_FORCE = ComplexEnumMember(38, printable_name='Tekken Force')
+    KID_KAZUYA = ComplexEnumMember(39, printable_name='Kid Kazuya')
+    JACK_4 = ComplexEnumMember(40, printable_name='Jack 4')
+    YOUNG_HEIHACHI = ComplexEnumMember(41, printable_name='Young Heihachi')
+    TRAINING_DUMMY = ComplexEnumMember(42, printable_name='Training Dummy')
+    # --- DLC characters ------------------------------------------------------
+    GEESE = ComplexEnumMember(43, printable_name='Geese')
+    NOCTIS = ComplexEnumMember(44, printable_name='Noctis')
+    ANNA = ComplexEnumMember(45, printable_name='Anna')
+    LEI = ComplexEnumMember(46, printable_name='Lei')
+    MARDUK = ComplexEnumMember(47, printable_name='Marduk')
+    ARMOR_KING = ComplexEnumMember(48, printable_name='Armor King')
+    JULIA = ComplexEnumMember(49, printable_name='Julia')
+    NEGAN = ComplexEnumMember(50, printable_name='Negan')
+    # -------------------------------------------------------------------------
+    NOT_YET_LOADED = ComplexEnumMember(71, printable_name=None)
+    # Value if cursor is not shown
+    NO_SELECTION = ComplexEnumMember(255, printable_name=None)

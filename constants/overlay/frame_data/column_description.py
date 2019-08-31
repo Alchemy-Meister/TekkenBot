@@ -29,22 +29,36 @@
 
 """
 """
-from constants.printable_enum import PrintableEnum, PrintableValue
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class ColumnsDescription(PrintableEnum):
-    INPUT_COMMAND = PrintableValue(0, 'input command')
-    MOVE_ID = PrintableValue(1, 'internal move id number')
-    MOVE_NAME = PrintableValue(2, 'internal move name')
-    ATTACK_TYPE = PrintableValue(3, 'attack type')
-    STARTUP_FRAMES = PrintableValue(4, 'startup frames')
-    ON_BLOCK_FRAMES = PrintableValue(5, 'frame advantage on block')
-    ON_HIT_FRAMES = PrintableValue(6, 'frame advantage on hit')
-    COUNTER_HIT_FRAMES = PrintableValue(7, 'frame advantage on counter hit')
-    ACTIVE_FRAMES = PrintableValue(
-        8, 'active frame connected on/total active frames'
+class ColumnsDescription(ComplexEnum):
+    INPUT_COMMAND = ComplexEnumMember(0, printable_name='input command')
+    MOVE_ID = ComplexEnumMember(1, printable_name='internal move id number')
+    MOVE_NAME = ComplexEnumMember(2, printable_name='internal move name')
+    ATTACK_TYPE = ComplexEnumMember(3, printable_name='attack type')
+    STARTUP_FRAMES = ComplexEnumMember(4, printable_name='startup frames')
+    ON_BLOCK_FRAMES = ComplexEnumMember(
+        5, printable_name='frame advantage on block'
     )
-    TRACKING = PrintableValue(9, 'how well move tracks during startup')
-    TOTAL_FRAMES = PrintableValue(10, 'total number of frames in move')
-    REACTION_FRAMES = PrintableValue(11, 'frames before attacker can act')
-    OPPONET_FRAMES = PrintableValue(12, 'frames before defender can act')
-    NOTES = PrintableValue(13, 'additional move properties')
+    ON_HIT_FRAMES = ComplexEnumMember(
+        6, printable_name='frame advantage on hit'
+    )
+    COUNTER_HIT_FRAMES = ComplexEnumMember(
+        7, printable_name='frame advantage on counter hit'
+    )
+    ACTIVE_FRAMES = ComplexEnumMember(
+        8, printable_name='active frame connected on/total active frames'
+    )
+    TRACKING = ComplexEnumMember(
+        9, printable_name='how well move tracks during startup'
+    )
+    TOTAL_FRAMES = ComplexEnumMember(
+        10, printable_name='total number of frames in move'
+    )
+    REACTION_FRAMES = ComplexEnumMember(
+        11, printable_name='frames before attacker can act'
+    )
+    OPPONET_FRAMES = ComplexEnumMember(
+        12, printable_name='frames before defender can act'
+    )
+    NOTES = ComplexEnumMember(13, printable_name='additional move properties')
