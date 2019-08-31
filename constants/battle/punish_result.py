@@ -29,17 +29,19 @@
 
 """
 """
-
 import enum
 
-class PunishResult(enum.Enum):
-    """
-    """
-    NO_WINDOW = 0
-    NO_PUNISH = 1
-    PERFECT_PUNISH = 2
-    NO_LAUNCH_ON_LAUNCHABLE = 3
-    LAUNCH_ON_LAUNCHABLE = 4
-    JAB_ON_NOT_LAUNCHABLE = 5
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-    NOT_YET_CLOSED = 99
+class PunishResult(ComplexEnum):
+    """
+    """
+    NO_WINDOW = ComplexEnumMember(enum.auto())
+    NO_PUNISH = ComplexEnumMember(enum.auto(), is_wrong_punish=True)
+    PERFECT_PUNISH = ComplexEnumMember(enum.auto())
+    NO_LAUNCH_ON_LAUNCHABLE = ComplexEnumMember(
+        enum.auto(), is_wrong_punish=True
+    )
+    LAUNCH_ON_LAUNCHABLE = ComplexEnumMember(enum.auto())
+    JAB_ON_NOT_LAUNCHABLE = ComplexEnumMember(enum.auto())
+    NOT_YET_CLOSED = ComplexEnumMember(enum.auto())
