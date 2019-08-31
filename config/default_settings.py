@@ -39,25 +39,24 @@ class DefaultSettings():
     """
     """
     PATH = 'data/settings.ini'
-    # pylint: disable=no-member
     SETTINGS = {
         'DEFAULT': {
             'overlay_enable': 'true',
-            'overlay_mode': OverlayMode.FRAMEDATA.name,
-            'overlay_position': OverlayPosition.TOP.name,
+            'overlay_mode': getattr(OverlayMode.FRAMEDATA, 'name'),
+            'overlay_position': getattr(OverlayPosition.TOP, 'name'),
             'overlay_theme': 'classic',
             'framedata_overlay_columns': [
-                Columns.INPUT_COMMAND.name,
-                Columns.ATTACK_TYPE.name,
-                Columns.STARTUP_FRAMES.name,
-                Columns.ON_BLOCK_FRAMES.name,
-                Columns.ON_HIT_FRAMES.name,
-                Columns.ACTIVE_FRAMES.name,
-                Columns.TRACKING.name,
-                Columns.TOTAL_FRAMES.name,
-                Columns.RECOVERY_FRAMES.name,
-                Columns.OPPONENT_FRAMES.name,
-                Columns.NOTES.name
+                getattr(Columns.INPUT_COMMAND, 'name'),
+                getattr(Columns.ATTACK_TYPE, 'name'),
+                getattr(Columns.STARTUP_FRAMES, 'name'),
+                getattr(Columns.ON_BLOCK_FRAMES, 'name'),
+                getattr(Columns.ON_HIT_FRAMES, 'name'),
+                getattr(Columns.ACTIVE_FRAMES, 'name'),
+                getattr(Columns.TRACKING, 'name'),
+                getattr(Columns.TOTAL_FRAMES, 'name'),
+                getattr(Columns.RECOVERY_FRAMES, 'name'),
+                getattr(Columns.OPPONENT_FRAMES, 'name'),
+                getattr(Columns.NOTES, 'name')
             ]
         }
     }
