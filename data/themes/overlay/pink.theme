@@ -8,6 +8,6 @@ system_text = DeepPink4
 advantage_plus = light steel blue
 advantage_safe_slight_minus = light grey
 advantage_safe_minus = light grey
-advantage_punishible = gray
+advantage_punishable = gray
 advantage_very_punishable = light slate gray
 advantage_text = black

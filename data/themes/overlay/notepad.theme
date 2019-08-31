@@ -8,6 +8,6 @@ system_text = black
 advantage_plus = snow
 advantage_safe_slight_minus = snow
 advantage_safe_minus = snow
-advantage_punishible = snow
+advantage_punishable = snow
 advantage_very_punishable = snow
 advantage_text = black

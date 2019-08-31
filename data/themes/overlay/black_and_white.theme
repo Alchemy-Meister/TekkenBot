@@ -8,6 +8,6 @@ system_text = cornsilk2
 advantage_plus = black
 advantage_safe_slight_minus = black
 advantage_safe_minus = black
-advantage_punishible = black
+advantage_punishable = black
 advantage_very_punishable = black
 advantage_text = snow
