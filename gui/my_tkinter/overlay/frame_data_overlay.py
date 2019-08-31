@@ -34,6 +34,8 @@ import re
 import tkinter as tk
 import tkinter.font as tkfont
 
+from config import DefaultSettings
+
 from constants.battle import FrameAdvantage
 from constants.overlay import OverlayMode
 from constants.overlay.frame_data import Columns
@@ -57,21 +59,6 @@ class FrameDataOverlay(WritableOverlay):
         self.attack_log = list()
         self.longest_log_line = ''
         self.longest_log_font_size = None
-
-        # pylint: disable=no-member
-        initial_column_settings = [
-            Columns.INPUT_COMMAND.name,
-            Columns.ATTACK_TYPE.name,
-            Columns.STARTUP_FRAMES.name,
-            Columns.ON_BLOCK_FRAMES.name,
-            Columns.ON_HIT_FRAMES.name,
-            Columns.ACTIVE_FRAMES.name,
-            Columns.TRACKING.name,
-            Columns.TOTAL_FRAMES.name,
-            Columns.RECOVERY_FRAMES.name,
-            Columns.OPPONENT_FRAMES.name,
-            Columns.NOTES.name
-        ]
 
         # TODO load this dict dynamically
         self.frame_advantage_backgrounds = {
@@ -113,7 +100,9 @@ class FrameDataOverlay(WritableOverlay):
         self.textbox.grid(column=1, row=0, rowspan=2, sticky=tk.N + tk.E + tk.W)
         self.p2_frame_panel.grid(column=2, row=1, sticky=tk.N + tk.S + tk.E)
 
-        self.set_display_columns(initial_column_settings)
+        self.set_display_columns(
+            DefaultSettings.SETTINGS['DEFAULT']['framedata_overlay_columns']
+        )
 
     def set_display_columns(
             self, display_columns_settings
