@@ -128,7 +128,7 @@ class OverlayManager(metaclass=Singleton):
             initial_settings = DefaultSettings.SETTINGS['DEFAULT']
 
         if self.current_overlay:
-            self.current_overlay.turn_off()
+            self.current_overlay.set_enable(False)
             self.change_overlay(
                 OverlayMode[initial_settings.get('overlay_mode')]
             )
