@@ -87,7 +87,7 @@ class FrameDataOverlay(WritableOverlay):
             foreground='lawn green'
         )
 
-        self.insert_columns_to_log(
+        self.__insert_columns_to_log(
             [column.printable_name for column in Columns]
         )
 
@@ -131,38 +131,6 @@ class FrameDataOverlay(WritableOverlay):
         except TypeError:
             pass
         self.is_resizing = False
-
-    def __update_textbox_info(self):
-        self.__clear(clear_header=True)
-        max_log_line_length = 0
-        for tag, values in self.attack_log:
-            log_line = ''.join(
-                [
-                    self.__generate_visible_column_string(
-                        values
-                    ),
-                    '\n'
-                ]
-            )
-            log_line_length = len(log_line)
-            if log_line_length > max_log_line_length:
-                self.longest_log_line = log_line
-                max_log_line_length = log_line_length
-            self.textbox.insert(
-                tk.END,
-                log_line,
-                tag
-            )
-        self.longest_log_font_size = (
-            WritableOverlay._get_font_text_dimensions(
-                tkfont.Font(
-                    family=self.initial_textbox_font[0],
-                    size=self.initial_textbox_font[1]
-                ),
-                self.longest_log_line
-            )
-        )
-        self.textbox.fit_to_content()
 
     def set_theme(self, theme_dict):
         super().set_theme(theme_dict)
@@ -229,7 +197,7 @@ class FrameDataOverlay(WritableOverlay):
             all_columns_values = FrameDataOverlay.__generate_columns(
                 display_string
             )
-            self.insert_columns_to_log(all_columns_values)
+            self.__insert_columns_to_log(all_columns_values)
             display_string = self.__generate_visible_column_string(
                 all_columns_values
             )
@@ -270,31 +238,10 @@ class FrameDataOverlay(WritableOverlay):
         ]
         return FrameDataOverlay.__generate_column_string(*visible_columns)
 
-    def insert_columns_to_log(self, columns, tag=None):
+    def __insert_columns_to_log(self, columns, tag=None):
         if len(self.attack_log) >= self.max_attack_log_length:
             self.attack_log.pop(1)
         self.attack_log.append([tag, columns])
-
-    def __update_frame_advantage(self, frame_advantage, player_1=True):
-        if '?' not in frame_advantage:
-            frame_advantage = int(frame_advantage)
-            current_frame_advantage_enum = None
-            for frame_advantage_enum in FrameAdvantage:
-                if frame_advantage <= frame_advantage_enum.value:
-                    current_frame_advantage_enum = frame_advantage_enum
-                    break
-            if frame_advantage >= 0:
-                frame_advantage = ''.join(['+', str(frame_advantage)])
-            if player_1:
-                self.p1_frame_panel.str_frame_advantage.set(frame_advantage)
-                self.p1_frame_panel.set_frame_advantage(
-                    current_frame_advantage_enum
-                )
-            else:
-                self.p2_frame_panel.str_frame_advantage.set(frame_advantage)
-                self.p2_frame_panel.set_frame_advantage(
-                    current_frame_advantage_enum
-                )
 
     def _resize_overlay_widgets(self, overlay_scale=None):
         if overlay_scale:
@@ -345,13 +292,26 @@ class FrameDataOverlay(WritableOverlay):
             )
         )
 
-    def _update_visible_state(self):
-        previous_visible_state = self.visible
-        self.visible = self.launcher.game_state.is_in_battle()
-        if previous_visible_state != self.visible and not self.visible:
-            self.__clear()
-            self.textbox.insert(tk.END, '\n')
-            self.textbox.update()
+    def __update_frame_advantage(self, frame_advantage, player_1=True):
+        if '?' not in frame_advantage:
+            frame_advantage = int(frame_advantage)
+            current_frame_advantage_enum = None
+            for frame_advantage_enum in FrameAdvantage:
+                if frame_advantage <= frame_advantage_enum.value:
+                    current_frame_advantage_enum = frame_advantage_enum
+                    break
+            if frame_advantage >= 0:
+                frame_advantage = ''.join(['+', str(frame_advantage)])
+            if player_1:
+                self.p1_frame_panel.str_frame_advantage.set(frame_advantage)
+                self.p1_frame_panel.set_frame_advantage(
+                    current_frame_advantage_enum
+                )
+            else:
+                self.p2_frame_panel.str_frame_advantage.set(frame_advantage)
+                self.p2_frame_panel.set_frame_advantage(
+                    current_frame_advantage_enum
+                )
 
     def _update_state(self):
         game_state = self.launcher.game_state
@@ -373,3 +333,44 @@ class FrameDataOverlay(WritableOverlay):
 
             self.p1_frame_panel.str_live_recovery.set(str_p1_recovery)
             self.p2_frame_panel.str_live_recovery.set(str_p2_recovery)
+
+
+    def __update_textbox_info(self):
+        self.__clear(clear_header=True)
+        max_log_line_length = 0
+        for tag, values in self.attack_log:
+            log_line = ''.join(
+                [
+                    self.__generate_visible_column_string(
+                        values
+                    ),
+                    '\n'
+                ]
+            )
+            log_line_length = len(log_line)
+            if log_line_length > max_log_line_length:
+                self.longest_log_line = log_line
+                max_log_line_length = log_line_length
+            self.textbox.insert(
+                tk.END,
+                log_line,
+                tag
+            )
+        self.longest_log_font_size = (
+            WritableOverlay._get_font_text_dimensions(
+                tkfont.Font(
+                    family=self.initial_textbox_font[0],
+                    size=self.initial_textbox_font[1]
+                ),
+                self.longest_log_line
+            )
+        )
+        self.textbox.fit_to_content()
+
+    def _update_visible_state(self):
+        previous_visible_state = self.visible
+        self.visible = self.launcher.game_state.is_in_battle()
+        if previous_visible_state != self.visible and not self.visible:
+            self.__clear()
+            self.textbox.insert(tk.END, '\n')
+            self.textbox.update()
