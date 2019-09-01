@@ -22,6 +22,7 @@ Created by roguelike2d. Maintained by the community.
 - [x] Resizable overlay windows on draggable mode.
 
 #### Frame data overlay
+- [x] Up to 4 frame data lines.
 - [x] Frame data text widget width fits to its content.
 - [x] Custom column ordering. Configurable in *./data/settings.ini*
 
