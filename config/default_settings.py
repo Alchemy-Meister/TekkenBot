@@ -45,6 +45,7 @@ class DefaultSettings():
             'alarm_enable': False,
             'alarm_sound_folder': 'original',
             'alarm_voice_folder': 'original',
+            'overlay_automatic_hide': True,
             'overlay_enable': True,
             'overlay_mode': getattr(OverlayMode.FRAMEDATA, 'name'),
             'overlay_position': getattr(OverlayPosition.TOP, 'name'),
