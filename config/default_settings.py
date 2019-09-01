@@ -30,6 +30,7 @@
 """
 """
 import configparser
+import distutils.util as utils
 import re
 
 from constants.overlay import OverlayMode, OverlayPosition
@@ -41,10 +42,10 @@ class DefaultSettings():
     PATH = 'data/settings.ini'
     SETTINGS = {
         'DEFAULT': {
-            'alarm_enable': str(False),
+            'alarm_enable': False,
             'alarm_sound_folder': 'original',
             'alarm_voice_folder': 'original',
-            'overlay_enable': str(True),
+            'overlay_enable': True,
             'overlay_mode': getattr(OverlayMode.FRAMEDATA, 'name'),
             'overlay_position': getattr(OverlayPosition.TOP, 'name'),
             'overlay_theme': 'classic',
@@ -101,7 +102,10 @@ class DefaultSettings():
                     if column_name
                     ]
             else:
-                settings['DEFAULT'][key] = value
+                try:
+                    settings['DEFAULT'][key] = bool(utils.strtobool(value))
+                except ValueError:
+                    settings['DEFAULT'][key] = value
         return settings
 
     @staticmethod
