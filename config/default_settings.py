@@ -94,9 +94,12 @@ class DefaultSettings():
         settings = {'DEFAULT': {}}
         for key, value in str_settings_dict['DEFAULT'].items():
             if re.search(r'[,|\[|\]]', value):
-                settings['DEFAULT'][key] = (
-                    re.sub(r'[^a-zA-Z_,]+', '', value).split(',')
-                )
+                settings['DEFAULT'][key] = [
+                    column_name for column_name in re.sub(
+                        r'[^a-zA-Z_,]+', '', value
+                    ).split(',')
+                    if column_name
+                    ]
             else:
                 settings['DEFAULT'][key] = value
         return settings
