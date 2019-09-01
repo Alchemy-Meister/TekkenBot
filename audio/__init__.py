@@ -29,5 +29,5 @@
 
 """
 """
-
+from .punish_coach_alarm import PunishCoachAlarm
 from .sound_player import SoundPlayer
