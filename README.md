@@ -17,13 +17,13 @@ Created by roguelike2d. Maintained by the community.
 - [x] Added the possibility to write into the Tekken's process memory to overwrite characters, stages, among other settings. (Includes *non-playable* characters and stages)
 
 ### Overlays
-- [x] Overlays show and hide automatically on battle's start and end.
+- [x] Overlays show and hide automatically on battle's start and end. Configurable in *./data/settings.ini*
 - [x] Overlays scale to different resolutions.
 - [x] Resizable overlay windows on draggable mode.
 
 #### Frame data overlay
 - [x] Frame data text widget width fits to its content.
-- [x] Custom column ordering.
+- [x] Custom column ordering. Configurable in *./data/settings.ini*
 
 #### Command input overlay
 - [x] Input arrows and buttons mimic Tekken GUI's style. (Credits to: [mspkvp](https://github.com/mspkvp/tk7movespretty))
@@ -41,7 +41,7 @@ Created by roguelike2d. Maintained by the community.
 - [x] Initial overlay configuration can be changed in *./data/settings.ini*
 
 ### TODO
-- [ ] Add a settings menu to display or hide frame data columns and save configuration into a file.
+- [ ] Add a settings menu to the GUI to display or hide frame data columns and save configuration into a file.
 - [ ] Reimplement other overlays (Only frame-data and command input overlays have been implemented)
 - [ ] Endless bug fixes
 - [ ] Complete this list :P
@@ -64,7 +64,7 @@ If you want to run from source instead, install Python 3 and run `pip install -r
 **A:** Wait for a good soul to update the `memory_address.ini` file, or fix it yourself by following the guide on the Wiki.
 
 **Q:** The frame advantage of this move seems wrong!\
-**A:** Double check using the alternative "manual" method to find frame advantage with the help of `tiny_live_frame_data_numbers`:
+**A:** Double check using the alternative "manual" method to find frame advantage with the help of `tiny live frame data numbers`:
 1. mirror match (because not all characters have the same jumps)
 2. do your attack, neutral jump, and don't do anything else
 3. set the dummy to neutral jump as second action\
