@@ -30,6 +30,10 @@ Created by roguelike2d. Maintained by the community.
 - [x] Support for Rage button.
 - [x] SVG icon scaling.
 
+### Audio
+- [x] Overlay independent Punish Coach Alarm.
+- [x] Customizable sounds and voices under under *./data/audios/voice/* and *./data/audios/sound/* respectively.
+
 ### Networking
 - [x] Check for new releases on github repository and download them.
 
@@ -54,7 +58,7 @@ Created by roguelike2d. Maintained by the community.
 
 **Q:** How do I use this thing?\
 **A:** Go to the releases page, download the latest `TekkenBotPrime_vXXX.zip`, extract the files somewhere, open `TekkenBotPrime.exe`, and finally hop into practice mode.\
-If you want to run from source instead, install Python 3 and run `tekken_bot_prime.py`
+If you want to run from source instead, install Python 3 and run `pip install -r requirements.txt` then `python tekken_bot_prime.py`
 
 **Q:** The bot stopped working after a game patch!\
 **A:** Wait for a good soul to update the `memory_address.ini` file, or fix it yourself by following the guide on the Wiki.
@@ -73,7 +77,7 @@ If you want to run from source instead, install Python 3 and run `tekken_bot_pri
 **A:** Play borderless or windowed, full screen doesn't work.
 
 **Q:** But I really really want to play full screen otherwise my game will lag!\
-**A:** If you have a multi-monitor setup, enable `overlay_as_draggable_window` and move the overlay to a different monitor.
+**A:** If you have a multi-monitor setup, set the Overlay Position to *Draggable* in Overlay > Position > Draggable and move the overlay to a different monitor.
 ## Tools
 ### FrameDataOverlay
 A window that can go over the game to display real time move information read from memory. Requires the game to be in windowed or borderless to work or can be run as a standalone window on a second screen.
@@ -91,6 +95,6 @@ Pushes jab or a user inputted move when getting out of block stun.
 Attempts to punish negative attacks with the best available punish. Punishes are listed in the character's file in the /TekkenData folder.
 ## Project details
 ### Prerequisites
-Tekken Bot is developed on Python 3.5 and tries to use only core libraries to improve portability, download size, and, someday, optimization. It targets the 64-bit version of Tekken 7 available through Steam on Windows 7/8/10.
+Tekken Bot is developed on Python 3.7 and tries to use only core libraries to improve portability, download size, and, someday, optimization. It targets the 64-bit version of Tekken 7 available through Steam on Windows 7/8/10.
 ### Deployment
 Tekken Bot distributable is built using pyinstaller with Python 3.7. On Windows, use the included build_project.ps1 file with Powershell 5.
