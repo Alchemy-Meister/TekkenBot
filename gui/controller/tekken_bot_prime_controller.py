@@ -33,6 +33,7 @@ import sys
 import tkinter as tk
 from tkinter import messagebox
 
+from audio import PunishCoachAlarm
 from constants.overlay import OverlayMode, OverlayPosition
 from config import DefaultSettings, ReloadableConfigManager
 from gui.model import OverlayModel
@@ -42,6 +43,7 @@ from gui.view import TekkenBotPrimeView
 
 from network import NoInternetConnectionError
 
+from tekken.coach import PunishCoach
 from tekken.launcher import Launcher
 
 from .memory_override_panel_controller import MemoryOverwritePanelController
@@ -78,6 +80,7 @@ class TekkenBotPrimeController():
         self.launcher = None
         self.overlay_manager = None
         self.mop_controller = None
+        self.punish_coach_alarm = None
 
         self.__initialize_console_text()
         self.root.mainloop()
@@ -89,7 +92,9 @@ class TekkenBotPrimeController():
         self.view.load_overlay_themes(
             enumerate(self.model.get_overlay_themes_names())
         )
+        self.__update_alarm_gui_settings()
         self.__update_overlay_gui_settings()
+        self.punish_coach_alarm.reload()
         self.overlay_manager.reload()
 
     def enable_save_to_file(self, enable):
@@ -111,6 +116,9 @@ class TekkenBotPrimeController():
 
     def enable_overlay(self, enable):
         self.overlay_manager.enable_overlay(enable)
+
+    def enable_punish_alarm(self, enable):
+        self.punish_coach_alarm.enable(enable)
 
     def overlay_mode_change(self, overlay_mode_name):
         self.overlay_manager.change_overlay(
@@ -183,7 +191,12 @@ class TekkenBotPrimeController():
 
     def __post_console_initialization(self):
         self.launcher = Launcher(self.root, extended_print=False)
-        self.__intialize_overlay_settings()
+        self.reloadable_initial_settings = self.config_manager.add_config(
+            'settings.ini', parse=True, config_model_class=DefaultSettings
+        )
+        self.__initialize_overlay_settings()
+        self.__initialize_punish_alarm()
+
         self.__initialize_memory_override_panel()
 
         self.root.after(1, self.root.focus_force())
@@ -196,15 +209,24 @@ class TekkenBotPrimeController():
         self.view.memory_overwride_panel = self.mop_controller.view
         self.show_memory_override(False)
 
-    def __intialize_overlay_settings(self):
-        self.reloadable_initial_settings = self.config_manager.add_config(
-            'settings.ini', parse=True, config_model_class=DefaultSettings
-        )
+    def __initialize_overlay_settings(self):
         self.__update_overlay_gui_settings()
-
         self.overlay_manager = OverlayManager(
             self.launcher,
             initial_settings=self.reloadable_initial_settings
+        )
+
+    def __initialize_punish_alarm(self):
+        self.__update_alarm_gui_settings()
+        self.punish_coach_alarm = PunishCoachAlarm(
+            PunishCoach(self.launcher), self.reloadable_initial_settings
+        )
+
+    def __update_alarm_gui_settings(self):
+        self.view.enable_punish_alarm.set(
+            self.reloadable_initial_settings.config['DEFAULT'].get(
+                'alarm_enable'
+            )
         )
 
     def __update_overlay_gui_settings(self):

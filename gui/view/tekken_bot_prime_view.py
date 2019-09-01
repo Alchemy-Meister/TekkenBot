@@ -84,6 +84,17 @@ class TekkenBotPrimeView():
             )
         )
 
+        punish_alarm_menu = tk.Menu(self.menu_bar, tearoff=0)
+
+        self.enable_punish_alarm = tk.BooleanVar(value=False)
+        punish_alarm_menu.add_checkbutton(
+            label='Enable',
+            variable=self.enable_punish_alarm,
+            command=lambda: self.controller.enable_punish_alarm(
+                self.enable_punish_alarm.get()
+            )
+        )
+
         self.overlay_menu = tk.Menu(self.menu_bar, tearoff=0)
 
         self.enable_overlay = tk.BooleanVar(value=False)
@@ -129,6 +140,7 @@ class TekkenBotPrimeView():
 
         self.menu_bar.add_cascade(label='Tekken Bot', menu=tekken_bot_menu)
         self.menu_bar.add_cascade(label='View', menu=view)
+        self.menu_bar.add_cascade(label='Punish Alarm', menu=punish_alarm_menu)
         self.menu_bar.add_cascade(label='Overlay', menu=self.overlay_menu)
         self.menu_bar.add_cascade(label='Help', menu=help_menu)
 
