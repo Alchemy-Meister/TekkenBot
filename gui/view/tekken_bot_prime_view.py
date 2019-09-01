@@ -106,8 +106,17 @@ class TekkenBotPrimeView():
             )
         )
 
+        self.overlay_auto_hide = tk.BooleanVar(value=False)
+        self.overlay_menu.add_checkbutton(
+            label='Auto-hide',
+            variable=self.overlay_auto_hide,
+            command=lambda: self.controller.enable_overlay_auto_hide(
+                self.overlay_auto_hide.get()
+            )
+        )
+
         self.overlay_mode = tk.StringVar()
-        overlay_mode_submenu = TekkenBotPrimeView.create_populated_menu(
+        overlay_mode_submenu = TekkenBotPrimeView.__create_populated_menu(
             root,
             self.overlay_mode,
             self.controller.populate_overlay_modes_submenu(),
@@ -115,7 +124,7 @@ class TekkenBotPrimeView():
         )
 
         self.overlay_position = tk.StringVar()
-        overlay_position_submenu = TekkenBotPrimeView.create_populated_menu(
+        overlay_position_submenu = TekkenBotPrimeView.__create_populated_menu(
             root,
             self.overlay_position,
             self.controller.populate_overlay_positions_submenu(),
@@ -154,21 +163,13 @@ class TekkenBotPrimeView():
         root.grid_rowconfigure(1, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
-    def show_memory_overwrite_panel(self):
-        if self.memory_overwride_panel:
-            self.memory_overwride_panel.grid(column=0, row=0)
-
-    def hide_memory_overwrite_panel(self):
-        if self.memory_overwride_panel:
-            self.memory_overwride_panel.grid_remove()
-
     def load_overlay_themes(self, theme_enumaration):
         try:
             overlay_theme_index = self.overlay_menu.index('Theme')
             self.overlay_menu.delete(overlay_theme_index)
         except tk.TclError:
             pass
-        overlay_theme_submenu = TekkenBotPrimeView.create_populated_menu(
+        overlay_theme_submenu = TekkenBotPrimeView.__create_populated_menu(
             self.menu_bar,
             self.overlay_theme,
             theme_enumaration,
@@ -176,8 +177,15 @@ class TekkenBotPrimeView():
         )
         self.overlay_menu.add_cascade(label='Theme', menu=overlay_theme_submenu)
 
+    def show_memory_overwrite_panel(self, show):
+        if self.memory_overwride_panel:
+            if show:
+                self.memory_overwride_panel.grid(column=0, row=0)
+            else:
+                self.memory_overwride_panel.grid_remove()
+
     @staticmethod
-    def create_populated_menu(root, variable, menu_list, callback):
+    def __create_populated_menu(root, variable, menu_list, callback):
         menu = tk.Menu(master=root, tearoff=0)
         for value, label in menu_list:
             menu.add_radiobutton(

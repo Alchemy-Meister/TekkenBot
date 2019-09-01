@@ -69,7 +69,7 @@ class TekkenBotPrimeController():
         self.root.title(self.title)
         self.root.iconbitmap(icon)
         self.root.geometry('{}x{}'.format(920, 720))
-        self.root.protocol('WM_DELETE_WINDOW', self.on_delete_window)
+        self.root.protocol('WM_DELETE_WINDOW', self.__on_delete_window)
 
         self.updater.gui_container = self.root
 
@@ -85,40 +85,36 @@ class TekkenBotPrimeController():
         self.__initialize_console_text()
         self.root.mainloop()
 
-    def restart(self):
-        sys.stdout.write('restart')
-        self.config_manager.reload_all()
-        self.model.reload()
-        self.view.load_overlay_themes(
-            enumerate(self.model.get_overlay_themes_names())
-        )
-        self.__update_alarm_gui_settings()
-        self.__update_overlay_gui_settings()
-        self.punish_coach_alarm.reload()
-        self.overlay_manager.reload()
+    def check_for_updates(self):
+        try:
+            self.updater.is_update_available(
+                use_cache=False,
+                success_callback=self.__on_update_check_success,
+                error_callback=self.__on_no_internet_connection,
+                run_async=True
+            )
+        except NoInternetConnectionError:
+            self.__on_no_internet_connection()
 
     def enable_save_to_file(self, enable):
         sys.stdout.enable_save_to_file(enable)
         sys.stderr.enable_save_to_file(enable)
 
-    def is_save_to_file_enabled(self):
-        return self.save_to_file
-
     def enable_auto_scroll(self, enable):
         sys.stdout.enable_auto_scroll(enable)
         sys.stderr.enable_auto_scroll(enable)
 
-    def show_memory_override(self, enable):
-        if enable:
-            self.view.show_memory_overwrite_panel()
-        else:
-            self.view.hide_memory_overwrite_panel()
-
     def enable_overlay(self, enable):
         self.overlay_manager.enable_overlay(enable)
 
+    def enable_overlay_auto_hide(self, enable):
+        self.overlay_manager.enable_automatic_overlay_hide(enable)
+
     def enable_punish_alarm(self, enable):
         self.punish_coach_alarm.enable(enable)
+
+    def is_save_to_file_enabled(self):
+        return self.save_to_file
 
     def overlay_mode_change(self, overlay_mode_name):
         self.overlay_manager.change_overlay(
@@ -135,23 +131,6 @@ class TekkenBotPrimeController():
             self.model.get_theme(overlay_theme_index)
         )
 
-    def check_for_updates(self):
-        try:
-            self.updater.is_update_available(
-                use_cache=False,
-                success_callback=self.__update_check_success,
-                error_callback=self.__no_internet_connection,
-                run_async=True
-            )
-        except NoInternetConnectionError:
-            self.__no_internet_connection()
-
-    def on_delete_window(self):
-        sys.stdout.close()
-        sys.stdout = self.original_stdout
-        sys.stderr = self.original_stderr
-        self.root.destroy()
-
     def populate_overlay_modes_submenu(self):
         return self.model.all_overlay_modes
 
@@ -160,6 +139,86 @@ class TekkenBotPrimeController():
 
     def populate_overlay_themes_submenu(self):
         return enumerate(self.model.get_overlay_themes_names())
+
+    def restart(self):
+        sys.stdout.write('restart')
+        self.config_manager.reload_all()
+        self.model.reload()
+        self.view.load_overlay_themes(
+            enumerate(self.model.get_overlay_themes_names())
+        )
+        self.__update_alarm_gui_settings()
+        self.__update_overlay_gui_settings()
+        self.punish_coach_alarm.reload()
+        self.overlay_manager.reload()
+
+    def show_memory_override(self, enable):
+        self.view.show_memory_overwrite_panel(enable)
+
+    def __initialize_console_text(self):
+        sys.stdout.write_file(
+            'data/readme.txt',
+            callback=self.__post_console_initialization
+        )
+
+    def __initialize_memory_override_panel(self):
+        self.mop_controller = MemoryOverwritePanelController(
+            self.root, self.launcher
+        )
+        self.view.memory_overwride_panel = self.mop_controller.view
+        self.show_memory_override(False)
+
+    def __initialize_overlay_settings(self):
+        self.__update_overlay_gui_settings()
+        self.overlay_manager = OverlayManager(
+            self.launcher,
+            initial_settings=self.reloadable_initial_settings
+        )
+
+    def __initialize_punish_alarm(self):
+        self.__update_alarm_gui_settings()
+        self.punish_coach_alarm = PunishCoachAlarm(
+            PunishCoach(self.launcher), self.reloadable_initial_settings
+        )
+
+    def __on_delete_window(self):
+        sys.stdout.close()
+        sys.stdout = self.original_stdout
+        sys.stderr = self.original_stderr
+        self.root.destroy()
+
+    def __on_no_internet_connection(self):
+        messagebox.showerror(
+            self.title, 'Unable to connect to the Internet.'
+        )
+
+    def __on_update_check_success(self, available):
+        if available:
+            if messagebox.askyesno(
+                    self.title,
+                    '{0} {1}'.format(
+                        'A new version of Tekken Bot Prime is available.',
+                        'Would you like to download it now?'
+                    )
+            ):
+                self.updater.download_update(use_cache=True)
+        else:
+            messagebox.showinfo(
+                self.title, 'There are currently no updates available.'
+            )
+
+    def __post_console_initialization(self):
+        self.launcher = Launcher(self.root, extended_print=False)
+        self.reloadable_initial_settings = self.config_manager.add_config(
+            'settings.ini', parse=True, config_model_class=DefaultSettings
+        )
+        self.__initialize_overlay_settings()
+        self.__initialize_punish_alarm()
+
+        self.__initialize_memory_override_panel()
+
+        self.root.after(1, self.root.focus_force())
+        self.launcher.start()
 
     def __redirect_stdout_to_console(self, widget):
         sys.stdout = StdStreamRedirector(
@@ -183,45 +242,6 @@ class TekkenBotPrimeController():
             callback=self.original_stderr.write
         )
 
-    def __initialize_console_text(self):
-        sys.stdout.write_file(
-            'data/readme.txt',
-            callback=self.__post_console_initialization
-        )
-
-    def __post_console_initialization(self):
-        self.launcher = Launcher(self.root, extended_print=False)
-        self.reloadable_initial_settings = self.config_manager.add_config(
-            'settings.ini', parse=True, config_model_class=DefaultSettings
-        )
-        self.__initialize_overlay_settings()
-        self.__initialize_punish_alarm()
-
-        self.__initialize_memory_override_panel()
-
-        self.root.after(1, self.root.focus_force())
-        self.launcher.start()
-
-    def __initialize_memory_override_panel(self):
-        self.mop_controller = MemoryOverwritePanelController(
-            self.root, self.launcher
-        )
-        self.view.memory_overwride_panel = self.mop_controller.view
-        self.show_memory_override(False)
-
-    def __initialize_overlay_settings(self):
-        self.__update_overlay_gui_settings()
-        self.overlay_manager = OverlayManager(
-            self.launcher,
-            initial_settings=self.reloadable_initial_settings
-        )
-
-    def __initialize_punish_alarm(self):
-        self.__update_alarm_gui_settings()
-        self.punish_coach_alarm = PunishCoachAlarm(
-            PunishCoach(self.launcher), self.reloadable_initial_settings
-        )
-
     def __update_alarm_gui_settings(self):
         self.view.enable_punish_alarm.set(
             self.reloadable_initial_settings.config['DEFAULT'].get(
@@ -232,36 +252,18 @@ class TekkenBotPrimeController():
     def __update_overlay_gui_settings(self):
         initial_settings = self.reloadable_initial_settings.config['DEFAULT']
 
-        default_overlay_enabled = initial_settings.get('overlay_enable')
-        default_overlay_mode = OverlayMode[initial_settings.get('overlay_mode')]
-        default_overlay_position = OverlayPosition[
-            initial_settings.get('overlay_position')
-        ]
-        default_overlay_theme_index = self.model.get_index_by_filename(
-            initial_settings.get('overlay_theme')
+        self.view.enable_overlay.set(initial_settings.get('overlay_enable'))
+        self.view.overlay_auto_hide.set(
+            initial_settings.get('overlay_automatic_hide')
         )
-
-        self.view.enable_overlay.set(default_overlay_enabled)
-        self.view.overlay_mode.set(default_overlay_mode.name)
-        self.view.overlay_position.set(default_overlay_position.name)
-        self.view.overlay_theme.set(default_overlay_theme_index)
-
-    def __update_check_success(self, available):
-        if available:
-            if messagebox.askyesno(
-                    self.title,
-                    '{0} {1}'.format(
-                        'A new version of Tekken Bot Prime is available.',
-                        'Would you like to download it now?'
-                    )
-            ):
-                self.updater.download_update(use_cache=True)
-        else:
-            messagebox.showinfo(
-                self.title, 'There are currently no updates available.'
+        self.view.overlay_mode.set(
+            OverlayMode[initial_settings.get('overlay_mode')].name
+        )
+        self.view.overlay_position.set(
+            OverlayPosition[initial_settings.get('overlay_position')].name
+        )
+        self.view.overlay_theme.set(
+            self.model.get_index_by_filename(
+                initial_settings.get('overlay_theme')
             )
-
-    def __no_internet_connection(self):
-        messagebox.showerror(
-            self.title, 'Unable to connect to the Internet.'
         )
