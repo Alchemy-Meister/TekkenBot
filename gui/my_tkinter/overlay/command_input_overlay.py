@@ -309,7 +309,10 @@ class CommandInputOverlay(Overlay):
 
     def _update_visible_state(self):
         previous_visible_state = self.visible
-        self.visible = self.launcher.game_state.is_in_battle()
+        if self.automatic_hide:
+            self.visible = self.launcher.game_state.is_in_battle()
+        else:
+            self.visible = True
         if previous_visible_state != self.visible and not self.visible:
             self.command_input_canvas.delete(self.input_tag)
             self.frame_inputs.clear()

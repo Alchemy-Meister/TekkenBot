@@ -160,6 +160,87 @@ class FrameDataOverlay(WritableOverlay):
             if display_string:
                 self.textbox.insert(tk.END, display_string, player_tag)
 
+    def _resize_overlay_widgets(self, overlay_scale=None):
+        if overlay_scale:
+            scale = [
+                overlay_scale_size * tekken_scale_size
+                for overlay_scale_size, tekken_scale_size in zip(
+                    overlay_scale, self._tekken_scale
+                    )
+            ]
+        else:
+            scale = self._tekken_scale
+
+        scaled_frame_panel_width, _ = self.p1_frame_panel.resize_to_scale(scale)
+        self.p2_frame_panel.resize_to_scale(scale)
+
+        scaled_textbot_font, font_width, _ = WritableOverlay._get_fitting_font(
+            scale,
+            self.initial_textbox_font,
+            self.longest_log_line,
+            self.longest_log_font_size[0] * scale[0],
+            self.longest_log_font_size[1] * scale[1]
+            )
+
+        self.textbox.configure(font=scaled_textbot_font)
+        self.overlay.update_idletasks()
+
+        return (
+            scaled_frame_panel_width * 2 + font_width,
+            self.textbox.winfo_height()
+        )
+
+    def _update_dimensions(self):
+        self.overlay.update_idletasks()
+        self.coordinates['width'] = (
+            self.p1_frame_panel.winfo_width()
+            + self.p2_frame_panel.winfo_width()
+        )
+        if self.display_columns:
+            self.coordinates['width'] += self.textbox.winfo_width()
+
+        self.coordinates['height'] = self.textbox.winfo_height()
+        self.window_proportion = (
+            self.coordinates['width'] / self.coordinates['height']
+        )
+        self.overlay.geometry(
+            '{}x{}'.format(
+                self.coordinates['width'], self.coordinates['height']
+            )
+        )
+
+    def _update_state(self):
+        game_state = self.launcher.game_state
+        if len(game_state.state_log) > 1:
+            p1_frames = game_state.get_opp_frames_till_next_move()
+            p2_frames = game_state.get_bot_frames_till_next_move()
+
+            p1_recovery = p1_frames - p2_frames
+            str_p1_recovery = str(p1_recovery)
+            str_p2_recovery = str(p1_recovery * -1)
+
+            if p1_recovery > 0:
+                str_p1_recovery = ''.join(['+', str_p1_recovery])
+            elif p1_recovery == 0:
+                str_p1_recovery = ''.join(['+', str_p1_recovery])
+                str_p2_recovery = ''.join(['+', str_p2_recovery])
+            else:
+                str_p2_recovery = ''.join(['+', str_p2_recovery])
+
+            self.p1_frame_panel.str_live_recovery.set(str_p1_recovery)
+            self.p2_frame_panel.str_live_recovery.set(str_p2_recovery)
+
+    def _update_visible_state(self):
+        previous_visible_state = self.visible
+        if self.automatic_hide:
+            self.visible = self.launcher.game_state.is_in_battle()
+        else:
+            self.visible = True
+        if previous_visible_state != self.visible and not self.visible:
+            self.__clear()
+            self.textbox.insert(tk.END, '\n')
+            self.textbox.update()
+
     def __clear(self, clear_header=False):
         if not self.textbox.is_clear(include_header=clear_header):
             self.textbox.clear(clear_header=clear_header)
@@ -243,55 +324,6 @@ class FrameDataOverlay(WritableOverlay):
             self.attack_log.pop(1)
         self.attack_log.append([tag, columns])
 
-    def _resize_overlay_widgets(self, overlay_scale=None):
-        if overlay_scale:
-            scale = [
-                overlay_scale_size * tekken_scale_size
-                for overlay_scale_size, tekken_scale_size in zip(
-                    overlay_scale, self._tekken_scale
-                    )
-            ]
-        else:
-            scale = self._tekken_scale
-
-        scaled_frame_panel_width, _ = self.p1_frame_panel.resize_to_scale(scale)
-        self.p2_frame_panel.resize_to_scale(scale)
-
-        scaled_textbot_font, font_width, _ = WritableOverlay._get_fitting_font(
-            scale,
-            self.initial_textbox_font,
-            self.longest_log_line,
-            self.longest_log_font_size[0] * scale[0],
-            self.longest_log_font_size[1] * scale[1]
-            )
-
-        self.textbox.configure(font=scaled_textbot_font)
-        self.overlay.update_idletasks()
-
-        return (
-            scaled_frame_panel_width * 2 + font_width,
-            self.textbox.winfo_height()
-        )
-
-    def _update_dimensions(self):
-        self.overlay.update_idletasks()
-        self.coordinates['width'] = (
-            self.p1_frame_panel.winfo_width()
-            + self.p2_frame_panel.winfo_width()
-        )
-        if self.display_columns:
-            self.coordinates['width'] += self.textbox.winfo_width()
-
-        self.coordinates['height'] = self.textbox.winfo_height()
-        self.window_proportion = (
-            self.coordinates['width'] / self.coordinates['height']
-        )
-        self.overlay.geometry(
-            '{}x{}'.format(
-                self.coordinates['width'], self.coordinates['height']
-            )
-        )
-
     def __update_frame_advantage(self, frame_advantage, player_1=True):
         if '?' not in frame_advantage:
             frame_advantage = int(frame_advantage)
@@ -312,28 +344,6 @@ class FrameDataOverlay(WritableOverlay):
                 self.p2_frame_panel.set_frame_advantage(
                     current_frame_advantage_enum
                 )
-
-    def _update_state(self):
-        game_state = self.launcher.game_state
-        if len(game_state.state_log) > 1:
-            p1_frames = game_state.get_opp_frames_till_next_move()
-            p2_frames = game_state.get_bot_frames_till_next_move()
-
-            p1_recovery = p1_frames - p2_frames
-            str_p1_recovery = str(p1_recovery)
-            str_p2_recovery = str(p1_recovery * -1)
-
-            if p1_recovery > 0:
-                str_p1_recovery = ''.join(['+', str_p1_recovery])
-            elif p1_recovery == 0:
-                str_p1_recovery = ''.join(['+', str_p1_recovery])
-                str_p2_recovery = ''.join(['+', str_p2_recovery])
-            else:
-                str_p2_recovery = ''.join(['+', str_p2_recovery])
-
-            self.p1_frame_panel.str_live_recovery.set(str_p1_recovery)
-            self.p2_frame_panel.str_live_recovery.set(str_p2_recovery)
-
 
     def __update_textbox_info(self):
         self.__clear(clear_header=True)
@@ -366,11 +376,3 @@ class FrameDataOverlay(WritableOverlay):
             )
         )
         self.textbox.fit_to_content()
-
-    def _update_visible_state(self):
-        previous_visible_state = self.visible
-        self.visible = self.launcher.game_state.is_in_battle()
-        if previous_visible_state != self.visible and not self.visible:
-            self.__clear()
-            self.textbox.insert(tk.END, '\n')
-            self.textbox.update()

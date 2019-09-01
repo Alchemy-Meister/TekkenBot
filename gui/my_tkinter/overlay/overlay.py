@@ -35,6 +35,7 @@ import platform
 import tkinter as tk
 import tkinter.font as tkfont
 
+from config import DefaultSettings
 from constants.overlay import OverlayPosition
 from patterns.observer import Subscriber
 from tekken import Launcher
@@ -49,6 +50,10 @@ class Overlay(ABC):
 
     def __init__(self, launcher: Launcher):
         self.launcher = launcher
+
+        self.automatic_hide = DefaultSettings.SETTINGS['DEFAULT'].get(
+            'overlay_automatic_hide'
+        )
         self.coordinates = {
             'x': 0, 'y': 0, 'width': 0, 'height': 0
         }
@@ -58,7 +63,7 @@ class Overlay(ABC):
         self.coordinates_initialized = False
         self.dimensions_initialized = False
         self.visible = False
-        self.enabled = False
+        self.enabled = DefaultSettings.SETTINGS['DEFAULT'].get('overlay_enable')
         self.is_draggable = False
 
         self.is_resizing = False
@@ -94,30 +99,10 @@ class Overlay(ABC):
             Launcher.Event.CLOSED, subscriber, self.__stop
         )
 
-    def on(self):
-        self.enabled = True
-
-    def off(self):
-        self.enabled = False
-        self.hide()
-
-    def set_tekken_screen_mode(self, screen_mode):
-        self.tekken_screen_mode = screen_mode
-
-    def set_tekken_resolution(self, resolution):
-        self.tekken_resolution = resolution
-        self._tekken_scale = Overlay.__calculate_scale(
-            resolution,
-            [Overlay.WIDTH, Overlay.HEIGHT]
-        )
-        self.is_resizing = True
-        self._resize_overlay_widgets()
-        self.is_resizing = False
-        self._update_dimensions()
-
-    def set_tekken_position(self, position):
-        self.tekken_position = position
-        self._update_position(position)
+    def set_enable(self, enable):
+        self.enabled = enable
+        if not self.enabled:
+            self.__hide()
 
     def set_position(self, position):
         was_draggable = self.__position == OverlayPosition.DRAGGABLE
@@ -150,48 +135,26 @@ class Overlay(ABC):
         except AttributeError:
             pass
 
+    def set_tekken_screen_mode(self, screen_mode):
+        self.tekken_screen_mode = screen_mode
+
+    def set_tekken_resolution(self, resolution):
+        self.tekken_resolution = resolution
+        self._tekken_scale = Overlay.__calculate_scale(
+            resolution,
+            [Overlay.WIDTH, Overlay.HEIGHT]
+        )
+        self.is_resizing = True
+        self._resize_overlay_widgets()
+        self.is_resizing = False
+        self._update_dimensions()
+
+    def set_tekken_position(self, position):
+        self.tekken_position = position
+        self._update_position(position)
+
     def set_theme(self, theme_dict):
         self.transparent_color = theme_dict.get('transparent')
-
-    def hide(self):
-        self.visible = False
-        self.overlay.withdraw()
-
-    def show(self):
-        self.visible = True
-        self.overlay.deiconify()
-
-    def _set_dimensions(self, width, height):
-        self.coordinates['width'] = width
-        self.coordinates['height'] = height
-
-    def __update(self, is_state_updated):
-        if self.enabled:
-            game_reader = self.launcher.game_state.get_reader()
-            if(
-                    self.coordinates_initialized
-                    and (
-                        self.is_draggable
-                        or game_reader.is_tekken_foreground_wnd()
-                    )
-            ):
-                previous_visible_state = self.visible
-                self._update_visible_state()
-                if(
-                        previous_visible_state != self.visible
-                    ):
-                    if self.visible:
-                        self.show()
-                        self.overlay.focus_force()
-                    else:
-                        self.hide()
-            else:
-                self.hide()
-            if is_state_updated:
-                self._update_state()
-
-    def __on_delete_window(self):
-        pass
 
     def _on_resize_window(self, event):
         if(
@@ -227,27 +190,46 @@ class Overlay(ABC):
                 self.is_resizing = False
                 if self.resize_start:
                     self.resize_start = False
-                    self.overlay.after(100, self.force_resize_proportion)
+                    self.overlay.after(100, self.__force_resize_proportion)
 
         self.previous_event = event
         if self.skip_resize_event:
             self.skip_resize_event = False
 
-    def force_resize_proportion(self):
-        if not mouse.is_logical_left_button_down():
-            self.overlay.after(
-                1000,
-                lambda: self.overlay.geometry(
-                    '{}x{}'.format(*self.window_dimensions)
-                )
-            )
-            self.resize_start = True
-            self.skip_resize_event = True
-        else:
-            self.overlay.after(100, self.force_resize_proportion)
-
     @abstractmethod
     def _resize_overlay_widgets(self, overlay_scale=None):
+        pass
+
+    def _set_dimensions(self, width, height):
+        self.coordinates['width'] = width
+        self.coordinates['height'] = height
+
+    def __update(self, is_state_updated):
+        if self.enabled:
+            game_reader = self.launcher.game_state.get_reader()
+            if(
+                    self.coordinates_initialized
+                    and (
+                        self.is_draggable
+                        or game_reader.is_tekken_foreground_wnd()
+                    )
+            ):
+                previous_visible_state = self.visible
+                self._update_visible_state()
+                if(
+                        previous_visible_state != self.visible
+                    ):
+                    if self.visible:
+                        self.__show()
+                    else:
+                        self.__hide()
+            else:
+                self.__hide()
+            if is_state_updated:
+                self._update_state()
+
+    @abstractmethod
+    def _update_dimensions(self):
         pass
 
     def _update_position(self, tekken_position):
@@ -284,40 +266,12 @@ class Overlay(ABC):
             self.coordinates_initialized = True
 
     @abstractmethod
-    def _update_dimensions(self):
+    def _update_state(self):
         pass
 
     @abstractmethod
     def _update_visible_state(self):
         pass
-
-    @abstractmethod
-    def _update_state(self):
-        pass
-
-    def __stop(self):
-        self.dimensions_initialized = False
-        self.coordinates_initialized = False
-
-    @staticmethod
-    def __calculate_scale(current_size, original_size):
-        return (
-            current_size[0] / original_size[0],
-            current_size[1] / original_size[1]
-        )
-
-    @staticmethod
-    def __set_cursor_to_all_widgets(frame, cursor):
-        for child in frame.winfo_children():
-            child.configure(cursor=cursor)
-            if isinstance(child, tk.Frame):
-                Overlay.__set_cursor_to_all_widgets(child, cursor)
-
-    @staticmethod
-    def _get_font_text_dimensions(font, text):
-        width = font.measure(text)
-        height = font.metrics('linespace')
-        return width, height
 
     @staticmethod
     def _get_fitting_font(scale, font, text, max_font_width, max_font_height):
@@ -348,3 +302,52 @@ class Overlay(ABC):
             size = sign * (abs(size) - 1)
 
         return fitting_font, width, height
+
+    @staticmethod
+    def _get_font_text_dimensions(font, text):
+        width = font.measure(text)
+        height = font.metrics('linespace')
+        return width, height
+
+    def __force_resize_proportion(self):
+        if not mouse.is_logical_left_button_down():
+            self.overlay.after(
+                1000,
+                lambda: self.overlay.geometry(
+                    '{}x{}'.format(*self.window_dimensions)
+                )
+            )
+            self.resize_start = True
+            self.skip_resize_event = True
+        else:
+            self.overlay.after(100, self.__force_resize_proportion)
+
+    def __hide(self):
+        self.visible = False
+        self.overlay.withdraw()
+
+    def __on_delete_window(self):
+        pass
+
+    def __show(self):
+        self.visible = True
+        self.overlay.deiconify()
+        self.overlay.focus_force()
+
+    def __stop(self):
+        self.dimensions_initialized = False
+        self.coordinates_initialized = False
+
+    @staticmethod
+    def __calculate_scale(current_size, original_size):
+        return (
+            current_size[0] / original_size[0],
+            current_size[1] / original_size[1]
+        )
+
+    @staticmethod
+    def __set_cursor_to_all_widgets(frame, cursor):
+        for child in frame.winfo_children():
+            child.configure(cursor=cursor)
+            if isinstance(child, tk.Frame):
+                Overlay.__set_cursor_to_all_widgets(child, cursor)

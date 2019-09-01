@@ -87,37 +87,17 @@ class OverlayManager(metaclass=Singleton):
         self.reloadable_initial_settings = initial_settings
         self.reload()
 
-    def __screen_mode_change(self, screen_mode):
-        self.tekken_screen_mode = screen_mode
-        self.current_overlay.set_tekken_screen_mode(screen_mode)
-        for overlay in self.overlays.values():
-            if not isinstance(overlay, type(self.current_overlay)):
-                overlay.set_tekken_screen_mode(screen_mode)
-
-    def __resolution_change(self, resolution):
-        self.tekken_resolution = resolution
-        self.current_overlay.set_tekken_resolution(resolution)
-        for overlay in self.overlays.values():
-            if not isinstance(overlay, type(self.current_overlay)):
-                overlay.set_tekken_resolution(resolution)
-
-    def __position_change(self, position):
-        self.tekken_position = position
-        self.current_overlay.set_tekken_position(position)
-        for overlay in self.overlays.values():
-            if not isinstance(overlay, type(self.current_overlay)):
-                overlay.set_tekken_position(position)
+    def enable_automatic_overlay_hide(self, enable):
+        for overlay_id in self.overlays:
+            self.overlays[overlay_id].automatic_hide = enable
 
     def enable_overlay(self, enable):
         self.overlay_enabled = enable
-        if enable:
-            self.current_overlay.on()
-        else:
-            self.current_overlay.off()
+        self.current_overlay.set_enable(self.overlay_enabled)
 
     def change_overlay(self, mode: OverlayMode):
         sys.stdout.write('Turning overlay off')
-        self.current_overlay.off()
+        self.current_overlay.set_enable(False)
         self.overlays[self.current_overlay.__class__.CLASS_ID] = (
             self.current_overlay
         )
@@ -129,7 +109,7 @@ class OverlayManager(metaclass=Singleton):
         self.current_overlay = change_overlay
         sys.stdout.write('Turning overlay on')
         if self.overlay_enabled:
-            self.current_overlay.on()
+            self.current_overlay.set_enable(True)
 
     def change_overlay_position(self, position):
         for overlay_id in self.overlays:
@@ -138,6 +118,47 @@ class OverlayManager(metaclass=Singleton):
     def change_overlay_theme(self, theme_dict):
         for overlay_id in self.overlays:
             self.overlays[overlay_id].set_theme(theme_dict)
+
+    def reload(self):
+        if self.reloadable_initial_settings:
+            initial_settings = self.reloadable_initial_settings.config[
+                'DEFAULT'
+            ]
+        else:
+            initial_settings = DefaultSettings.SETTINGS['DEFAULT']
+
+        if self.current_overlay:
+            self.current_overlay.turn_off()
+            self.change_overlay(
+                OverlayMode[initial_settings.get('overlay_mode')]
+            )
+        else:
+            self.current_overlay = self.__add_overlay(
+                OverlayMode[initial_settings.get('overlay_mode')].value
+            )
+        self.change_overlay_position(
+            OverlayPosition[initial_settings.get('overlay_position')]
+        )
+        self.change_overlay_theme(
+            self.overlay_model.get_theme(
+                self.overlay_model.get_index_by_filename(
+                    initial_settings.get('overlay_theme')
+                )
+            )
+        )
+        self.set_framedata_overlay_column_settings(
+            initial_settings.get('framedata_overlay_columns')
+        )
+        self.enable_automatic_overlay_hide(
+            initial_settings.get('overlay_automatic_hide')
+        )
+        self.enable_overlay(initial_settings.get('overlay_enable'))
+
+    def set_framedata_overlay_column_settings(self, column_settings):
+        frame_data_overlay = self.overlays.get(OverlayMode.FRAMEDATA.value)
+        if not frame_data_overlay:
+            frame_data_overlay = self.__add_overlay(OverlayMode.FRAMEDATA.value)
+        frame_data_overlay.set_display_columns(column_settings)
 
     def write_to_overlay(self, string):
         if(
@@ -162,40 +183,17 @@ class OverlayManager(metaclass=Singleton):
             self.overlays[overlay_id].set_tekken_position(self.tekken_position)
         return self.overlays[overlay_id]
 
-    def set_framedata_overlay_column_settings(self, column_settings):
-        frame_data_overlay = self.overlays.get(OverlayMode.FRAMEDATA.value)
-        if not frame_data_overlay:
-            frame_data_overlay = self.__add_overlay(OverlayMode.FRAMEDATA.value)
-        frame_data_overlay.set_display_columns(column_settings)
+    def __position_change(self, position):
+        self.tekken_position = position
+        for overlay in self.overlays.values():
+            overlay.set_tekken_position(position)
 
-    def reload(self):
-        if self.reloadable_initial_settings:
-            initial_settings = self.reloadable_initial_settings.config[
-                'DEFAULT'
-            ]
-        else:
-            initial_settings = DefaultSettings.SETTINGS['DEFAULT']
+    def __resolution_change(self, resolution):
+        self.tekken_resolution = resolution
+        for overlay in self.overlays.values():
+            overlay.set_tekken_resolution(resolution)
 
-        if self.current_overlay:
-            self.current_overlay.off()
-            self.change_overlay(
-                OverlayMode[initial_settings.get('overlay_mode')]
-            )
-        else:
-            self.current_overlay = self.__add_overlay(
-                OverlayMode[initial_settings.get('overlay_mode')].value
-            )
-        self.enable_overlay(initial_settings.get('overlay_enable'))
-        self.change_overlay_position(
-            OverlayPosition[initial_settings.get('overlay_position')]
-        )
-        self.change_overlay_theme(
-            self.overlay_model.get_theme(
-                self.overlay_model.get_index_by_filename(
-                    initial_settings.get('overlay_theme')
-                )
-            )
-        )
-        self.set_framedata_overlay_column_settings(
-            initial_settings.get('framedata_overlay_columns')
-        )
+    def __screen_mode_change(self, screen_mode):
+        self.tekken_screen_mode = screen_mode
+        for overlay in self.overlays.values():
+            overlay.set_tekken_screen_mode(screen_mode)
