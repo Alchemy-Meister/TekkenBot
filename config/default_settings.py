@@ -41,7 +41,10 @@ class DefaultSettings():
     PATH = 'data/settings.ini'
     SETTINGS = {
         'DEFAULT': {
-            'overlay_enable': 'true',
+            'alarm_enable': str(False),
+            'alarm_sound_folder': 'original',
+            'alarm_voice_folder': 'original',
+            'overlay_enable': str(True),
             'overlay_mode': getattr(OverlayMode.FRAMEDATA, 'name'),
             'overlay_position': getattr(OverlayPosition.TOP, 'name'),
             'overlay_theme': 'classic',
