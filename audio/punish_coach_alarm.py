@@ -80,7 +80,7 @@ class PunishCoachAlarm():
         if(
                 self.__enabled
                 and frames_since_new_window < 60
-                and not frames_since_new_window % 6
+                and not frames_since_new_window % 12
                 and not self.__sound_played
         ):
             if(
