@@ -42,10 +42,17 @@ class SoundPlayer():
         media_path = Path(media_path)
         if not media_path.is_absolute():
             media_path = media_path.absolute()
-            winmm.mci_send_string(
-                'open {} alias media'.format(media_path)
+        if not media_path.suffix:
+            media_path = next(
+                (
+                    media_file for media_file in media_path.parent.iterdir()
+                    if media_path.name == media_file.stem
+                ), None
             )
-            winmm.mci_send_string('play media')
+        winmm.mci_send_string(
+            'open {} alias media'.format(media_path)
+        )
+        winmm.mci_send_string('play media')
 
     @staticmethod
     def close():
