@@ -42,12 +42,6 @@ class AttackTextbox(Textbox):
         self.configure(height=self.max_lines, state='disable')
         self.bind('<MouseWheel>', AttackTextbox.__disable_mouse_wheel)
 
-    def is_clear(self, include_header=False):
-        line_count = int(self.index('end-1c').split('.')[0])
-        if include_header:
-            return line_count == 0
-        return line_count <= 1
-
     def clear(self, clear_header=False):
         self.configure(state='normal')
         if clear_header:
@@ -63,6 +57,12 @@ class AttackTextbox(Textbox):
             self.delete('2.0', '3.0')
         super().insert(index, chars, *args)
         self.configure(state='disable')
+
+    def is_clear(self, include_header=False):
+        line_count = int(self.index('end-1c').split('.')[0])
+        if include_header:
+            return line_count == 0
+        return line_count <= 1
 
     @staticmethod
     def __disable_mouse_wheel(_event):
