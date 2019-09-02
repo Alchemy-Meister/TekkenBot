@@ -89,7 +89,7 @@ class OverlayManager(metaclass=Singleton):
 
     def enable_automatic_overlay_hide(self, enable):
         for overlay_id in self.overlays:
-            self.overlays[overlay_id].automatic_hide = enable
+            self.overlays[overlay_id].set_automatic_hide(enable)
 
     def enable_overlay(self, enable):
         self.overlay_enabled = enable
@@ -181,6 +181,12 @@ class OverlayManager(metaclass=Singleton):
             )
         if self.tekken_position:
             self.overlays[overlay_id].set_tekken_position(self.tekken_position)
+
+        if self.current_overlay:
+            self.overlays[overlay_id].copy_settings_from_overlay(
+                self.current_overlay
+            )
+
         return self.overlays[overlay_id]
 
     def __position_change(self, position):

@@ -79,7 +79,7 @@ class Overlay(ABC):
 
         self._tekken_scale = None
         self.__tekken_rect = None
-        self.__position = None
+        self.position = None
 
         self.overlay = tk.Toplevel(width=0, height=0)
         self.overlay.withdraw()
@@ -99,16 +99,25 @@ class Overlay(ABC):
             Launcher.Event.CLOSED, subscriber, self.__stop
         )
 
+    def copy_settings_from_overlay(self, other_overlay):
+        self.set_automatic_hide(other_overlay.automatic_hide)
+        self.set_position(other_overlay.position)
+
+    def set_automatic_hide(self, enable):
+        self.automatic_hide = enable
+        if enable:
+            self.visible = True
+
     def set_enable(self, enable):
         self.enabled = enable
         if not self.enabled:
             self.__hide()
 
     def set_position(self, position):
-        was_draggable = self.__position == OverlayPosition.DRAGGABLE
-        self.__position = position
+        was_draggable = self.position == OverlayPosition.DRAGGABLE
+        self.position = position
 
-        self.is_draggable = self.__position == OverlayPosition.DRAGGABLE
+        self.is_draggable = self.position == OverlayPosition.DRAGGABLE
         Overlay.__set_cursor_to_all_widgets(
             self.overlay, '' if self.is_draggable else 'none'
         )
@@ -249,9 +258,9 @@ class Overlay(ABC):
                 )
             else:
                 tekken_position_y = tekken_position[1]
-            if self.__position == OverlayPosition.TOP:
+            if self.position == OverlayPosition.TOP:
                 self.coordinates['y'] = tekken_position_y
-            elif self.__position == OverlayPosition.BOTTOM:
+            elif self.position == OverlayPosition.BOTTOM:
                 self.coordinates['y'] = (
                     tekken_position_y
                     + self.tekken_resolution[1]

@@ -38,26 +38,38 @@ class FrameAdvantagePanel(tk.Frame):
     """
     """
 
-    __CANVAS_CONFIG = {'width': 132, 'height': 82}
-    __FRAME_ADVATAGE_CONFIG = {'font': ['Consolas', 44]}
-    __LIVE_RECOVERY_CONFIG = {'font': ['Segoe UI', 12], 'x': 8, 'y': 4}
+    __CANVAS_CONFIG = {
+        'width': 132,
+        'height': 82,
+        'initial_frame_advantage': FrameAdvantage.SAFE_MINUS
+    }
+    __FRAME_ADVANTAGE_CONFIG = {'font': ['Consolas', 44], 'initial_text': '?'}
+    __LIVE_RECOVERY_CONFIG = {
+        'font': ['Segoe UI', 12], 'x': 8, 'y': 4, 'initial_text': '??'
+    }
     __PADDING_WIDTH = 10
 
     def __init__(self, master, transparent_color, **kwargs):
         super().__init__(master=master, **kwargs)
 
         self.frame_advantage_backgrounds = None
-        self.frame_advantage = FrameAdvantage.SAFE_MINUS
+        self.frame_advantage = FrameAdvantagePanel.__CANVAS_CONFIG[
+            'initial_frame_advantage'
+        ]
 
         self.left_padding = self.__create_padding(transparent_color)
 
         self.configure(background=transparent_color)
 
         self.str_frame_advantage = tk.StringVar()
-        self.str_frame_advantage.set('?')
+        self.str_frame_advantage.set(
+            FrameAdvantagePanel.__FRAME_ADVANTAGE_CONFIG['initial_text']
+        )
 
         self.str_live_recovery = tk.StringVar()
-        self.str_live_recovery.set('??')
+        self.str_live_recovery.set(
+            FrameAdvantagePanel.__LIVE_RECOVERY_CONFIG['initial_text']
+        )
 
         self.frame_advantage_canvas = tk.Canvas(
             self,
@@ -70,7 +82,7 @@ class FrameAdvantagePanel(tk.Frame):
 
         self.frame_advantage_text = self.frame_advantage_canvas.create_text(
             0, 0,
-            font=tuple(FrameAdvantagePanel.__FRAME_ADVATAGE_CONFIG['font']),
+            font=tuple(FrameAdvantagePanel.__FRAME_ADVANTAGE_CONFIG['font']),
             text=self.str_frame_advantage.get(),
             anchor=tk.CENTER
         )
@@ -94,6 +106,29 @@ class FrameAdvantagePanel(tk.Frame):
         self.left_padding.grid(column=0)
         self.frame_advantage_canvas.grid(column=1)
         self.right_padding.grid(column=2)
+
+    def clear(self):
+        self.str_frame_advantage.set(
+            FrameAdvantagePanel.__FRAME_ADVANTAGE_CONFIG['initial_text']
+        )
+        self.str_live_recovery.set(
+            FrameAdvantagePanel.__LIVE_RECOVERY_CONFIG['initial_text']
+        )
+        self.set_frame_advantage(
+            FrameAdvantagePanel.__CANVAS_CONFIG[
+                'initial_frame_advantage'
+            ]
+        )
+
+    def is_clear(self):
+        return (
+            self.str_frame_advantage.get()
+            == FrameAdvantagePanel.__FRAME_ADVANTAGE_CONFIG['initial_text']
+            and self.str_live_recovery.get()
+            == FrameAdvantagePanel.__LIVE_RECOVERY_CONFIG['initial_text']
+            and self.frame_advantage
+            != FrameAdvantagePanel.__CANVAS_CONFIG['initial_frame_advantage']
+        )
 
     def set_frame_advantage(self, frame_advantage):
         self.frame_advantage = frame_advantage
@@ -121,7 +156,7 @@ class FrameAdvantagePanel(tk.Frame):
 
         self.__resize_canvas_text(
             self.frame_advantage_text,
-            FrameAdvantagePanel.__FRAME_ADVATAGE_CONFIG,
+            FrameAdvantagePanel.__FRAME_ADVANTAGE_CONFIG,
             scale
         )
         self.__center_frame_advantage(scale)

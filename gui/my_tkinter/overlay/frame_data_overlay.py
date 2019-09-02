@@ -232,18 +232,21 @@ class FrameDataOverlay(WritableOverlay):
 
     def _update_visible_state(self):
         previous_visible_state = self.visible
-        if self.automatic_hide:
-            self.visible = self.launcher.game_state.is_in_battle()
-        else:
-            self.visible = True
+        self.visible = self.launcher.game_state.is_in_battle()
         if previous_visible_state != self.visible and not self.visible:
             self.__clear()
             self.textbox.insert(tk.END, '\n')
             self.textbox.update()
+        if not self.automatic_hide:
+            self.visible = True
 
     def __clear(self, clear_header=False):
+        if not self.p1_frame_panel.is_clear():
+            self.p1_frame_panel.clear()
         if not self.textbox.is_clear(include_header=clear_header):
             self.textbox.clear(clear_header=clear_header)
+        if not self.p2_frame_panel.is_clear():
+            self.p2_frame_panel.clear()
 
     def __create_padding(self, color):
         padding = tk.Frame(
@@ -346,7 +349,8 @@ class FrameDataOverlay(WritableOverlay):
                 )
 
     def __update_textbox_info(self):
-        self.__clear(clear_header=True)
+        if not self.textbox.is_clear(include_header=True):
+            self.textbox.clear(clear_header=True)
         max_log_line_length = 0
         for tag, values in self.attack_log:
             log_line = ''.join(
