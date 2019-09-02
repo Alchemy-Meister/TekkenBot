@@ -35,7 +35,7 @@ import enum
 class ComplexEnumMember():
     """
     """
-    def __init__(self, value, **kwargs):
+    def __init__(self, value=None, **kwargs):
         self.value = value
         for attribute_name, attribute_value in kwargs.items():
             setattr(self, attribute_name, attribute_value)
@@ -46,7 +46,10 @@ class ComplexEnum(enum.Enum):
     def __new__(cls, complex_enum_member):
         enum_instance = object.__new__(cls)
         # pylint: disable=protected-access
-        enum_instance._value_ = complex_enum_member.value
+        if complex_enum_member.value is None:
+            enum_instance._value_ = len(cls.__members__) + 1
+        else:
+            enum_instance._value_ = complex_enum_member.value
         for attrib_name, attrib_value in vars(complex_enum_member).items():
             if attrib_name != 'value':
                 setattr(enum_instance, attrib_name, attrib_value)
