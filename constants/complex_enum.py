@@ -45,11 +45,29 @@ class ComplexEnum(enum.Enum):
     """
     def __new__(cls, complex_enum_member):
         enum_instance = object.__new__(cls)
-        # pylint: disable=protected-access
         if complex_enum_member.value is None:
-            enum_instance._value_ = len(cls.__members__) + 1
+            setattr(enum_instance, '_value_', len(cls.__members__))
         else:
-            enum_instance._value_ = complex_enum_member.value
+            duplicated_member = [
+                member for member in cls.__members__.values()
+                if member.value == complex_enum_member.value
+            ]
+            if duplicated_member:
+                raise ValueError(
+                    (
+                        'duplicate value found in {} that matches {}. '
+                        "Duplicated member is after {} member's definition"
+                    ).format(
+                        cls.__name__,
+                        list(cls.__members__.keys())[
+                            list(cls.__members__.values()).index(
+                                duplicated_member[0]
+                            )
+                        ],
+                        list(cls.__members__.keys())[-1]
+                    )
+                )
+            setattr(enum_instance, '_value_', complex_enum_member.value)
         for attrib_name, attrib_value in vars(complex_enum_member).items():
             if attrib_name != 'value':
                 setattr(enum_instance, attrib_name, attrib_value)
