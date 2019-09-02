@@ -30,5 +30,6 @@
 """
 """
 
+from .layout import OverlayLayout
 from .mode import OverlayMode
 from .position import OverlayPosition

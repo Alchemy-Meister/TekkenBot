@@ -32,6 +32,6 @@ import enum
 class ScreenMode(enum.IntEnum):
     """
     """
-    FULLSCREEN = 0
-    BORDERLESS = 1
-    WINDOW = 2
+    FULLSCREEN = enum.auto()
+    BORDERLESS = enum.auto()
+    WINDOW = enum.auto()

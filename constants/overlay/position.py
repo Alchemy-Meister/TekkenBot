@@ -35,6 +35,6 @@ from constants.complex_enum import ComplexEnum, ComplexEnumMember
 class OverlayPosition(ComplexEnum):
     """
     """
-    TOP = ComplexEnumMember(0, printable_name='Top')
-    BOTTOM = ComplexEnumMember(1, printable_name='Bottom')
-    DRAGGABLE = ComplexEnumMember(2, printable_name='Draggable')
+    TOP = ComplexEnumMember(printable_name='Top')
+    BOTTOM = ComplexEnumMember(printable_name='Bottom')
+    DRAGGABLE = ComplexEnumMember(printable_name='Draggable')

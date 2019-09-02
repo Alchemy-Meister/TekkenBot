@@ -32,33 +32,31 @@
 from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
 class ColumnsDescription(ComplexEnum):
-    INPUT_COMMAND = ComplexEnumMember(0, printable_name='input command')
-    MOVE_ID = ComplexEnumMember(1, printable_name='internal move id number')
-    MOVE_NAME = ComplexEnumMember(2, printable_name='internal move name')
-    ATTACK_TYPE = ComplexEnumMember(3, printable_name='attack type')
-    STARTUP_FRAMES = ComplexEnumMember(4, printable_name='startup frames')
+    INPUT_COMMAND = ComplexEnumMember(printable_name='input command')
+    MOVE_ID = ComplexEnumMember(printable_name='internal move id number')
+    MOVE_NAME = ComplexEnumMember(printable_name='internal move name')
+    ATTACK_TYPE = ComplexEnumMember(printable_name='attack type')
+    STARTUP_FRAMES = ComplexEnumMember(printable_name='startup frames')
     ON_BLOCK_FRAMES = ComplexEnumMember(
-        5, printable_name='frame advantage on block'
+        printable_name='frame advantage on block'
     )
-    ON_HIT_FRAMES = ComplexEnumMember(
-        6, printable_name='frame advantage on hit'
-    )
+    ON_HIT_FRAMES = ComplexEnumMember(printable_name='frame advantage on hit')
     COUNTER_HIT_FRAMES = ComplexEnumMember(
-        7, printable_name='frame advantage on counter hit'
+        printable_name='frame advantage on counter hit'
     )
     ACTIVE_FRAMES = ComplexEnumMember(
-        8, printable_name='active frame connected on/total active frames'
+        printable_name='active frame connected on/total active frames'
     )
     TRACKING = ComplexEnumMember(
-        9, printable_name='how well move tracks during startup'
+        printable_name='how well move tracks during startup'
     )
     TOTAL_FRAMES = ComplexEnumMember(
-        10, printable_name='total number of frames in move'
+        printable_name='total number of frames in move'
     )
     REACTION_FRAMES = ComplexEnumMember(
-        11, printable_name='frames before attacker can act'
+        printable_name='frames before attacker can act'
     )
     OPPONET_FRAMES = ComplexEnumMember(
-        12, printable_name='frames before defender can act'
+        printable_name='frames before defender can act'
     )
-    NOTES = ComplexEnumMember(13, printable_name='additional move properties')
+    NOTES = ComplexEnumMember(printable_name='additional move properties')

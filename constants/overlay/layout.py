@@ -29,17 +29,10 @@
 
 """
 """
-
 from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
-class OverlayMode(ComplexEnum):
+class OverlayLayout(ComplexEnum):
     """
     """
-    FRAMEDATA = ComplexEnumMember(printable_name='Frame Data')
-    # TIMELINE = ComplexEnumMember(printable_name='Timeline')
-    COMMAND_INPUT = ComplexEnumMember(
-        printable_name='Command Inputs (and cancel window)'
-    )
-    PUNISH_COACH = ComplexEnumMember(printable_name='Punish Alarm (loud!)')
-    MATCHUP_RECORD = ComplexEnumMember(printable_name='Matchup Stats')
-    DEGUG_INFO = ComplexEnumMember(printable_name='Debugging Variables')
+    SINGLE = ComplexEnumMember(printable_name='Single')
+    DOUBLE = ComplexEnumMember(printable_name='Double')

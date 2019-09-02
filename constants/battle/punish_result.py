@@ -36,12 +36,10 @@ from constants.complex_enum import ComplexEnum, ComplexEnumMember
 class PunishResult(ComplexEnum):
     """
     """
-    NO_WINDOW = ComplexEnumMember(enum.auto())
-    NO_PUNISH = ComplexEnumMember(enum.auto(), is_wrong_punish=True)
-    PERFECT_PUNISH = ComplexEnumMember(enum.auto())
-    NO_LAUNCH_ON_LAUNCHABLE = ComplexEnumMember(
-        enum.auto(), is_wrong_punish=True
-    )
-    LAUNCH_ON_LAUNCHABLE = ComplexEnumMember(enum.auto())
-    JAB_ON_NOT_LAUNCHABLE = ComplexEnumMember(enum.auto())
-    NOT_YET_CLOSED = ComplexEnumMember(enum.auto())
+    NO_WINDOW = ComplexEnumMember()
+    NO_PUNISH = ComplexEnumMember(is_wrong_punish=True)
+    PERFECT_PUNISH = ComplexEnumMember()
+    NO_LAUNCH_ON_LAUNCHABLE = ComplexEnumMember(is_wrong_punish=True)
+    LAUNCH_ON_LAUNCHABLE = ComplexEnumMember()
+    JAB_ON_NOT_LAUNCHABLE = ComplexEnumMember()
+    NOT_YET_CLOSED = ComplexEnumMember()
