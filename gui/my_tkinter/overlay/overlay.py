@@ -100,8 +100,8 @@ class Overlay(ABC):
         )
 
     def copy_settings_from_overlay(self, other_overlay):
-        self.set_automatic_hide(other_overlay.automatic_hide)
         self.set_position(other_overlay.position)
+        self.set_automatic_hide(other_overlay.automatic_hide)
 
     def set_automatic_hide(self, enable):
         self.automatic_hide = enable

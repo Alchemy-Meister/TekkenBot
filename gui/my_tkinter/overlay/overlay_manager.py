@@ -122,6 +122,7 @@ class OverlayManager(metaclass=Singleton):
             self.overlays[overlay_id].set_position(position)
 
     def change_overlay_theme(self, theme_dict):
+        self.current_theme = theme_dict
         for overlay_id in self.overlays:
             self.overlays[overlay_id].set_theme(theme_dict)
 
@@ -194,6 +195,7 @@ class OverlayManager(metaclass=Singleton):
             self.overlays[overlay_id].set_tekken_position(self.tekken_position)
 
         if self.current_overlay:
+            self.overlays[overlay_id].set_theme(self.current_theme)
             self.overlays[overlay_id].copy_settings_from_overlay(
                 self.current_overlay
             )
