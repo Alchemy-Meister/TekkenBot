@@ -48,6 +48,7 @@ class AttackTextbox(Textbox):
             self.delete('1.0', tk.END)
         else:
             self.delete('2.0', tk.END)
+            self.insert(tk.END, '\n')
         self.configure(state='disable')
 
     def insert(self, index, chars, *args):

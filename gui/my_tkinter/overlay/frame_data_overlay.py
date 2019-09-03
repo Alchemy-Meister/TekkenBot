@@ -235,8 +235,6 @@ class FrameDataOverlay(WritableOverlay):
         self.visible = self.launcher.game_state.is_in_battle()
         if previous_visible_state != self.visible and not self.visible:
             self.__clear()
-            self.textbox.insert(tk.END, '\n')
-            self.textbox.update()
         if not self.automatic_hide:
             self.visible = True
 
