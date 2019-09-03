@@ -133,7 +133,6 @@ class TekkenEncyclopedia:
     def determine_coaching_tips(self, game_state: TekkenGameState):
         if self.previous_frame_data_entry != self.current_frame_data_entry:
             self.previous_frame_data_entry = self.current_frame_data_entry
-
             if self.current_punish_window is not None:
                 self.close_punish_window(
                     PunishResult.NO_WINDOW,
@@ -161,12 +160,12 @@ class TekkenEncyclopedia:
             self.punish_window_counter += 1
             #if self.punish_window_counter > self.current_punish_window.size:
 
-            was_block_punish = (
+            opponent_blocked = (
                 game_state.did_opp_start_getting_punished_x_frames_ago(1)
                 or game_state.did_opp_start_getting_hit_x_frames_ago(1)
             )
 
-            if was_block_punish:
+            if opponent_blocked:
                 leeway = (
                     game_state.opp_frames_until_recovery_x_frames_ago(2) - 1
                 )
@@ -379,8 +378,8 @@ class TekkenEncyclopedia:
                     self.add_stat(
                         result, player_char, opponent_name, opponent_char
                     )
-                    with open(self.stat_filename, 'a') as a_file:
-                        a_file.write(match_result + '\n')
+                    # with open(self.stat_filename, 'a') as a_file:
+                    #     a_file.write(match_result + '\n')
             if game_state.get_timer(frames_ago) < 3600 and self.game_events:
                 summary = RoundSummary(
                     self.game_events,
