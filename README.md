@@ -17,6 +17,7 @@ Created by roguelike2d. Maintained by the community.
 - [x] Added the possibility to write into the Tekken's process memory to overwrite characters, stages, among other settings. (Includes *non-playable* characters and stages)
 
 ### Overlays
+- [x] Automatic overlay position change when Tekkens enters/exits Fullscreen mode.
 - [x] Overlays show and hide automatically on battle's start and end. Configurable in *./data/settings.ini*
 - [x] Overlays scale to different resolutions.
 - [x] Resizable overlay windows on draggable mode.
