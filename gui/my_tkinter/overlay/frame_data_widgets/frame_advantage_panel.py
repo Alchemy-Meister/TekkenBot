@@ -127,7 +127,7 @@ class FrameAdvantagePanel(tk.Frame):
             and self.str_live_recovery.get()
             == FrameAdvantagePanel.__LIVE_RECOVERY_CONFIG['initial_text']
             and self.frame_advantage
-            != FrameAdvantagePanel.__CANVAS_CONFIG['initial_frame_advantage']
+            == FrameAdvantagePanel.__CANVAS_CONFIG['initial_frame_advantage']
         )
 
     def set_frame_advantage(self, frame_advantage):

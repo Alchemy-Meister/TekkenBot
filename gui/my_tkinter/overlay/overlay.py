@@ -63,10 +63,10 @@ class Overlay(ABC):
         self.coordinates_initialized = False
         self.dimensions_initialized = False
         self.visible = False
-        self.enabled = DefaultSettings.SETTINGS['DEFAULT'].get('overlay_enable')
+        self.enabled = False
         self.is_draggable = False
 
-        self.is_resizing = False
+        self.is_resizing = True
         self.resize_start = True
         self.skip_resize_event = False
         self.previous_event = None
@@ -213,30 +213,6 @@ class Overlay(ABC):
         self.coordinates['width'] = width
         self.coordinates['height'] = height
 
-    def __update(self, is_state_updated):
-        if self.enabled:
-            game_reader = self.launcher.game_state.get_reader()
-            if(
-                    self.coordinates_initialized
-                    and (
-                        self.is_draggable
-                        or game_reader.is_tekken_foreground_wnd()
-                    )
-            ):
-                previous_visible_state = self.visible
-                self._update_visible_state()
-                if(
-                        previous_visible_state != self.visible
-                    ):
-                    if self.visible:
-                        self.__show()
-                    else:
-                        self.__hide()
-            else:
-                self.__hide()
-            if is_state_updated:
-                self._update_state()
-
     @abstractmethod
     def _update_dimensions(self):
         pass
@@ -341,11 +317,34 @@ class Overlay(ABC):
     def __show(self):
         self.visible = True
         self.overlay.deiconify()
-        self.overlay.focus_force()
 
     def __stop(self):
         self.dimensions_initialized = False
         self.coordinates_initialized = False
+
+    def __update(self, is_state_updated):
+        if self.enabled:
+            game_reader = self.launcher.game_state.get_reader()
+            if(
+                    self.coordinates_initialized
+                    and (
+                        self.is_draggable
+                        or game_reader.is_tekken_foreground_wnd()
+                    )
+            ):
+                previous_visible_state = self.visible
+                self._update_visible_state()
+                if(
+                        previous_visible_state != self.visible
+                    ):
+                    if self.visible:
+                        self.__show()
+                    else:
+                        self.__hide()
+            else:
+                self.__hide()
+            if is_state_updated:
+                self._update_state()
 
     @staticmethod
     def __calculate_scale(current_size, original_size):

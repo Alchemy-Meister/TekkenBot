@@ -96,19 +96,25 @@ class OverlayManager(metaclass=Singleton):
         self.current_overlay.set_enable(self.overlay_enabled)
 
     def change_overlay(self, mode: OverlayMode):
-        sys.stdout.write('Turning overlay off')
-        self.current_overlay.set_enable(False)
-        self.overlays[self.current_overlay.__class__.CLASS_ID] = (
-            self.current_overlay
+        current_overlay_mode = self.current_overlay.__class__.CLASS_ID
+        sys.stdout.write(
+            'Turning {} overlay off'.format(
+                OverlayMode(current_overlay_mode).name
+            )
         )
+        self.current_overlay.set_enable(False)
+        self.overlays[current_overlay_mode] = self.current_overlay
         change_overlay = self.overlays.get(mode.value)
         if not change_overlay:
-            sys.stdout.write('creating new overlay')
-            change_overlay = self.__add_overlay(mode.value)
-        sys.stdout.write('changing overlay')
+            change_overlay = self.__add_overlay(mode)
+        sys.stdout.write(
+            'Changing from {} to {} overlay'.format(
+                OverlayMode(current_overlay_mode).name, mode.name
+            )
+        )
         self.current_overlay = change_overlay
-        sys.stdout.write('Turning overlay on')
         if self.overlay_enabled:
+            sys.stdout.write('Turning {} overlay on'.format(mode.name))
             self.current_overlay.set_enable(True)
 
     def change_overlay_position(self, position):
@@ -134,8 +140,9 @@ class OverlayManager(metaclass=Singleton):
             )
         else:
             self.current_overlay = self.__add_overlay(
-                OverlayMode[initial_settings.get('overlay_mode')].value
+                OverlayMode[initial_settings.get('overlay_mode')]
             )
+
         self.change_overlay_position(
             OverlayPosition[initial_settings.get('overlay_position')]
         )
@@ -146,18 +153,20 @@ class OverlayManager(metaclass=Singleton):
                 )
             )
         )
-        self.set_framedata_overlay_column_settings(
-            initial_settings.get('framedata_overlay_columns')
-        )
         self.enable_automatic_overlay_hide(
             initial_settings.get('overlay_automatic_hide')
         )
+
+        self.set_framedata_overlay_column_settings(
+            initial_settings.get('framedata_overlay_columns')
+        )
+
         self.enable_overlay(initial_settings.get('overlay_enable'))
 
     def set_framedata_overlay_column_settings(self, column_settings):
         frame_data_overlay = self.overlays.get(OverlayMode.FRAMEDATA.value)
         if not frame_data_overlay:
-            frame_data_overlay = self.__add_overlay(OverlayMode.FRAMEDATA.value)
+            frame_data_overlay = self.__add_overlay(OverlayMode.FRAMEDATA)
         frame_data_overlay.set_display_columns(column_settings)
 
     def write_to_overlay(self, string):
@@ -167,7 +176,9 @@ class OverlayManager(metaclass=Singleton):
         ):
             self.current_overlay.write(string)
 
-    def __add_overlay(self, overlay_id):
+    def __add_overlay(self, overlay_mode):
+        sys.stdout.write('Creating {} overlay'.format(overlay_mode.name))
+        overlay_id = overlay_mode.value
         self.overlays[overlay_id] = self.overlay_factory.create_class(
             overlay_id, self.launcher
         )
