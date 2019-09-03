@@ -115,6 +115,14 @@ class TekkenBotPrimeView():
             )
         )
 
+        # self.overlay_layout = tk.StringVar()
+        # overlay_layout_submenu = TekkenBotPrimeView.__create_populated_menu(
+        #     root,
+        #     self.overlay_layout,
+        #     self.controller.populate_overlay_layouts_submenu(),
+        #     self.controller.overlay_layout_change
+        # )
+
         self.overlay_mode = tk.StringVar()
         overlay_mode_submenu = TekkenBotPrimeView.__create_populated_menu(
             root,
@@ -124,16 +132,21 @@ class TekkenBotPrimeView():
         )
 
         self.overlay_position = tk.StringVar()
-        overlay_position_submenu = TekkenBotPrimeView.__create_populated_menu(
-            root,
-            self.overlay_position,
-            self.controller.populate_overlay_positions_submenu(),
-            self.controller.overlay_position_change
+        self.overlay_position_submenu = (
+            TekkenBotPrimeView.__create_populated_menu(
+                root,
+                self.overlay_position,
+                self.controller.populate_overlay_positions_submenu(),
+                self.controller.overlay_position_change
+            )
         )
 
+        # self.overlay_menu.add_cascade(
+        #     label='Layout', menu=overlay_layout_submenu
+        # )
         self.overlay_menu.add_cascade(label='Mode', menu=overlay_mode_submenu)
         self.overlay_menu.add_cascade(
-            label='Position', menu=overlay_position_submenu
+            label='Position', menu=self.overlay_position_submenu
         )
 
         self.overlay_theme = tk.IntVar()
@@ -162,6 +175,11 @@ class TekkenBotPrimeView():
 
         root.grid_rowconfigure(1, weight=1)
         root.grid_columnconfigure(0, weight=1)
+
+    def enable_overlay_position(self, str_position, enable):
+        self.overlay_position_submenu.entryconfig(
+            str_position, state='normal' if enable else 'disabled'
+        )
 
     def load_overlay_themes(self, theme_enumaration):
         try:

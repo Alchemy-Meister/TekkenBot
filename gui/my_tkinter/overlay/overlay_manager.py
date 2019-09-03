@@ -126,6 +126,9 @@ class OverlayManager(metaclass=Singleton):
         for overlay_id in self.overlays:
             self.overlays[overlay_id].set_theme(theme_dict)
 
+    def get_overlays_previous_positions(self):
+        return [overlay.previous_position for overlay in self.overlays.values()]
+
     def reload(self):
         if self.reloadable_initial_settings:
             initial_settings = self.reloadable_initial_settings.config[

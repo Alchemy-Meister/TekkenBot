@@ -36,6 +36,7 @@ import tkinter as tk
 import tkinter.font as tkfont
 
 from config import DefaultSettings
+from constants.graphic_settings import ScreenMode
 from constants.overlay import OverlayPosition
 from patterns.observer import Subscriber
 from tekken import Launcher
@@ -79,6 +80,8 @@ class Overlay(ABC):
 
         self._tekken_scale = None
         self.__tekken_rect = None
+
+        self.previous_position = None
         self.position = None
 
         self.overlay = tk.Toplevel(width=0, height=0)
@@ -146,6 +149,13 @@ class Overlay(ABC):
 
     def set_tekken_screen_mode(self, screen_mode):
         self.tekken_screen_mode = screen_mode
+        if screen_mode == ScreenMode.FULLSCREEN:
+            if self.position != OverlayPosition.DRAGGABLE:
+                self.previous_position = self.position
+                self.set_position(OverlayPosition.DRAGGABLE)
+        elif self.previous_position is not None:
+            self.set_position(self.previous_position)
+            self.previous_position = None
 
     def set_tekken_resolution(self, resolution):
         self.tekken_resolution = resolution

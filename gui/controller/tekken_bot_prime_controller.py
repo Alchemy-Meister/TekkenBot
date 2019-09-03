@@ -34,15 +34,16 @@ import tkinter as tk
 from tkinter import messagebox
 
 from audio import PunishCoachAlarm
-from constants.overlay import OverlayMode, OverlayPosition
 from config import DefaultSettings, ReloadableConfigManager
+from constants.event import GraphicSettingsChangeEvent
+from constants.graphic_settings import ScreenMode
+from constants.overlay import OverlayMode, OverlayPosition
 from gui.model import OverlayModel
 from gui.my_tkinter import StdStreamRedirector
 from gui.my_tkinter.overlay import OverlayManager
 from gui.view import TekkenBotPrimeView
-
 from network import NoInternetConnectionError
-
+from patterns.observer import Subscriber
 from tekken.coach import PunishCoach
 from tekken.launcher import Launcher
 
@@ -116,6 +117,9 @@ class TekkenBotPrimeController():
     def is_save_to_file_enabled(self):
         return self.save_to_file
 
+    # def overlay_layout_change(self, overlay_layout_name):
+    #     pass
+
     def overlay_mode_change(self, overlay_mode_name):
         self.overlay_manager.change_overlay(
             OverlayModel.get_overlay_mode_enum(overlay_mode_name)
@@ -130,6 +134,9 @@ class TekkenBotPrimeController():
         self.overlay_manager.change_overlay_theme(
             self.model.get_theme(overlay_theme_index)
         )
+
+    # def populate_overlay_layouts_submenu(self):
+    #     return []
 
     def populate_overlay_modes_submenu(self):
         return self.model.all_overlay_modes
@@ -181,6 +188,27 @@ class TekkenBotPrimeController():
             PunishCoach(self.launcher), self.reloadable_initial_settings
         )
 
+    def __limit_overlay_gui_settings(self, screen_mode):
+        if screen_mode == ScreenMode.FULLSCREEN:
+            self.view.overlay_position.set(
+                getattr(OverlayPosition.DRAGGABLE, 'name')
+            )
+            for position in OverlayPosition:
+                if position != OverlayPosition.DRAGGABLE:
+                    self.view.enable_overlay_position(
+                        getattr(position, 'printable_name'), False
+                    )
+        else:
+            for position in OverlayPosition:
+                if position != OverlayPosition.DRAGGABLE:
+                    self.view.enable_overlay_position(
+                        getattr(position, 'printable_name'), True
+                    )
+            previous = self.overlay_manager.get_overlays_previous_positions()[0]
+            if previous:
+                self.view.overlay_position.set(previous.name)
+
+
     def __on_delete_window(self):
         sys.stdout.close()
         sys.stdout = self.original_stdout
@@ -212,6 +240,12 @@ class TekkenBotPrimeController():
         self.reloadable_initial_settings = self.config_manager.add_config(
             'settings.ini', parse=True, config_model_class=DefaultSettings
         )
+
+        self.launcher.game_state.graphic_settings_publisher.register(
+            GraphicSettingsChangeEvent.SCREEN_MODE, Subscriber(),
+            self.__limit_overlay_gui_settings
+        )
+
         self.__initialize_overlay_settings()
         self.__initialize_punish_alarm()
 
