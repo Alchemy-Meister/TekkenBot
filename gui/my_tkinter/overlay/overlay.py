@@ -107,45 +107,48 @@ class Overlay(ABC):
         self.set_automatic_hide(other_overlay.automatic_hide)
 
     def set_automatic_hide(self, enable):
-        self.automatic_hide = enable
-        if enable:
-            self.visible = True
+        if enable != self.automatic_hide:
+            self.automatic_hide = enable
+            if enable:
+                self.visible = True
 
     def set_enable(self, enable):
-        self.enabled = enable
-        if not self.enabled:
-            self.__hide()
+        if enable != self.enabled:
+            self.enabled = enable
+            if not self.enabled:
+                self.__hide()
 
     def set_position(self, position):
-        was_draggable = self.position == OverlayPosition.DRAGGABLE
-        self.position = position
+        if position != self.position:
+            was_draggable = self.position == OverlayPosition.DRAGGABLE
+            self.position = position
 
-        self.is_draggable = self.position == OverlayPosition.DRAGGABLE
-        Overlay.__set_cursor_to_all_widgets(
-            self.overlay, '' if self.is_draggable else 'none'
-        )
-        self.overlay.overrideredirect(not self.is_draggable)
-        self.overlay.wm_attributes('-topmost', not self.is_draggable)
-
-        if Overlay.TRANSPARENCY_CAPABLE:
-            self.overlay.wm_attributes(
-                '-transparentcolor',
-                '' if self.is_draggable else self.transparent_color
+            self.is_draggable = self.position == OverlayPosition.DRAGGABLE
+            Overlay.__set_cursor_to_all_widgets(
+                self.overlay, '' if self.is_draggable else 'none'
             )
-            self.overlay.attributes(
-                '-alpha', '1' if self.is_draggable else '0.75'
-            )
+            self.overlay.overrideredirect(not self.is_draggable)
+            self.overlay.wm_attributes('-topmost', not self.is_draggable)
 
-        try:
-            if was_draggable and not self.is_draggable:
-                self._resize_overlay_widgets()
-                self._update_dimensions()
+            if Overlay.TRANSPARENCY_CAPABLE:
+                self.overlay.wm_attributes(
+                    '-transparentcolor',
+                    '' if self.is_draggable else self.transparent_color
+                )
+                self.overlay.attributes(
+                    '-alpha', '1' if self.is_draggable else '0.75'
+                )
+
             try:
-                self._update_position(self.tekken_position)
-            except TypeError:
+                if was_draggable and not self.is_draggable:
+                    self._resize_overlay_widgets()
+                    self._update_dimensions()
+                try:
+                    self._update_position(self.tekken_position)
+                except TypeError:
+                    pass
+            except AttributeError:
                 pass
-        except AttributeError:
-            pass
 
     def set_tekken_screen_mode(self, screen_mode):
         self.tekken_screen_mode = screen_mode
