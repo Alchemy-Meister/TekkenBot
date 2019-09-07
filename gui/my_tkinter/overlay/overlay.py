@@ -102,9 +102,15 @@ class Overlay(ABC):
             Launcher.Event.CLOSED, subscriber, self.__stop
         )
 
-    def copy_settings_from_overlay(self, other_overlay):
+    def set_settings(self, automatic_hide, position):
+        self.set_position(position)
+        self.set_automatic_hide(automatic_hide)
+
+    def set_settings_from_overlay(self, other_overlay):
+        previous_settings = self.automatic_hide, self.position
         self.set_position(other_overlay.position)
         self.set_automatic_hide(other_overlay.automatic_hide)
+        return previous_settings
 
     def set_automatic_hide(self, enable):
         if enable != self.automatic_hide:
@@ -143,11 +149,8 @@ class Overlay(ABC):
                 if was_draggable and not self.is_draggable:
                     self._resize_overlay_widgets()
                     self._update_dimensions()
-                try:
-                    self._update_position(self.tekken_position)
-                except TypeError:
-                    pass
-            except AttributeError:
+                self._update_position(self.tekken_position)
+            except (TypeError, AttributeError):
                 pass
 
     def set_tekken_screen_mode(self, screen_mode):
