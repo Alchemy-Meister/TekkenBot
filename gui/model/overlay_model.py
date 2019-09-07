@@ -31,7 +31,7 @@
 """
 import os
 from config import ReloadableConfigManager
-from constants.overlay import OverlayMode, OverlayPosition
+from constants.overlay import OverlayLayout, OverlayMode, OverlayPosition
 from patterns.singleton import Singleton
 
 class OverlayModel(metaclass=Singleton):
@@ -39,6 +39,7 @@ class OverlayModel(metaclass=Singleton):
     """
     def __init__(self):
         self.__config_manager = ReloadableConfigManager()
+        self.all_overlay_layouts = OverlayModel.__enum_to_list(OverlayLayout)
         self.all_overlay_modes = OverlayModel.__enum_to_list(OverlayMode)
         self.all_overlay_positions = OverlayModel.__enum_to_list(
             OverlayPosition
@@ -68,12 +69,14 @@ class OverlayModel(metaclass=Singleton):
 
     @staticmethod
     def __enum_to_list(printable_enum_class):
-        return_list = list()
-        for printable_enum in printable_enum_class:
-            return_list.append(
-                (printable_enum.name, printable_enum.printable_name)
-            )
-        return return_list
+        return [
+            (printable_enum.name, printable_enum.printable_name)
+            for printable_enum in printable_enum_class
+        ]
+
+    @staticmethod
+    def get_overlay_layout_enum(overlay_layout_name):
+        return OverlayLayout[overlay_layout_name]
 
     @staticmethod
     def get_overlay_mode_enum(overlay_mode_name):
