@@ -34,5 +34,5 @@ from constants.complex_enum import ComplexEnum, ComplexEnumMember
 class OverlayLayout(ComplexEnum):
     """
     """
-    SINGLE = ComplexEnumMember(printable_name='Single')
-    DOUBLE = ComplexEnumMember(printable_name='Double')
+    SINGLE = ComplexEnumMember(1, printable_name='Single')
+    DOUBLE = ComplexEnumMember(2, printable_name='Double')

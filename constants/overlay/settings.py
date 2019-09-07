@@ -30,7 +30,11 @@
 """
 """
 
-from .layout import OverlayLayout
-from .mode import OverlayMode
-from .position import OverlayPosition
-from .settings import OverlaySettings
+from constants.complex_enum import ComplexEnum, ComplexEnumMember
+
+class OverlaySettings(ComplexEnum):
+    """
+    """
+    MODE = ComplexEnumMember(printable_name='Mode')
+    POSITION = ComplexEnumMember(printable_name='Position')
+    THEME = ComplexEnumMember(printable_name='Theme')
