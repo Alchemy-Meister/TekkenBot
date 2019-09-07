@@ -31,6 +31,7 @@
 """
 from distutils.version import LooseVersion
 import os
+import socket
 import queue
 import threading
 import urllib.parse as url_parse
@@ -76,27 +77,27 @@ class Updater(metaclass=Singleton):
                 lambda: self.__gui_update(success_callback, error_callback)
             )
 
-    def get_update_version(self, use_cache=True):
+    def get_update_version(self, use_cache=True, timeout=None):
         if use_cache and self.update_version_initialized:
             return self.update_version
 
-        return self.__get_update_version()
+        return self.__get_update_version(timeout=timeout)
 
     def is_update_available(
             self, use_cache=True, run_async=False, success_callback=None,
-            error_callback=None
+            error_callback=None, timeout=None
     ):
         if run_async and self.gui_container:
             if not self.gui_update_running:
                 self.__async_is_update_available(
-                    use_cache, success_callback, error_callback
+                    use_cache, success_callback, error_callback, timeout=timeout
                 )
         else:
-            return self.__proccess_update_available(use_cache)
+            return self.__proccess_update_available(use_cache, timeout=timeout)
 
-    def get_download_url(self, use_cache=False, run_async=False):
+    def get_download_url(self, use_cache=False, run_async=False, timeout=None):
         if self.is_update_available(use_cache=use_cache, run_async=run_async):
-            version = self.get_update_version(use_cache=True)
+            version = self.get_update_version(use_cache=True, timeout=timeout)
             return url_parse.urljoin(
                 self.github_releases,
                 'download/{0}/{1}/'.format(
@@ -105,17 +106,22 @@ class Updater(metaclass=Singleton):
             )
         return None
 
-    def download_update(self, use_cache=False):
+    def download_update(self, use_cache=False, timeout=None):
         threading.Thread(
             target=self.__open_download_url,
-            kwargs={'use_cache': use_cache, 'run_async': False}
+            kwargs={
+                'use_cache': use_cache, 'run_async': False, 'timeout': timeout
+            }
         ).start()
 
-    def __get_update_version(self):
+    def __get_update_version(self, timeout=None):
         latest_release_url = url_parse.urljoin(self.github_releases, 'latest/')
 
         try:
-            response = urllib2.urlopen(latest_release_url)
+            if timeout is None:
+                response = urllib2.urlopen(latest_release_url)
+            else:
+                response = urllib2.urlopen(latest_release_url, timeout=timeout)
             response_redirected_url = response.geturl()
 
             self.update_version_initialized = True
@@ -135,17 +141,17 @@ class Updater(metaclass=Singleton):
         return self.update_version
 
     def __async_is_update_available(
-            self, cache, success_callback, error_callback
+            self, cache, success_callback, error_callback, timeout=None
     ):
         self.gui_update_running = True
         self.__gui_update(success_callback, error_callback)
         threading.Thread(
-            target=self.__proccess_update_available, args=(cache, True,)
+            target=self.__proccess_update_available, args=(cache, True, timeout)
         ).start()
 
-    def __proccess_update_available(self, cache, use_queue=False):
+    def __proccess_update_available(self, cache, use_queue=False, timeout=None):
         try:
-            version = self.get_update_version(use_cache=cache)
+            version = self.get_update_version(use_cache=cache, timeout=timeout)
             if version and self.current_version < LooseVersion(version):
                 if use_queue:
                     self.queue.put(True)
@@ -159,7 +165,11 @@ class Updater(metaclass=Singleton):
             else:
                 raise NoInternetConnectionError
 
-    def __open_download_url(self, use_cache=False, run_async=False):
+    def __open_download_url(
+            self, use_cache=False, run_async=False, timeout=None
+    ):
         webbrowser.open(
-            self.get_download_url(use_cache=use_cache, run_async=run_async)
+            self.get_download_url(
+                use_cache=use_cache, run_async=run_async, timeout=timeout
+            )
         )
