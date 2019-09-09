@@ -92,6 +92,7 @@ class CharacterIDs(ComplexEnum):
     ARMOR_KING = ComplexEnumMember(48, printable_name='Armor King')
     JULIA = ComplexEnumMember(49, printable_name='Julia')
     NEGAN = ComplexEnumMember(50, printable_name='Negan')
+    ZAFINA = ComplexEnumMember(51, printable_name='Zafina')
     # -------------------------------------------------------------------------
     NOT_YET_LOADED = ComplexEnumMember(71, printable_name=None)
     # Value if cursor is not shown
