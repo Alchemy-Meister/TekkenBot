@@ -439,8 +439,7 @@ class TekkenGameReader(ProcessIO):
                         bot_facing, self.opponent_name,
                         self.is_player_player_one
                     )
-            except (OSError, struct.error, TypeError) as e:
-                print(e)
+            except (OSError, struct.error, TypeError):
                 self.reacquire_everything()
                 raise OSError
             finally:
