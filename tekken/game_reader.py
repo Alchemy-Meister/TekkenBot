@@ -30,6 +30,7 @@
 """
 
 """
+import traceback
 import sys
 import struct
 import MovelistParser
@@ -292,11 +293,14 @@ class TekkenGameReader(ProcessIO):
                 else:
                     game_state[0] = self.get_graphic_settings(process_handle)
 
-                player_data_base_address = self.get_value_from_address(
-                    process_handle,
-                    self.module_address + self.player_data_pointer_offset,
-                    is_64bit=True
-                )
+                player_data_base_address = self.module_address
+                for i, offset in enumerate(self.player_data_pointer_offset):
+                    player_data_base_address = self.get_pointer_value(
+                        process_handle, player_data_base_address + offset
+                    )
+                    if not player_data_base_address:
+                        break
+
                 if player_data_base_address == 0:
                     if not self.reacquire_game_state:
                         sys.stdout.write(
@@ -435,7 +439,8 @@ class TekkenGameReader(ProcessIO):
                         bot_facing, self.opponent_name,
                         self.is_player_player_one
                     )
-            except (OSError, struct.error, TypeError):
+            except (OSError, struct.error, TypeError) as e:
+                print(e)
                 self.reacquire_everything()
                 raise OSError
             finally:
