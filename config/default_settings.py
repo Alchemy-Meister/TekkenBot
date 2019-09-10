@@ -33,7 +33,7 @@ import configparser
 import distutils.util as utils
 import re
 
-from constants.overlay import OverlayLayout, OverlayMode, OverlayPosition
+from constants.overlay import OverlayMode, OverlayPosition
 from constants.overlay.frame_data import Columns
 
 class DefaultSettings():
@@ -47,13 +47,9 @@ class DefaultSettings():
             'alarm_voice_folder': 'original',
             'overlay_automatic_hide': True,
             'overlay_enable': True,
-            'overlay_layout': getattr(OverlayLayout.SINGLE, 'name'),
-            'overlay_1_mode': getattr(OverlayMode.FRAMEDATA, 'name'),
-            'overlay_1_position': getattr(OverlayPosition.TOP, 'name'),
-            'overlay_1_theme': 'classic',
-            'overlay_2_mode': getattr(OverlayMode.COMMAND_INPUT, 'name'),
-            'overlay_2_position': getattr(OverlayPosition.BOTTOM, 'name'),
-            'overlay_2_theme': 'classic',
+            'overlay_mode': getattr(OverlayMode.FRAMEDATA, 'name'),
+            'overlay_position': getattr(OverlayPosition.TOP, 'name'),
+            'overlay_theme': 'classic',
             'framedata_overlay_columns': [
                 getattr(Columns.INPUT_COMMAND, 'name'),
                 getattr(Columns.ATTACK_TYPE, 'name'),
