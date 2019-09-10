@@ -199,7 +199,7 @@ class OverlayManager(metaclass=Singleton):
 
         if self.current_overlay:
             self.overlays[overlay_id].set_theme(self.current_theme)
-            self.overlays[overlay_id].copy_settings_from_overlay(
+            self.overlays[overlay_id].set_settings_from_overlay(
                 self.current_overlay
             )
 
