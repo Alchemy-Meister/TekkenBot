@@ -3,6 +3,12 @@ AI and tools for playing and understanding Tekken 7.
 
 Created by roguelike2d. Maintained by the community.
 
+## Related
+1. The original repository:
+    - WAZAAAAA0: [https://github.com/WAZAAAAA0/TekkenBot](https://github.com/WAZAAAAA0/TekkenBot)
+2. Check out this additional fork for new TekkenBotPrime features:
+    - compsyguy: [https://github.com/compsyguy/TekkenBot/](https://github.com/compsyguy/TekkenBot/)
+
 ## New Features in this fork
 
 ### Executable
