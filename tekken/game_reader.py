@@ -30,7 +30,6 @@
 """
 
 """
-import traceback
 import sys
 import struct
 import MovelistParser
