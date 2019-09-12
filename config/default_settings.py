@@ -53,7 +53,7 @@ class DefaultSettings():
             'overlay_1_theme': 'classic',
             'overlay_2_mode': getattr(OverlayMode.COMMAND_INPUT, 'name'),
             'overlay_2_position': getattr(OverlayPosition.BOTTOM, 'name'),
-            'overlay_2_theme': 'classic',
+            'overlay_2_theme': 'arcade',
             'framedata_overlay_columns': [
                 getattr(Columns.INPUT_COMMAND, 'name'),
                 getattr(Columns.ATTACK_TYPE, 'name'),
