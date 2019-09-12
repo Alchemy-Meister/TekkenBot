@@ -71,7 +71,7 @@ class TekkenBotPrime():
 
         update_available = False
         try:
-            update_available = updater.is_update_available()
+            update_available = updater.is_update_available(timeout=5)
         except NoInternetConnectionError:
             pass
 
