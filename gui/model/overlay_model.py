@@ -30,6 +30,7 @@
 """
 """
 import os
+from pathlib import Path
 from config import ReloadableConfigManager
 from constants.overlay import OverlayLayout, OverlayMode, OverlayPosition
 from patterns.singleton import Singleton
@@ -44,21 +45,60 @@ class OverlayModel(metaclass=Singleton):
         self.all_overlay_positions = OverlayModel.__enum_to_list(
             OverlayPosition
         )
-        self.overlay_themes = self.__config_manager.add_config_group(
-            'overlay_themes', self.__get_all_overlay_theme_config_paths
+
+        overlay_theme_dir = 'themes/overlay'
+        overlay_theme_path = os.path.join(
+            self.__config_manager.data_folder, overlay_theme_dir
         )
+        self.overlay_themes = {}
+        for theme_dir in Path(overlay_theme_path).iterdir():
+            try:
+                overlay_mode = OverlayMode[theme_dir.name.upper()].name
+                self.overlay_themes[overlay_mode] = {}
+                self.overlay_themes[overlay_mode]['dir'] = theme_dir
+                self.overlay_themes[overlay_mode]['themes'] = (
+                    self.__config_manager.add_config_group(
+                        '{}_overlay_themes'.format(theme_dir.name),
+                        lambda mode=overlay_mode:
+                        self.__get_all_overlay_theme_config_paths(mode)
+                    )
+                )
+            except KeyError:
+                pass
 
-    def get_overlay_themes_names(self):
-        return [
-            theme['theme']['printable_name']
-            for theme in self.overlay_themes
-        ]
+    def get_all_overlay_theme_names(self):
+        return {
+            overlay_mode:
+            [
+                theme_mode['theme']['printable_name']
+                for theme_mode in theme_dict['themes']
+            ]
+            for overlay_mode, theme_dict in self.overlay_themes.items()
+        }
 
-    def get_theme(self, theme_index):
-        return self.overlay_themes[theme_index].config['theme']
+    def get_overlay_themes_names(self, overlay_mode):
+        try:
+            return [
+                theme['theme']['printable_name']
+                for theme in self.overlay_themes[overlay_mode]['themes']
+            ]
+        except KeyError:
+            return []
 
-    def get_index_by_filename(self, theme_filename):
-        for index, theme_config in enumerate(self.overlay_themes):
+    def get_theme(self, theme_index, overlay_mode):
+        try:
+            return (
+                self.overlay_themes[overlay_mode]['themes'][theme_index].config[
+                    'theme'
+                ]
+            )
+        except TypeError:
+            return {}
+
+    def get_index_by_filename(self, overlay_mode_name, theme_filename):
+        for index, theme_config in enumerate(
+                self.overlay_themes[overlay_mode_name]['themes']
+        ):
             if(
                     theme_filename
                     == str(os.path.basename(theme_config.path)).split('.theme')
@@ -86,18 +126,17 @@ class OverlayModel(metaclass=Singleton):
     def get_overlay_position_enum(overlay_position_name):
         return OverlayPosition[overlay_position_name]
 
-    def __get_all_overlay_theme_config_paths(self):
-        overlay_theme_dir = 'themes/overlay'
-        overlay_theme_path = os.path.join(
-            self.__config_manager.data_folder, overlay_theme_dir
-        )
-        return [
-            os.path.join(overlay_theme_path, theme)
-            for theme in os.listdir(overlay_theme_path)
-            if theme.endswith('.theme')
-        ]
-
     def reload(self):
-        self.overlay_themes = self.__config_manager.get_config_group(
-            'overlay_themes'
-        )
+        for key in self.overlay_themes:
+            self.overlay_themes[key]['themes'] = (
+                self.__config_manager.get_config_group(
+                    '{}_overlay_themes'.format(key.lower())
+                )
+            )
+
+    def __get_all_overlay_theme_config_paths(self, overlay_mode_name):
+        theme_dir = self.overlay_themes[overlay_mode_name]['dir']
+        return [
+            theme for theme in theme_dir.iterdir()
+            if theme.name.endswith('.theme')
+        ]

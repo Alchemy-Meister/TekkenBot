@@ -37,7 +37,7 @@ from audio import PunishCoachAlarm
 from config import DefaultSettings, ReloadableConfigManager
 from constants.event import GraphicSettingsChangeEvent
 from constants.graphic_settings import ScreenMode
-from constants.overlay import OverlayMode, OverlayPosition
+from constants.overlay import OverlayLayout, OverlayPosition, OverlaySettings
 from gui.model import OverlayModel
 from gui.my_tkinter import StdStreamRedirector
 from gui.my_tkinter.overlay import OverlayManager
@@ -106,7 +106,7 @@ class TekkenBotPrimeController():
         sys.stderr.enable_auto_scroll(enable)
 
     def enable_overlay(self, enable):
-        self.overlay_manager.enable_overlay(enable)
+        self.overlay_manager.enable_overlays(enable)
 
     def enable_overlay_auto_hide(self, enable):
         self.overlay_manager.enable_automatic_overlay_hide(enable)
@@ -117,26 +117,37 @@ class TekkenBotPrimeController():
     def is_save_to_file_enabled(self):
         return self.save_to_file
 
-    # def overlay_layout_change(self, overlay_layout_name):
-    #     pass
+    def overlay_layout_change(self, overlay_layout_name):
+        layout = OverlayModel.get_overlay_layout_enum(overlay_layout_name)
+        self.view.adapt_overlay_menu_to_overlay_number(layout.value)
+        self.overlay_manager.change_overlay_layout(layout)
 
-    def overlay_mode_change(self, overlay_mode_name):
-        self.overlay_manager.change_overlay(
-            OverlayModel.get_overlay_mode_enum(overlay_mode_name)
+    def overlay_mode_change(self, overlay_mode_name, overlay_slot, swap):
+        self.overlay_manager.change_overlay_mode(
+            OverlayModel.get_overlay_mode_enum(overlay_mode_name),
+            overlay_slot,
+            swap
         )
 
-    def overlay_position_change(self, overlay_position_name):
+    def overlay_position_change(
+            self, overlay_position_name, overlay_slot, swap
+    ):
         self.overlay_manager.change_overlay_position(
-            OverlayModel.get_overlay_position_enum(overlay_position_name)
+            OverlayModel.get_overlay_position_enum(overlay_position_name),
+            overlay_slot,
+            swap
         )
 
-    def overlay_theme_change(self, overlay_theme_index):
+    def overlay_theme_change(self, str_overlay_theme_index, overlay_slot):
+        overlay_mode = self.overlay_manager.get_overlay_mode(overlay_slot)
         self.overlay_manager.change_overlay_theme(
-            self.model.get_theme(overlay_theme_index)
+            self.model.get_theme(
+                int(str_overlay_theme_index), overlay_mode.name
+            )
         )
 
-    # def populate_overlay_layouts_submenu(self):
-    #     return []
+    def populate_overlay_layouts_submenu(self):
+        return self.model.all_overlay_layouts
 
     def populate_overlay_modes_submenu(self):
         return self.model.all_overlay_modes
@@ -144,18 +155,16 @@ class TekkenBotPrimeController():
     def populate_overlay_positions_submenu(self):
         return self.model.all_overlay_positions
 
-    def populate_overlay_themes_submenu(self):
-        return enumerate(self.model.get_overlay_themes_names())
+    def populate_overlay_themes_submenu(self, overlay_mode):
+        return enumerate(self.model.get_overlay_themes_names(overlay_mode))
 
     def restart(self):
         sys.stdout.write('restart')
         self.config_manager.reload_all()
         self.model.reload()
-        self.view.load_overlay_themes(
-            enumerate(self.model.get_overlay_themes_names())
-        )
         self.__update_alarm_gui_settings()
         self.__update_overlay_gui_settings()
+        self.view.load_overlay_themes()
         self.punish_coach_alarm.reload()
         self.overlay_manager.reload()
 
@@ -190,7 +199,8 @@ class TekkenBotPrimeController():
 
     def __limit_overlay_gui_settings(self, screen_mode):
         if screen_mode == ScreenMode.FULLSCREEN:
-            self.view.overlay_position.set(
+            self.view.set_in_all_overlay_settings(
+                OverlaySettings.POSITION,
                 getattr(OverlayPosition.DRAGGABLE, 'name')
             )
             for position in OverlayPosition:
@@ -204,10 +214,9 @@ class TekkenBotPrimeController():
                     self.view.enable_overlay_position(
                         getattr(position, 'printable_name'), True
                     )
-            previous = self.overlay_manager.get_overlays_previous_positions()[0]
-            if previous:
-                self.view.overlay_position.set(previous.name)
-
+            self.view.restore_previous_overlays_settings(
+                OverlaySettings.POSITION
+            )
 
     def __on_delete_window(self):
         sys.stdout.close()
@@ -238,7 +247,7 @@ class TekkenBotPrimeController():
     def __post_console_initialization(self):
         self.launcher = Launcher(self.root, extended_print=False)
         self.reloadable_initial_settings = self.config_manager.add_config(
-            'settings.ini', parse=True, config_model_class=DefaultSettings
+            'settings.ini', config_model_class=DefaultSettings
         )
 
         self.launcher.game_state.graphic_settings_publisher.register(
@@ -290,14 +299,41 @@ class TekkenBotPrimeController():
         self.view.overlay_auto_hide.set(
             initial_settings.get('overlay_automatic_hide')
         )
-        self.view.overlay_mode.set(
-            OverlayMode[initial_settings.get('overlay_mode')].name
+        self.view.overlay_layout.set(initial_settings.get('overlay_layout'))
+        overlay_number = (
+            OverlayModel.get_overlay_layout_enum(
+                initial_settings.get('overlay_layout')
+            ).value
         )
-        self.view.overlay_position.set(
-            OverlayPosition[initial_settings.get('overlay_position')].name
-        )
-        self.view.overlay_theme.set(
-            self.model.get_index_by_filename(
-                initial_settings.get('overlay_theme')
+        for overlay_index in range(list(OverlayLayout).pop().value):
+            overlay_mode = OverlayModel.get_overlay_mode_enum(
+                initial_settings.get(
+                    'overlay_{}_mode'.format(overlay_index + 1)
+                )
             )
-        )
+            self.view.set_overlay_setting(
+                overlay_index,
+                OverlaySettings.MODE,
+                overlay_mode.name
+            )
+
+            self.view.set_overlay_setting(
+                overlay_index,
+                OverlaySettings.POSITION,
+                OverlayModel.get_overlay_position_enum(
+                    initial_settings.get(
+                        'overlay_{}_position'.format(overlay_index + 1)
+                    )
+                ).name
+            )
+            self.view.set_overlay_setting(
+                overlay_index,
+                OverlaySettings.THEME,
+                self.model.get_index_by_filename(
+                    overlay_mode.name,
+                    initial_settings.get(
+                        'overlay_{}_theme'.format(overlay_index + 1)
+                    )
+                )
+            )
+        self.view.adapt_overlay_menu_to_overlay_number(overlay_number)
