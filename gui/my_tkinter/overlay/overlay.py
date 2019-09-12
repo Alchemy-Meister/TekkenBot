@@ -102,13 +102,22 @@ class Overlay(ABC):
             Launcher.Event.CLOSED, subscriber, self.__stop
         )
 
-    def set_settings(self, automatic_hide, position):
+    def __repr__(self):
+        return 'Class: {}, Position: {}, Previous position: {}'.format(
+            self.__class__.__name__, self.position, self.previous_position
+        )
+
+    def set_settings(self, automatic_hide, position, previous_position):
         self.set_position(position)
+        self.previous_position = previous_position
         self.set_automatic_hide(automatic_hide)
 
     def set_settings_from_overlay(self, other_overlay):
-        previous_settings = self.automatic_hide, self.position
+        previous_settings = (
+            self.automatic_hide, self.position, self.previous_position
+        )
         self.set_position(other_overlay.position)
+        self.previous_position = other_overlay.previous_position
         self.set_automatic_hide(other_overlay.automatic_hide)
         return previous_settings
 
@@ -152,6 +161,9 @@ class Overlay(ABC):
                 self._update_position(self.tekken_position)
             except (TypeError, AttributeError):
                 pass
+        elif self.previous_position:
+            self.previous_position = self.position
+
 
     def set_tekken_screen_mode(self, screen_mode):
         self.tekken_screen_mode = screen_mode
