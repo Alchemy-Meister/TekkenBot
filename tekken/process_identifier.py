@@ -66,26 +66,6 @@ class ProcessIO():
         except OSError:
             return None
 
-    def get_address_of_multilevel_pointer(self, process_handle, dict_key):
-        """
-        """
-        addresses_str = self.config['NonPlayerDataAddresses'][dict_key]
-        # The pointer trail is stored as a string of addresses in hex in the
-        # config. Split them up and convert.
-        addresses = list(map(lambda x: int(x, 16), addresses_str.split()))
-        address = self.module_address
-        for i, offset in enumerate(addresses):
-            if i + 1 < len(addresses):
-                address = self.get_pointer_value(
-                    process_handle, address + offset
-                )
-                if not address:
-                    address = None
-                    break
-            else:
-                address += offset
-        return address
-
     def reacquire_everything(self):
         """
         """
