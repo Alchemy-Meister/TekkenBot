@@ -27,6 +27,7 @@ Created by roguelike2d. Maintained by the community.
 - [x] Overlays show and hide automatically on battle's start and end. Configurable in *./data/settings.ini*
 - [x] Overlays scale to different resolutions.
 - [x] Resizable overlay windows on draggable mode.
+- [x] Simultaneous overlays. Up to 2 overlays can be enabled at the same time.
 
 #### Frame data overlay
 - [x] Up to 4 frame data lines.
