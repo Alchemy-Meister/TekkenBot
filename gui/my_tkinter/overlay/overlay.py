@@ -78,6 +78,7 @@ class Overlay(ABC):
         self.tekken_resolution = None
         self.tekken_position = None
 
+        self.overlay_scale = None
         self._tekken_scale = None
         self.__tekken_rect = None
 
@@ -214,13 +215,13 @@ class Overlay(ABC):
                     event.width / self.window_proportion
                 )
 
-                overlay_scale = Overlay.__calculate_scale(
+                self.overlay_scale = Overlay.__calculate_scale(
                     [self.window_dimensions[0], self.window_dimensions[1]],
                     [self.coordinates['width'], self.coordinates['height']]
                 )
                 self.is_resizing = True
                 width, height = self._resize_overlay_widgets(
-                    overlay_scale=overlay_scale
+                    overlay_scale=self.overlay_scale
                 )
                 self.window_dimensions[0] = width
                 self.window_dimensions[1] = round(height)

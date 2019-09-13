@@ -42,8 +42,6 @@ from constants.battle import MoveProperty
 from constants.input import InputAttack, InputDirection
 from constants.overlay import OverlayMode
 
-from config.default_settings import DefaultSettings
-
 from .overlay import Overlay
 
 class CommandInputOverlay(Overlay):
@@ -116,7 +114,7 @@ class CommandInputOverlay(Overlay):
         )
 
         self.__initialize_frame_indexes()
-        self._load_resources()
+        self.__load_resources()
         self.__initialize_input_coordinates()
         self.__initialize_frame_lines()
         self.__initialize_canvas()
@@ -130,6 +128,21 @@ class CommandInputOverlay(Overlay):
     def set_theme(self, theme_dict):
         super().set_theme(theme_dict)
         self.button_folder = theme_dict.get('button_style')
+        if self.overlay_scale:
+            scale = [
+                overlay_scale_size * tekken_scale_size
+                for overlay_scale_size, tekken_scale_size in zip(
+                    self.overlay_scale, self._tekken_scale
+                )
+            ]
+        else:
+            scale = self._tekken_scale
+
+        if scale is None:
+            self.__load_resources(only_buttons=True)
+        else:
+            self.__load_resources(only_buttons=True, scale=scale)
+        self.__paint_input(restore=True)
 
     def __initialize_frame_indexes(self, scale=(1, 1,), expand=False):
         if expand:
@@ -264,7 +277,7 @@ class CommandInputOverlay(Overlay):
                 overlay_scale_size * tekken_scale_size
                 for overlay_scale_size, tekken_scale_size in zip(
                     overlay_scale, self._tekken_scale
-                    )
+                )
             ]
             expand_canvas = True
         else:
@@ -289,6 +302,11 @@ class CommandInputOverlay(Overlay):
         self.coordinates['width'] = int(self.canvas_width)
         self.coordinates['height'] = int(self.canvas_height)
         self.window_proportion = self.canvas_width / self.canvas_height
+        self.overlay.geometry(
+            '{}x{}'.format(
+                self.coordinates['width'], self.coordinates['height']
+            )
+        )
 
     def _update_state(self):
         last_game_state_log = self.launcher.game_state.state_log[-1]
@@ -331,7 +349,7 @@ class CommandInputOverlay(Overlay):
         if not self.automatic_hide:
             self.visible = True
 
-    def _load_resources(self, only_buttons=False, scale=(1, 1,)):
+    def __load_resources(self, only_buttons=False, scale=(1, 1,)):
         if not only_buttons:
             for enum_member in InputDirection:
                 if(
