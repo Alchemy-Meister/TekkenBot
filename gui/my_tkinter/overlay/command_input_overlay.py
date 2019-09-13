@@ -31,6 +31,7 @@
 """
 import math
 import io
+from pathlib import Path
 import tkinter as tk
 
 from PIL import Image, ImageTk
@@ -40,6 +41,8 @@ from reportlab.graphics import renderPM
 from constants.battle import MoveProperty
 from constants.input import InputAttack, InputDirection
 from constants.overlay import OverlayMode
+
+from config.default_settings import DefaultSettings
 
 from .overlay import Overlay
 
@@ -105,6 +108,13 @@ class CommandInputOverlay(Overlay):
         self.arrow_images = dict()
         self.button_images = dict()
 
+        self.button_folder = next(
+            (
+                button_dir.name
+                for button_dir in Path('data/images/buttons').iterdir()
+            ), None
+        )
+
         self.__initialize_frame_indexes()
         self._load_resources()
         self.__initialize_input_coordinates()
@@ -116,6 +126,10 @@ class CommandInputOverlay(Overlay):
         self._set_dimensions(self.canvas_width, self.canvas_height)
 
         self.overlay.minsize(width=240, height=12)
+
+    def set_theme(self, theme_dict):
+        super().set_theme(theme_dict)
+        self.button_folder = theme_dict.get('button_style')
 
     def __initialize_frame_indexes(self, scale=(1, 1,), expand=False):
         if expand:
@@ -317,34 +331,41 @@ class CommandInputOverlay(Overlay):
         if not self.automatic_hide:
             self.visible = True
 
-    def _load_resources(self):
-        for enum_member in InputDirection:
-            if(
-                    InputDirection.NULL
-                    != enum_member
-                    != InputDirection.NEUTRAL
-            ):
-                svg_drawing = svg2rlg(
-                    'data/images/arrows/{}.svg'.format(
-                        enum_member.symbol
+    def _load_resources(self, only_buttons=False, scale=(1, 1,)):
+        if not only_buttons:
+            for enum_member in InputDirection:
+                if(
+                        InputDirection.NULL
+                        != enum_member
+                        != InputDirection.NEUTRAL
+                ):
+                    svg_drawing = svg2rlg(
+                        'data/images/arrows/{}.svg'.format(
+                            enum_member.symbol
+                        )
                     )
-                )
-                self.svg_arrow_images[enum_member.symbol] = svg_drawing
+                    self.svg_arrow_images[enum_member.symbol] = svg_drawing
 
         for enum_member in InputAttack:
-            str_button = enum_member.printable_name
+            str_button = getattr(enum_member, 'printable_name', None)
             if str_button:
-                svg_drawing = svg2rlg(
-                    'data/images/buttons/steam_arcade/{}.svg'.format(
-                        str_button
-                    )
+                str_input_path = 'data/images/buttons/{}/{}.svg'.format(
+                    self.button_folder, str_button
                 )
+                input_path = Path(str_input_path)
+                if input_path.exists():
+                    input_path = str(input_path)
+                else:
+                    input_path = str_input_path.replace(
+                        self.button_folder, 'common'
+                    )
+                svg_drawing = svg2rlg(input_path)
                 self.svg_button_images[str_button] = svg_drawing
         self.arrow_images = self.scale_svg_images(
-            self.svg_arrow_images, (1, 1,)
+            self.svg_arrow_images, scale
         )
         self.button_images = self.scale_svg_images(
-            self.svg_button_images, (1, 1,)
+            self.svg_button_images, scale
         )
 
     def scale_svg_images(self, svg_image_dict, scale):
