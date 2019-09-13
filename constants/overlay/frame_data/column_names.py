@@ -37,7 +37,7 @@ class Columns(ComplexEnum):
     INPUT_COMMAND = ComplexEnumMember(printable_name='command')
     MOVE_ID = ComplexEnumMember(printable_name='id')
     MOVE_NAME = ComplexEnumMember(printable_name='name')
-    ATTACK_TYPE = ComplexEnumMember(printable_name='type')
+    ATTACK_TYPE = ComplexEnumMember(printable_name='hit type')
     STARTUP_FRAMES = ComplexEnumMember(printable_name='startup')
     ON_BLOCK_FRAMES = ComplexEnumMember(printable_name='block')
     ON_HIT_FRAMES = ComplexEnumMember(printable_name='hit')

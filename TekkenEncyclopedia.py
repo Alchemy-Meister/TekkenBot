@@ -660,11 +660,11 @@ class FrameDataEntry:
         if self.calculated_startup != self.startup:
             self.calculated_startup = str(self.calculated_startup) + "?"
 
-        non_nerd_string = "{:^5}|{:^4}|{:^4}|{:^7}|{:^4}|{:^4}|{:^4}|{:^5}|{:^3}|{:^2}|{:^3}|{:^3}|{:^3}|".format(
+        non_nerd_string = "{:^5}|{:^4}|{:^4}|{:^8}|{:^4}|{:^4}|{:^4}|{:^5}|{:^3}|{:^2}|{:^3}|{:^3}|{:^3}|".format(
             str(self.input),
             str(self.move_id),
             self.move_str,
-            str(self.hitType)[:7],
+            str(self.hitType)[:8],
             str(self.calculated_startup),
             self.WithPlusIfNeeded(self.onBlock),
             self.WithPlusIfNeeded(self.onNormalHit),
