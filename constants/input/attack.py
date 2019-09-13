@@ -33,7 +33,7 @@
 from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
 class InputAttack(ComplexEnum):
-    NULL = ComplexEnumMember(0, printable_name='')
+    NULL = ComplexEnumMember(0)
     ONE = ComplexEnumMember(512, printable_name='1')
     TWO = ComplexEnumMember(1024, printable_name='2')
     THREE = ComplexEnumMember(2048, printable_name='3')
