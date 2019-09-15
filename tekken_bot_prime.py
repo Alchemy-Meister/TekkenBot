@@ -27,12 +27,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import logging
 import platform
 import sys
 import tkinter as tk
 
 from config import ReloadableConfig
 from gui.controller import LaunchUpdaterController, TekkenBotPrimeController
+from log import Formatter
 from network.updater import NoInternetConnectionError, Updater
 import win32.defines as win32
 
@@ -57,6 +59,12 @@ class TekkenBotPrime():
             )
             sys.exit(win32.ERROR_INVALID_ENVIRONMENT)
 
+        logging_handler = logging.StreamHandler(sys.stdout)
+        logging_handler.setFormatter(Formatter())
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(logging_handler)
+
         updater_config = (
             ReloadableConfig('data/updater_config.ini').config['DEFAULT']
         )
@@ -73,13 +81,15 @@ class TekkenBotPrime():
         try:
             update_available = updater.is_update_available(timeout=5)
         except NoInternetConnectionError:
-            pass
+            logger.debug('unable to check for updates')
 
         if update_available:
+            logger.debug('update available')
             LaunchUpdaterController(
                 updater, TekkenBotPrimeController, title=title, icon=icon
             )
         else:
+            logger.debug('update not available')
             TekkenBotPrimeController(updater, title=title, icon=icon)
 
 if __name__ == "__main__":
