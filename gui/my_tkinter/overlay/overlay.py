@@ -97,6 +97,11 @@ class Overlay(ABC):
         subscriber = Subscriber()
 
         launcher.publisher.register(
+            Launcher.Event.INITIALIZED,
+            subscriber,
+            self.__set_initialization_flag
+        )
+        launcher.publisher.register(
             Launcher.Event.UPDATED, subscriber, self.__update
         )
         launcher.publisher.register(
@@ -104,7 +109,7 @@ class Overlay(ABC):
         )
 
     def __repr__(self):
-        return 'Class: {}, Position: {}, Previous position: {}'.format(
+        return '{}(position = {}, previous_position = {})'.format(
             self.__class__.__name__, self.position, self.previous_position
         )
 
@@ -343,19 +348,24 @@ class Overlay(ABC):
     def __on_delete_window(self):
         pass
 
+    def __set_initialization_flag(self):
+        if self.coordinates['width'] and self.coordinates['height']:
+            self.dimensions_initialized = True
+
     def __show(self):
         self.visible = True
         self.overlay.deiconify()
 
     def __stop(self):
         self.dimensions_initialized = False
-        self.coordinates_initialized = False
+        self.__hide()
 
     def __update(self, is_state_updated):
         if self.enabled:
             game_reader = self.launcher.game_state.get_reader()
             if(
                     self.coordinates_initialized
+                    and self.dimensions_initialized
                     and (
                         self.is_draggable
                         or game_reader.is_tekken_foreground_wnd()

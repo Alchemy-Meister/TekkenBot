@@ -71,11 +71,12 @@ class Launcher:
         end = os_time.now(resolution=os_time.Resolution.MILLI)
         elapsed_time = (end - start)
         if self.game_state.is_pid_valid():
-            if not self.initialized:
-                self.initialized = True
-                self.publisher.dispatch(Launcher.Event.INITIALIZED)
-            else:
-                self.publisher.dispatch(Launcher.Event.UPDATED, sucessful)
+            if self.game_state.is_tekken_visible():
+                if not self.initialized:
+                    self.initialized = True
+                    self.publisher.dispatch(Launcher.Event.INITIALIZED)
+                else:
+                    self.publisher.dispatch(Launcher.Event.UPDATED, sucessful)
             self.view.after(
                 max(
                     Launcher.INITIAL_SHORT_DELAY,

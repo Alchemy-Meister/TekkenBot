@@ -208,6 +208,7 @@ class FrameDataOverlay(WritableOverlay):
                 self.coordinates['width'], self.coordinates['height']
             )
         )
+        self.dimensions_initialized = True
 
     def _update_state(self):
         game_state = self.launcher.game_state

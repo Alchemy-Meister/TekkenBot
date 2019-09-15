@@ -307,6 +307,7 @@ class CommandInputOverlay(Overlay):
                 self.coordinates['width'], self.coordinates['height']
             )
         )
+        self.dimensions_initialized = True
 
     def _update_state(self):
         last_game_state_log = self.launcher.game_state.state_log[-1]

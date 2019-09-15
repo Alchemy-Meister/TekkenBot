@@ -180,7 +180,14 @@ class TekkenGameReader(ProcessIO):
                     )
                 )
             )
-            graphic_settings.position = self.get_tekken_window_position()
+            if(
+                    graphic_settings.resolution != (0, 0)
+                    and graphic_settings.resolution[0]
+                    != graphic_settings.resolution[1]
+            ):
+                graphic_settings.position = self.get_tekken_window_position()
+            else:
+                graphic_settings = None
         except OSError:
             pass
         return graphic_settings
@@ -219,10 +226,10 @@ class TekkenGameReader(ProcessIO):
         return not bool(style & user32.WS_CAPTION)
 
     def is_tekken_minimized(self):
-        window_handler = user32.find_window(
-            lp_class_name='UnrealWindow', lp_window_name='TEKKEN 7 '
-        )
-        return user32.is_iconic(window_handler)
+        try:
+            return user32.is_iconic(self.window_handler)
+        except OSError:
+            return False
 
     def get_titlebar_height(self):
         return (
