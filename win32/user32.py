@@ -67,6 +67,7 @@ WS_OVERLAPPEDWINDOW = (
     WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX
     | WS_MAXIMIZEBOX
 )
+WS_VISIBLE = 0x10000000
 
 # Virtual-Key Codes
 VK_LBUTTON = 0x01
@@ -734,6 +735,17 @@ def is_iconic(h_wnd):
     _is_iconic.restype = bool
 
     return _is_iconic(h_wnd)
+
+def is_window(h_wnd):
+    """
+    BOOL IsWindow(
+        HWND hWnd
+    );
+    """
+    _is_window = WINDLL.user32.IsWindow
+    _is_window.argtypes = [HWND]
+    _is_window.restype = bool
+    return _is_window(h_wnd)
 
 def is_window_visible(h_wnd):
     """
