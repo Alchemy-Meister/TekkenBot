@@ -29,13 +29,14 @@
 
 """
 """
-
+import logging
 import sys
 
 from config import DefaultSettings
 from constants.event import GraphicSettingsChangeEvent
 from constants.overlay import OverlayMode, OverlayPosition, OverlayLayout
 from gui.model import OverlayModel
+from log import Formatter
 from patterns.factory import OverlayFactory
 from patterns.observer import Subscriber
 from patterns.singleton import Singleton
@@ -48,6 +49,13 @@ class OverlayManager(metaclass=Singleton):
     """
     def __init__(self, launcher, initial_settings=None):
         self.launcher = launcher
+
+        logging_handler = logging.StreamHandler(sys.stdout)
+        logging_handler.setFormatter(Formatter())
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(logging_handler)
 
         graphic_settings_publisher = (
             self.launcher.game_state.graphic_settings_publisher
@@ -103,42 +111,54 @@ class OverlayManager(metaclass=Singleton):
 
     def change_overlay_layout(self, layout):
         if self.active_slots < layout.value:
+            self.logger.debug('layout value increased')
             min_value = self.active_slots
             max_value = layout.value
             enable = True
         else:
+            self.logger.debug('layout value decreased')
             min_value = layout.value
             max_value = self.active_slots
             enable = False
         for turn_id in self.overlay_slots[min_value:max_value]:
+            self.logger.debug(
+                'turning %s overlay %s',
+                OverlayMode(self.overlays[turn_id].__class__.CLASS_ID).name,
+                'on' if enable else 'off'
+            )
             self.overlays[turn_id].set_enable(enable)
+        self.logger.debug(
+            'changing layout from %s to %s',
+            OverlayLayout(self.active_slots).name,
+            layout.name
+        )
         self.active_slots = layout.value
 
     def change_overlay_mode(self, mode: OverlayMode, slot, swap):
-        sys.stdout.write('Overlay Manager - Overlay Mode Change: ENTER')
-
         overlay = self.overlays[self.overlay_slots[slot]]
         previous_mode = OverlayMode(self.overlay_slots[slot])
 
-        sys.stdout.write(
-            'Overlay Manager - Layout: {}, Overlay Slot: {}, Swap: {}'.format(
-                OverlayLayout(self.active_slots).name, slot + 1, swap
-            )
+        self.logger.debug(
+            'arguments: layout: %s, mode: %s, overlay slot: %d, swap: %s',
+            OverlayLayout(self.active_slots).name,
+            mode.name,
+            slot + 1,
+            swap
         )
-        sys.stdout.write(
-            'Overlay Manager - Overlay Slots IDs: {}'.format(
-                [
-                    OverlayMode(overlay_id).name
-                    for overlay_id in self.overlay_slots
-                ]
-            )
+        self.logger.debug(
+            'overlay slot id list: %s',
+            [
+                OverlayMode(overlay_id).name
+                for overlay_id in self.overlay_slots
+            ]
         )
-        sys.stdout.write(
-            'Overlay Manager - Overlay Slots: {}'.format(
-                [self.overlays[overlay_id] for overlay_id in self.overlay_slots]
-            )
+        self.logger.debug(
+            'overlay settings in overlay slots: %s',
+            [
+                self.overlays[overlay_id]
+                for overlay_id in self.overlay_slots
+            ]
         )
-
         if swap:
             previous_slot = self.overlay_slots.index(
                 self.overlays[mode.value].__class__.CLASS_ID
@@ -146,42 +166,45 @@ class OverlayManager(metaclass=Singleton):
             self.overlay_slots[slot], self.overlay_slots[previous_slot] = (
                 self.overlay_slots[previous_slot], self.overlay_slots[slot]
             )
-            sys.stdout.write(
-                'Overlay Manager - Overlay Slots IDs Swapped: {}'.format(
-                    [
-                        OverlayMode(overlay_id).name
-                        for overlay_id in self.overlay_slots
-                    ]
-                )
+            self.logger.debug(
+                'overlay slot id list after swap: %s',
+                [
+                    OverlayMode(overlay_id).name
+                    for overlay_id in self.overlay_slots
+                ]
             )
             if self.active_slots == 1:
-                sys.stdout.write(
-                    'Overlay Manager - Turning {} overlay off'.format(
-                        previous_mode.name
-                    )
+                self.logger.debug(
+                    'turning %s overlay off',
+                    previous_mode.name
                 )
                 overlay.set_enable(False)
-                sys.stdout.write(
-                    'Overlay Manager - Turning {} overlay on'.format(mode.name)
+                self.logger.debug(
+                    'turning %s overlay on',
+                    mode.name
                 )
                 self.overlays[mode.value].set_enable(True)
+
+            self.logger.debug(
+                'swapping %s and %s overlay settings',
+                mode.name,
+                previous_mode.name
+            )
             previous_settings = overlay.set_settings_from_overlay(
                 self.overlays[mode.value]
             )
             self.overlays[mode.value].set_settings(*previous_settings)
-            sys.stdout.write(
-                'Overlay Manager - Overlay Slots Settings Swapped: {}'.format(
-                    [
-                        self.overlays[overlay_id]
-                        for overlay_id in self.overlay_slots
-                    ]
-                )
+            self.logger.debug(
+                'overlay settings swapped: %s',
+                [
+                    self.overlays[overlay_id]
+                    for overlay_id in self.overlay_slots
+                ]
             )
         else:
-            sys.stdout.write(
-                'Overlay Manager - Turning {} overlay off'.format(
-                    previous_mode.name
-                )
+            self.logger.debug(
+                'turning %s overlay off',
+                previous_mode.name
             )
             overlay.set_enable(False)
             change_overlay = self.overlays.get(mode.value)
@@ -191,40 +214,37 @@ class OverlayManager(metaclass=Singleton):
                 )
                 self.overlay_slots[slot] = change_overlay.__class__.CLASS_ID
             else:
-                sys.stdout.write(
-                    "Overlay Manager - Changing {} overlay settings to {}'s"
-                    .format(mode.name, previous_mode.name)
+                self.logger.debug(
+                    'swapping %s and %s overlay settings',
+                    mode.name,
+                    previous_mode.name
                 )
                 previous_settings = change_overlay.set_settings_from_overlay(
                     overlay
                 )
                 overlay.set_settings(*previous_settings)
-            sys.stdout.write(
-                'Overlay Manager - Changing from {} to {} overlay'.format(
-                    previous_mode.name, mode.name
-                )
-            )
             if self.overlays_enabled:
-                sys.stdout.write(
-                    'Overlay Manager - Turning {} overlay on'.format(mode.name)
+                self.logger.debug(
+                    'turning %s overlay on',
+                    mode.name
                 )
                 change_overlay.set_enable(True)
 
-        sys.stdout.write('Overlay Manager - Overlay Mode Change: EXIT')
+        self.logger.debug('exit')
 
     def change_overlay_position(self, position, slot, swap):
         overlay = self.overlays[self.overlay_slots[slot]]
 
-        sys.stdout.write('Overlay Manager - Overlay Position Change: ENTER')
-        sys.stdout.write(
-            'Overlay Manager - Layout: {}, Overlay Slot: {}, Swap: {}'.format(
-                OverlayLayout(self.active_slots).name, slot + 1, swap
-            )
+        self.logger.debug(
+            'arguments: layout: %s, overlay slot: %s, position: %s, swap: %s',
+            OverlayLayout(self.active_slots).name,
+            slot + 1,
+            position.name,
+            swap
         )
-        sys.stdout.write(
-            'Overlay Manager - Overlay Slots: {}'.format(
-                [self.overlays[overlay_id] for overlay_id in self.overlay_slots]
-            )
+        self.logger.debug(
+            'overlay settings in overlay slots: %s',
+            [self.overlays[overlay_id] for overlay_id in self.overlay_slots]
         )
 
         if swap:
@@ -233,24 +253,26 @@ class OverlayManager(metaclass=Singleton):
                 for overlay_id in self.overlay_slots
                 if self.overlays[overlay_id].position == position
             )
+            self.logger.debug(
+                'swapping %s and %s overlay positions',
+                OverlayMode(self.overlay_slots[slot]).name,
+                OverlayMode(swap_overlay.__class__.CLASS_ID).name
+            )
             previous_position = overlay.position
             overlay.set_position(position)
             swap_overlay.set_position(previous_position)
-            sys.stdout.write(
-                'Overlay Manager - Overlay Slots Position Swapped: {}'.format(
-                    [
-                        self.overlays[overlay_id]
-                        for overlay_id in self.overlay_slots
-                    ]
-                )
+            self.logger.debug(
+                'overlay settings after position swap: %s',
+                [
+                    self.overlays[overlay_id]
+                    for overlay_id in self.overlay_slots
+                ]
             )
         else:
             overlay.set_position(position)
-            sys.stdout.write(
-                'Overlay Manager - Overlay Position Changed: {}'.format(overlay)
-            )
+            self.logger.debug('overlay position changed: %s', overlay)
 
-        sys.stdout.write('Overlay Manager - Overlay Position Change: EXIT')
+        self.logger.debug('exit')
 
 
     def change_overlay_theme(self, theme_dict):
@@ -327,9 +349,8 @@ class OverlayManager(metaclass=Singleton):
                 overlay.write(string)
 
     def __add_overlay(self, overlay_mode, previous_overlay=None):
-        sys.stdout.write(
-            'Overlay Manager - Creating {} overlay'.format(overlay_mode.name)
-        )
+        self.logger.debug('overlays before creation: %s', self.overlays)
+        self.logger.debug('creating %s overlay', overlay_mode.name)
         overlay_id = overlay_mode.value
         self.overlays[overlay_id] = self.overlay_factory.create_class(
             overlay_id, self.launcher
@@ -346,17 +367,16 @@ class OverlayManager(metaclass=Singleton):
             self.overlays[overlay_id].set_tekken_position(self.tekken_position)
 
         if previous_overlay:
-            sys.stdout.write(
-                "Overlay Manager - Initializing {} overlay with {}'s settings"
-                .format(
-                    overlay_mode.name,
-                    OverlayMode(previous_overlay.__class__.CLASS_ID).name
-                )
+            self.logger.debug(
+                "initializing %s overlay with %s's settings",
+                overlay_mode.name,
+                OverlayMode(previous_overlay.__class__.CLASS_ID).name
             )
             self.overlays[overlay_id].set_settings_from_overlay(
                 previous_overlay
             )
 
+        self.logger.debug('overlays after creation: %s', self.overlays)
         return self.overlays[overlay_id]
 
     def __position_change(self, position):
