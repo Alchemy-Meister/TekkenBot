@@ -15,9 +15,10 @@ emerges from block), or multiple game states over time (did player 1 just begin
 to block this frame?, what was the last move player 2 did?).
 """
 
-import sys
 from collections import Counter
+import logging
 import math
+import sys
 
 # pylint: disable=wildcard-import
 from MoveInfoEnums import *  # NOQA
@@ -29,9 +30,13 @@ from constants.input import InputAttack, InputDirection
 from constants.event import GraphicSettingsChangeEvent
 from constants.graphic_settings import ScreenMode
 
+from log import Formatter
+
 from patterns.observer import Publisher
 
 import win32.kernel32 as kernel32
+import win32.user32 as user32
+
 from tekken.process_io_manager import ProcessIOManager
 
 class TekkenGameState:
@@ -45,6 +50,12 @@ class TekkenGameState:
         self.mirrored_state_log = []
         self.is_mirrored = False
         self.futurestate_log = None
+
+        logging_handler = logging.StreamHandler(sys.stdout)
+        logging_handler.setFormatter(Formatter())
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(logging_handler)
 
         self.graphic_settings_publisher = Publisher(GraphicSettingsChangeEvent)
 
@@ -120,18 +131,35 @@ class TekkenGameState:
     def compare_graphic_settings(self, graphic_settings):
         graphic_settings_changed = False
         if not graphic_settings.equal_screen_mode(self.graphic_settings):
+            self.logger.debug(
+                'TEKKEN7 screen mode changed from %s to %s',
+                getattr(self.graphic_settings, 'screen_mode', None),
+                graphic_settings.screen_mode
+            )
             graphic_settings_changed = True
             self.graphic_settings_publisher.dispatch(
                 GraphicSettingsChangeEvent.SCREEN_MODE,
                 graphic_settings.screen_mode
             )
-        if not graphic_settings.equal_resolution(self.graphic_settings):
+        if(
+                not graphic_settings.equal_resolution(self.graphic_settings)
+        ):
+            self.logger.debug(
+                'TEKKEN7 resolution changed from %s to %s',
+                getattr(self.graphic_settings, 'resolution', None),
+                graphic_settings.resolution
+            )
             graphic_settings_changed = True
             self.graphic_settings_publisher.dispatch(
                 GraphicSettingsChangeEvent.RESOLUTION,
                 graphic_settings.resolution
             )
         if not graphic_settings.equal_position(self.graphic_settings):
+            self.logger.debug(
+                'TEKKEN7 position changed from %s to %s',
+                getattr(self.graphic_settings, 'position', None),
+                graphic_settings.position
+            )
             graphic_settings_changed = True
             self.graphic_settings_publisher.dispatch(
                 GraphicSettingsChangeEvent.POSITION,
@@ -167,6 +195,14 @@ class TekkenGameState:
             not self.game_io_manager.process_reader
             .is_state_reacquisition_required()
         )
+
+    def is_tekken_visible(self):
+        try:
+            return user32.is_window(
+                self.game_io_manager.process_reader.window_handler
+            )
+        except OSError:
+            return False
 
     def is_bot_on_left(self):
         is_player_one_on_left = (
