@@ -29,9 +29,8 @@
 
 """
 """
-from distutils.version import LooseVersion
+from distutils.version import StrictVersion
 import os
-import socket
 import queue
 import threading
 import urllib.parse as url_parse
@@ -47,7 +46,7 @@ class Updater(metaclass=Singleton):
     """
 
     def __init__(self, current_version, user, repo, download_filename_format):
-        self.current_version = LooseVersion(current_version)
+        self.current_version = StrictVersion(current_version)
         self.github_releases = 'https://github.com/{0}/{1}/releases/'.format(
             user, repo
         )
@@ -152,7 +151,7 @@ class Updater(metaclass=Singleton):
     def __proccess_update_available(self, cache, use_queue=False, timeout=None):
         try:
             version = self.get_update_version(use_cache=cache, timeout=timeout)
-            if version and self.current_version < LooseVersion(version):
+            if version and self.current_version < StrictVersion(version):
                 if use_queue:
                     self.queue.put(True)
                 return True
