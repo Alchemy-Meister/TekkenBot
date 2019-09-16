@@ -33,6 +33,7 @@ import configparser
 import distutils.util as utils
 import re
 
+from constants.log import LogLevel
 from constants.overlay import OverlayLayout, OverlayMode, OverlayPosition
 from constants.overlay.frame_data import Columns
 
@@ -66,7 +67,8 @@ class DefaultSettings():
                 getattr(Columns.RECOVERY_FRAMES, 'name'),
                 getattr(Columns.OPPONENT_FRAMES, 'name'),
                 getattr(Columns.NOTES, 'name')
-            ]
+            ],
+            'display_log_level': getattr(LogLevel.INFO, 'name')
         }
     }
 
