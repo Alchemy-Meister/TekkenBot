@@ -29,12 +29,14 @@
 
 """
 """
+import logging
 import sys
 import itertools
 import tkinter as tk
 import tkinter.scrolledtext as tkst
 
 from constants.overlay import OverlayLayout, OverlayPosition, OverlaySettings
+from log import Formatter
 
 class TekkenBotPrimeView():
     """
@@ -42,6 +44,13 @@ class TekkenBotPrimeView():
     def __init__(self, root, controller):
         self.controller = controller
         self.menu_bar = tk.Menu(root)
+
+        logging_handler = logging.StreamHandler(sys.stdout)
+        logging_handler.setFormatter(Formatter())
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(logging_handler)
 
         tekken_bot_menu = tk.Menu(self.menu_bar, tearoff=0)
         tekken_bot_menu.add_command(
@@ -294,6 +303,10 @@ class TekkenBotPrimeView():
             variable=variables[1]
         )
 
+        self.__initialize_overlay_menu_state(
+            overlay_index, OverlaySettings.POSITION, overlay_position_submenu
+        )
+
         overlay_theme_submenu = TekkenBotPrimeView.__create_populated_menu(
             variables[2],
             self.controller.populate_overlay_themes_submenu(variables[0].get()),
@@ -309,8 +322,8 @@ class TekkenBotPrimeView():
 
         enums = list(OverlaySettings)
         for overlay_setting, menu in zip(enums, menus):
-            self.__initialize_overlay_menu_state(
-                overlay_index, overlay_setting, menu
+            self.__overlays_settings[overlay_index][overlay_setting]['menu'] = (
+                menu
             )
 
         return ((enum, menu) for (enum, menu) in zip(enums, menus))
@@ -343,7 +356,6 @@ class TekkenBotPrimeView():
         if previous_menu_state is not None:
             for label, state in previous_menu_state.items():
                 menu.entryconfig(label, state=state)
-        settings_dict['menu'] = menu
         settings_dict['menu_state'] = {
             menu.entryconfig(index)['label'][4]:
             menu.entryconfig(index)['state'][4]
@@ -356,43 +368,37 @@ class TekkenBotPrimeView():
 
         enums = list(OverlaySettings)
 
-        sys.stdout.write(
-            'GUI variable init - ENTER: Overlay Slot: {}'.format(
-                overlay_index + 1
-            )
-        )
+        self.logger.debug('arguments: overlay slot: %s', overlay_index + 1)
 
         for index, (var, enum) in enumerate(zip(variables, enums)):
             previous_dict = self.__overlays_settings[overlay_index].get(enum)
             previous_value = None
 
             if previous_dict:
-                sys.stdout.write(
-                    'GUI variable init - PREVIOUS DICT FOUND: '
-                    'Variable: {}, Previous Value: {}'.format(
-                        previous_dict['variable'].get(),
-                        previous_dict['previous_value']
-                    )
-                )
-                sys.stdout.write(
-                    'GUI variable init - PREVIOUS DICT: {}'.format(
-                        previous_dict
-                    )
-                )
                 variables[index] = previous_dict['variable']
+                self.logger.debug(
+                    "a dictory that stores overlay %d's %s found: "
+                    "{'variable': '%s', 'previous_value': '%s'}",
+                    overlay_index + 1,
+                    enum.name,
+                    previous_dict['variable'].get(),
+                    previous_dict['previous_value']
+                )
             else:
                 self.__overlays_settings[overlay_index][enum] = {
                     'previous_value': previous_value,
                     'variable': var
                 }
-                sys.stdout.write(
-                    'GUI variable init - NOT DICT, CREATING: '
-                    'Variable: {}, Previous Value: {}'.format(
-                        var.get(), previous_value
-                    )
+                self.logger.debug(
+                    'creating new dictionary to store overlay %s '
+                    "in slot %d: {'variable': '%s', 'previous_value': '%s'}",
+                    enum.name,
+                    overlay_index + 1,
+                    var.get(),
+                    previous_value
                 )
 
-        sys.stdout.write('Integrity checker - EXIT')
+        self.logger.debug('exit')
         return variables
 
     def __integrity_checker(
@@ -406,22 +412,28 @@ class TekkenBotPrimeView():
         repeated_variable = self.__repeat_value_checker(
             overlay_index, setting_key, setting_dict['variable'].get()
         )
-        sys.stdout.write(
-            'Integrity checker - ENTER: Overlay Slot: '
-            '{}, Setting Key: {}, Value: {}, Previous Value: {}'.format(
-                overlay_index + 1,
-                setting_key.name,
-                setting_dict['variable'].get(),
-                setting_dict['previous_value']
-            )
+        self.logger.debug(
+            'arguments: overlay slot: %d, setting key: %s, current value: %s, '
+            'previous_value: %s',
+            overlay_index + 1,
+            setting_key.name,
+            setting_dict['variable'].get(),
+            setting_dict['previous_value']
         )
         if repeated_variable:
-            sys.stdout.write(
-                'Integrity checker - REPEATED FOUND: '
-                'Value: {}, Previous Value: {}'.format(
-                    repeated_variable['variable'].get(),
-                    repeated_variable['previous_value']
-                )
+            self.logger.debug(
+                'duplicated %s setting with current value found: '
+                'value: %s, previous_value: %s',
+                setting_key.name,
+                repeated_variable['variable'].get(),
+                repeated_variable['previous_value']
+            )
+
+            self.logger.debug(
+                "swapping duplicated %s setting's current and previous values "
+                "to overlay %d's previous_value",
+                setting_key.name,
+                overlay_index + 1
             )
             repeated_variable['variable'].set(
                 setting_dict['previous_value']
@@ -429,24 +441,22 @@ class TekkenBotPrimeView():
             repeated_variable['previous_value'] = setting_dict[
                 'previous_value'
             ]
-            sys.stdout.write(
-                'Integrity checker - REPEATED UPDATED: '
-                'Value: {}, Previous Value: {}'.format(
-                    repeated_variable['variable'].get(),
-                    repeated_variable['previous_value']
-                )
+
+            self.logger.debug(
+                'updated duplicated setting: current value: %s, '
+                'previous_value: %s',
+                repeated_variable['variable'].get(),
+                repeated_variable['previous_value']
             )
 
         setting_dict['previous_value'] = setting_dict['variable'].get()
-        sys.stdout.write(
-            'Integrity checker - EXIT: Overlay Slot: '
-            '{}, Setting Key: {}, Value: {}, Previous Value: {}'.format(
-                overlay_index + 1,
-                setting_key.name,
-                setting_dict['variable'].get(),
-                setting_dict['previous_value']
-            )
+        self.logger.debug(
+            "updating overlay's %d %s setting's previous_value to "
+            'its current value',
+            overlay_index + 1,
+            setting_key
         )
+        self.logger.debug('exit')
         callback(
             setting_dict['variable'].get(),
             overlay_index,
