@@ -45,12 +45,15 @@ class TekkenBotPrimeView():
         self.controller = controller
         self.menu_bar = tk.Menu(root)
 
-        logging_handler = logging.StreamHandler(sys.stdout)
-        logging_handler.setFormatter(Formatter())
+        self.__stdout_handler = logging.StreamHandler(sys.stdout)
+        self.__stdout_handler.setFormatter(Formatter())
+        self.__file_handler = logging.FileHandler('tekkenbotprime.log', 'a')
+        self.__file_handler.setFormatter(Formatter())
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        self.logger.addHandler(logging_handler)
+        self.logger.addHandler(self.__stdout_handler)
+        self.logger.addHandler(self.__file_handler)
 
         tekken_bot_menu = tk.Menu(self.menu_bar, tearoff=0)
         tekken_bot_menu.add_command(
@@ -253,6 +256,11 @@ class TekkenBotPrimeView():
                 self.__overlays_settings[overlay_index][setting_key]
             )
             setting_variable['variable'].set(setting_variable['previous_value'])
+
+    def set_logging_handler(self, handler):
+        self.logger.removeHandler(self.__stdout_handler)
+        self.logger.removeHandler(self.__file_handler)
+        self.logger.addHandler(handler)
 
     def set_overlay_setting(
             self, overlay_index, setting_key, setting_value, set_previous=True

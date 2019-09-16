@@ -292,7 +292,7 @@ class TekkenBotPrimeController():
             {
                 'file_path': 'tekkenbotprime.log',
                 'save_to_file': self.save_to_file,
-                'write_mode': 'w'
+                'write_mode': 'a'
             },
             callback=self.original_stdout.write
         )
@@ -310,6 +310,10 @@ class TekkenBotPrimeController():
             },
             callback=self.original_stderr.write
         )
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(Formatter())
+
+        self.view.set_logging_handler(stdout_handler)
 
     def __update_alarm_gui_settings(self):
         self.view.enable_punish_alarm.set(
