@@ -59,14 +59,11 @@ class TekkenBotPrime():
             )
             sys.exit(win32.ERROR_INVALID_ENVIRONMENT)
 
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setFormatter(Formatter())
         file_handler = logging.FileHandler('tekkenbotprime.log', 'w')
         file_handler.setFormatter(Formatter())
 
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG)
-        logger.addHandler(stdout_handler)
         logger.addHandler(file_handler)
 
         updater_config = (
