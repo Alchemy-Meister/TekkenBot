@@ -79,8 +79,6 @@ class OverlayManager(metaclass=Singleton):
 
         sys.stdout.callback = self.write_to_overlays
 
-        self.current_theme = None
-
         self.tekken_position = None
         self.tekken_resolution = None
         self.tekken_screen_mode = None
@@ -275,10 +273,8 @@ class OverlayManager(metaclass=Singleton):
         self.logger.debug('exit')
 
 
-    def change_overlay_theme(self, theme_dict):
-        self.current_theme = theme_dict
-        for overlay_id in self.overlays:
-            self.overlays[overlay_id].set_theme(theme_dict)
+    def change_overlay_theme(self, theme_dict, slot):
+        self.overlays[self.overlay_slots[slot]].set_theme(theme_dict)
 
     def get_overlay_mode(self, slot):
         return OverlayMode(

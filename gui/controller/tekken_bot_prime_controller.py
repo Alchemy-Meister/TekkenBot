@@ -62,6 +62,13 @@ class TekkenBotPrimeController():
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
 
+        logging_handler = logging.StreamHandler(sys.stdout)
+        logging_handler.setFormatter(Formatter())
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(logging_handler)
+
         self.root = tk.Tk()
         self.config_manager = ReloadableConfigManager()
         self.reloadable_initial_settings = None
@@ -146,11 +153,15 @@ class TekkenBotPrimeController():
 
     def overlay_theme_change(self, str_overlay_theme_index, overlay_slot):
         overlay_mode = self.overlay_manager.get_overlay_mode(overlay_slot)
-        self.overlay_manager.change_overlay_theme(
-            self.model.get_theme(
-                int(str_overlay_theme_index), overlay_mode.name
-            )
+        theme_dict = self.model.get_theme(
+            int(str_overlay_theme_index), overlay_mode.name
         )
+        self.logger.debug(
+            'arguments: overlay theme: %s, overlay slot: %d',
+            theme_dict['printable_name'],
+            overlay_slot + 1
+        )
+        self.overlay_manager.change_overlay_theme(theme_dict, overlay_slot)
 
     def populate_overlay_layouts_submenu(self):
         return self.model.all_overlay_layouts
@@ -165,7 +176,6 @@ class TekkenBotPrimeController():
         return enumerate(self.model.get_overlay_themes_names(overlay_mode))
 
     def restart(self):
-        sys.stdout.write('restart')
         self.config_manager.reload_all()
         self.model.reload()
         self.__update_alarm_gui_settings()
