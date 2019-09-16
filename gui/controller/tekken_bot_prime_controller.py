@@ -62,12 +62,12 @@ class TekkenBotPrimeController():
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
 
-        logging_handler = logging.StreamHandler(sys.stdout)
-        logging_handler.setFormatter(Formatter())
+        self.stdout_handler = logging.StreamHandler(sys.stdout)
+        self.stdout_handler.setFormatter(Formatter())
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        self.logger.addHandler(logging_handler)
+        self.logger.addHandler(self.stdout_handler)
 
         self.root = tk.Tk()
         self.config_manager = ReloadableConfigManager()
@@ -176,6 +176,7 @@ class TekkenBotPrimeController():
         return enumerate(self.model.get_overlay_themes_names(overlay_mode))
 
     def restart(self):
+        self.logger.debug('restarting')
         self.config_manager.reload_all()
         self.model.reload()
         self.__update_alarm_gui_settings()
@@ -310,10 +311,14 @@ class TekkenBotPrimeController():
             },
             callback=self.original_stderr.write
         )
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setFormatter(Formatter())
 
-        self.view.set_logging_handler(stdout_handler)
+        self.logger.removeHandler(self.stdout_handler)
+
+        self.stdout_handler = logging.StreamHandler(sys.stdout)
+        self.stdout_handler.setFormatter(Formatter())
+
+        self.logger.addHandler(self.stdout_handler)
+        self.view.set_logging_handler(self.stdout_handler)
 
     def __update_alarm_gui_settings(self):
         self.view.enable_punish_alarm.set(
