@@ -30,7 +30,6 @@
 """
 """
 import logging
-import sys
 import itertools
 import tkinter as tk
 import tkinter.scrolledtext as tkst
@@ -45,14 +44,11 @@ class TekkenBotPrimeView():
         self.controller = controller
         self.menu_bar = tk.Menu(root)
 
-        self.__stdout_handler = logging.StreamHandler(sys.stdout)
-        self.__stdout_handler.setFormatter(Formatter())
         self.__file_handler = logging.FileHandler('tekkenbotprime.log', 'a')
         self.__file_handler.setFormatter(Formatter())
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        self.logger.addHandler(self.__stdout_handler)
         self.logger.addHandler(self.__file_handler)
 
         tekken_bot_menu = tk.Menu(self.menu_bar, tearoff=0)
@@ -229,21 +225,24 @@ class TekkenBotPrimeView():
         for overlay_index, overlay_settings in enumerate(
                 self.__overlays_settings
         ):
+            overlay_theme_submenu = (
+                TekkenBotPrimeView.__create_populated_menu(
+                    overlay_settings[OverlaySettings.THEME][
+                        'variable'
+                    ],
+                    self.controller.populate_overlay_themes_submenu(
+                        overlay_settings[OverlaySettings.MODE]['variable']
+                        .get()
+                    ),
+                    self.controller.overlay_theme_change,
+                    overlay_index=overlay_index
+                )
+            )
+            overlay_settings[OverlaySettings.THEME]['menu'] = (
+                overlay_theme_submenu
+            )
             if overlay_index < self.overlay_number:
                 overlay_settings['parent'].delete(tk.END)
-                overlay_theme_submenu = (
-                    TekkenBotPrimeView.__create_populated_menu(
-                        overlay_settings[OverlaySettings.THEME][
-                            'variable'
-                        ],
-                        self.controller.populate_overlay_themes_submenu(
-                            overlay_settings[OverlaySettings.MODE]['variable']
-                            .get()
-                        ),
-                        self.controller.overlay_theme_change,
-                        overlay_index=overlay_index
-                    )
-                )
 
                 overlay_settings['parent'].add_cascade(
                     label=getattr(OverlaySettings.THEME, 'printable_name'),
@@ -258,7 +257,6 @@ class TekkenBotPrimeView():
             setting_variable['variable'].set(setting_variable['previous_value'])
 
     def set_logging_handler(self, handler):
-        self.logger.removeHandler(self.__stdout_handler)
         self.logger.removeHandler(self.__file_handler)
         self.logger.addHandler(handler)
 
@@ -272,7 +270,9 @@ class TekkenBotPrimeView():
             overlay_index, setting_key, setting_value
         )
         if repeated_variable:
-            repeated_variable.set(setting_variable['variable'].get())
+            repeated_variable['variable'].set(
+                setting_variable['variable'].get()
+            )
 
         setting_variable['variable'].set(setting_value)
         if set_previous:
@@ -459,7 +459,7 @@ class TekkenBotPrimeView():
 
         setting_dict['previous_value'] = setting_dict['variable'].get()
         self.logger.debug(
-            "updating overlay's %d %s setting's previous_value to "
+            "updating overlay %d's %s setting's previous_value to "
             'its current value',
             overlay_index + 1,
             setting_key
@@ -504,11 +504,23 @@ class TekkenBotPrimeView():
     def __update_overlay_themes_swap(
             self, overlay_mode_name, overlay_index, repeated_variable
     ):
+        self.logger.debug(
+            'arguments: overlay slot: %d, overlay mode: %s, '
+            'repeated_variable: %s',
+            overlay_index + 1,
+            overlay_mode_name,
+            repeated_variable,
+        )
         if repeated_variable:
             theme_menu = (
                 self.__overlays_settings[overlay_index][OverlaySettings.THEME][
                     'menu'
                 ]
+            )
+            self.logger.debug(
+                'themes in overlay %s: %s',
+                overlay_index + 1,
+                TekkenBotPrimeView.__print_menu(theme_menu)
             )
             previous_index, previous_theme_menu = next(
                 (
@@ -525,6 +537,12 @@ class TekkenBotPrimeView():
                     )
                 )
                 , (None, None)
+            )
+
+            self.logger.debug(
+                'themes in overlay %s: %s',
+                previous_index + 1,
+                TekkenBotPrimeView.__print_menu(previous_theme_menu)
             )
 
             swap_index_menus = (
@@ -585,3 +603,12 @@ class TekkenBotPrimeView():
                 )
             )
         return menu
+
+    @staticmethod
+    def __print_menu(menu):
+        last_entry = menu.index(tk.END)
+        last_entry = last_entry + 1 if last_entry else 0
+        return [
+            menu.entryconfig(entry_index)['label'][4]
+            for entry_index in range(last_entry)
+        ]
