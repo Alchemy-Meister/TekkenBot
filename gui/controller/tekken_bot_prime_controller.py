@@ -29,6 +29,7 @@
 
 """
 """
+import logging
 import sys
 import tkinter as tk
 from tkinter import messagebox
@@ -37,11 +38,13 @@ from audio import PunishCoachAlarm
 from config import DefaultSettings, ReloadableConfigManager
 from constants.event import GraphicSettingsChangeEvent
 from constants.graphic_settings import ScreenMode
+from constants.log import LogLevel
 from constants.overlay import OverlayLayout, OverlayPosition, OverlaySettings
 from gui.model import OverlayModel
 from gui.my_tkinter import StdStreamRedirector
 from gui.my_tkinter.overlay import OverlayManager
 from gui.view import TekkenBotPrimeView
+from log import Formatter
 from network import NoInternetConnectionError
 from patterns.observer import Subscriber
 from tekken.coach import PunishCoach
@@ -76,6 +79,9 @@ class TekkenBotPrimeController():
 
         self.view = TekkenBotPrimeView(self.root, self)
 
+        self.reloadable_initial_settings = self.config_manager.add_config(
+            'settings.ini', config_model_class=DefaultSettings
+        )
         self.__redirect_stdout_to_console(self.view.console)
 
         self.launcher = None
@@ -246,9 +252,6 @@ class TekkenBotPrimeController():
 
     def __post_console_initialization(self):
         self.launcher = Launcher(self.root, extended_print=False)
-        self.reloadable_initial_settings = self.config_manager.add_config(
-            'settings.ini', config_model_class=DefaultSettings
-        )
 
         self.launcher.game_state.graphic_settings_publisher.register(
             GraphicSettingsChangeEvent.SCREEN_MODE, Subscriber(),
@@ -264,9 +267,18 @@ class TekkenBotPrimeController():
         self.launcher.start()
 
     def __redirect_stdout_to_console(self, widget):
+        log_level = LogLevel[
+            self.reloadable_initial_settings.config['DEFAULT'].get(
+                'display_log_level'
+            )
+        ]
         sys.stdout = StdStreamRedirector(
             widget,
-            {'auto_scroll': self.is_auto_scroll_enabled, 'tag': 'stdout'},
+            {
+                'auto_scroll': self.is_auto_scroll_enabled,
+                'log_level': log_level,
+                'tag': 'stdout'
+            },
             {
                 'file_path': 'tekkenbotprime.log',
                 'save_to_file': self.save_to_file,
@@ -276,7 +288,11 @@ class TekkenBotPrimeController():
         )
         sys.stderr = StdStreamRedirector(
             widget,
-            {'auto_scroll': self.is_auto_scroll_enabled, 'tag': 'stderr'},
+            {
+                'auto_scroll': self.is_auto_scroll_enabled,
+                'log_level': log_level,
+                'tag': 'stderr'
+            },
             {
                 'file_path': 'tekkenbotprime.log',
                 'save_to_file': self.save_to_file,

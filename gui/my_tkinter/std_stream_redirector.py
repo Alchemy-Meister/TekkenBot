@@ -33,6 +33,8 @@ import time
 import queue
 import threading
 
+from constants.log import LogLevel
+
 class StdStreamRedirector():
     """
     """
@@ -44,6 +46,15 @@ class StdStreamRedirector():
         self.widget = widget
         self.tag = widget_config.get('tag')
         self.auto_scroll = widget_config.get('auto_scroll', True)
+        self.log_level = widget_config.get('log_level', LogLevel.INFO)
+        if self.log_level > LogLevel.INFO or self.log_level == LogLevel.NOTSET:
+            self.log_level = LogLevel.INFO
+
+        self.filter_log_level_tags = [
+            log_level.name
+            for log_level in LogLevel
+            if log_level < self.log_level
+        ]
 
         self.save_to_file = False
         self.file = None
@@ -133,11 +144,15 @@ class StdStreamRedirector():
         self.file.flush()
 
     def __write_on_widget(self, message):
-        self.widget.configure(state='normal')
-        self.widget.insert('end', message, (self.tag,))
-        self.widget.configure(state='disabled')
-        if self.auto_scroll:
-            self.widget.see('end')
+        if all(
+                log_level not in message
+                for log_level in self.filter_log_level_tags
+        ):
+            self.widget.configure(state='normal')
+            self.widget.insert('end', message, (self.tag,))
+            self.widget.configure(state='disabled')
+            if self.auto_scroll:
+                self.widget.see('end')
         if self.save_to_file:
             threading.Thread(
                 target=self.__write_to_file,
