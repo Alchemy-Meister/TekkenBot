@@ -80,6 +80,7 @@ class CommandInputOverlay(Overlay):
         self.canvas_step_number = 60
 
         self.background = 'black'
+        self.frame_line_color = 'red'
 
         self.command_input_canvas = tk.Canvas(
             self.overlay,
@@ -128,6 +129,11 @@ class CommandInputOverlay(Overlay):
         super().set_theme(theme_dict)
         self.background = theme_dict.get('background')
         self.command_input_canvas.config(bg=self.background)
+        self.frame_line_color = theme_dict.get('frame_line_color')
+        for line_index in self.command_input_canvas.find_withtag(self.line_tag):
+            self.command_input_canvas.itemconfigure(
+                line_index, fill=self.frame_line_color
+            )
         self.button_folder = theme_dict.get('button_style')
         if self.overlay_scale:
             scale = [
@@ -251,7 +257,7 @@ class CommandInputOverlay(Overlay):
                 0,
                 coordinate_x - 1,
                 self.canvas_height,
-                fill='red',
+                fill=self.frame_line_color,
                 tag=self.line_tag
             )
 

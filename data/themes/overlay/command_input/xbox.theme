@@ -2,4 +2,5 @@
 printable_name = Xbox
 background = black
 button_style = xbox
+frame_line_color = green4
 transparent = white
