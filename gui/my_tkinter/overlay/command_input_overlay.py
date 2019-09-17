@@ -51,7 +51,6 @@ class CommandInputOverlay(Overlay):
     CLASS_ID = OverlayMode.COMMAND_INPUT.value
 
     __COMMAND_INPUT_CANVAS_CONFIG = {
-        'background': 0x0,
         'frame_index_y': 8,
         'frame_index_min_margin': 6,
         'frame_index_min_y_margin': 0,
@@ -80,11 +79,11 @@ class CommandInputOverlay(Overlay):
         self.input_tag = 'input'
         self.canvas_step_number = 60
 
+        self.background = 'black'
+
         self.command_input_canvas = tk.Canvas(
             self.overlay,
-            bg='#{0:06X}'.format(
-                CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG['background']
-            ),
+            bg=self.background,
             highlightthickness=0,
             borderwidth=0,
             relief='flat'
@@ -127,6 +126,8 @@ class CommandInputOverlay(Overlay):
 
     def set_theme(self, theme_dict):
         super().set_theme(theme_dict)
+        self.background = theme_dict.get('background')
+        self.command_input_canvas.config(bg=self.background)
         self.button_folder = theme_dict.get('button_style')
         if self.overlay_scale:
             scale = [
@@ -419,9 +420,7 @@ class CommandInputOverlay(Overlay):
                 renderPM.drawToFile(
                     svg_drawing,
                     image_stream,
-                    bg=CommandInputOverlay.__COMMAND_INPUT_CANVAS_CONFIG[
-                        'background'
-                    ],
+                    bg=self.__tkcolor_to_int(self.background),
                     fmt='PNG'
                 )
                 image_dict[key] = ImageTk.PhotoImage(Image.open(image_stream))
@@ -458,6 +457,8 @@ class CommandInputOverlay(Overlay):
                     index
                     * self.step_length
                     + index
+                    + self.step_length
+                    / 2
                 )
             )
             direction_code = InputDirection(direction_code)
@@ -467,8 +468,7 @@ class CommandInputOverlay(Overlay):
                     != InputDirection.NULL
             ):
                 self.command_input_canvas.create_image(
-                    coordinate_x
-                    + self.step_length / 2,
+                    coordinate_x,
                     self.arrow_image_coordinate_y0,
                     image=self.arrow_images[direction_code.symbol],
                     tag=self.input_tag
@@ -477,20 +477,29 @@ class CommandInputOverlay(Overlay):
             input_code = InputAttack(input_code)
             if input_code != InputAttack.NULL:
                 self.command_input_canvas.create_image(
-                    coordinate_x
-                    + self.step_length / 2,
+                    coordinate_x,
                     self.button_image_coordinate_y0,
                     image=self.button_images[input_code.printable_name],
                     tag=self.input_tag
                 )
 
-            coordinate_x += self.step_length / 2 - self.cancel_rect_size / 2
-            rect_coordinate_x1 = coordinate_x + self.cancel_rect_size
+            coordinate_x -= self.cancel_rect_size / 2
             self.command_input_canvas.create_rectangle(
                 coordinate_x,
                 self.cancel_rect_coordinate_y0,
-                rect_coordinate_x1,
+                coordinate_x + self.cancel_rect_size,
                 self.cancel_rect_coordinate_y1,
                 fill=frame_cancels[index],
                 tag=self.input_tag
             )
+
+    def __tkcolor_to_int(self, tk_color):
+        return int(
+            '{:02x}{:02x}{:02x}'.format(
+                *[
+                    int(rgb_16_bit / 256)
+                    for rgb_16_bit in self.overlay.winfo_rgb(tk_color)
+                ]
+            ),
+            16
+        )

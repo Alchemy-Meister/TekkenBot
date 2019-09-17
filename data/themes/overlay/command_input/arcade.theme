@@ -1,4 +1,5 @@
 [theme]
 printable_name = Arcade
+background = black
 button_style = arcade
 transparent = white

@@ -1,4 +1,5 @@
 [theme]
 printable_name = PlayStation
+background = black
 button_style = playstation
 transparent = white

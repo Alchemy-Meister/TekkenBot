@@ -1,4 +1,5 @@
 [theme]
 printable_name = Xbox
+background = black
 button_style = xbox
 transparent = white
