@@ -3,4 +3,5 @@ printable_name = PlayStation
 background = black
 button_style = playstation
 frame_line_color = #004098
+text_color = #01b1ea
 transparent = white

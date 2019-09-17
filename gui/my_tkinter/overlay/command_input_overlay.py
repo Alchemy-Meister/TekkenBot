@@ -81,6 +81,7 @@ class CommandInputOverlay(Overlay):
 
         self.background = 'black'
         self.frame_line_color = 'red'
+        self.text_color = 'snow'
 
         self.command_input_canvas = tk.Canvas(
             self.overlay,
@@ -130,9 +131,16 @@ class CommandInputOverlay(Overlay):
         self.background = theme_dict.get('background')
         self.command_input_canvas.config(bg=self.background)
         self.frame_line_color = theme_dict.get('frame_line_color')
-        for line_index in self.command_input_canvas.find_withtag(self.line_tag):
+        for line_id in self.command_input_canvas.find_withtag(self.line_tag):
             self.command_input_canvas.itemconfigure(
-                line_index, fill=self.frame_line_color
+                line_id, fill=self.frame_line_color
+            )
+        self.text_color = theme_dict.get('text_color')
+        for frame_index_id in self.command_input_canvas.find_withtag(
+                self.index_tag
+        ):
+            self.command_input_canvas.itemconfigure(
+                frame_index_id, fill=self.text_color
             )
         self.button_folder = theme_dict.get('button_style')
         if self.overlay_scale:
@@ -209,7 +217,7 @@ class CommandInputOverlay(Overlay):
                 scaled_frame_index_y,
                 font=self.font,
                 text=str_frame_intex,
-                fill='snow',
+                fill=self.text_color,
                 tag=self.index_tag
             )
 

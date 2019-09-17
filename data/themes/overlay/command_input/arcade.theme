@@ -3,4 +3,5 @@ printable_name = Arcade
 background = black
 button_style = arcade
 frame_line_color = red
+text_color = snow
 transparent = white
