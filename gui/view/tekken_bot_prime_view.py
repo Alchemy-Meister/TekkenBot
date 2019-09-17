@@ -462,7 +462,7 @@ class TekkenBotPrimeView():
             "updating overlay %d's %s setting's previous_value to "
             'its current value',
             overlay_index + 1,
-            setting_key
+            setting_key.name
         )
         self.logger.debug('exit')
         callback(
