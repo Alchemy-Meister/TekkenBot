@@ -30,6 +30,7 @@
 """
 
 """
+import traceback
 import sys
 import struct
 import MovelistParser
@@ -40,7 +41,12 @@ import win32.kernel32 as kernel32
 import win32.user32 as user32
 import win32.utils.actual_rect as actual_rect
 
-from .structures.graphic_settings import GraphicSettingsStruct, GraphicSettings
+from .structures.graphic_settings import (
+    GraphicSettingsStruct,
+    GraphicSettingsWrapper,
+    ResolutionStruct,
+    ResolutionWrapper
+)
 from .bot_snapshot import BotSnapshot
 from .game_snapshot import GameSnapshot
 from .process_identifier import ProcessIO
@@ -171,13 +177,11 @@ class TekkenGameReader(ProcessIO):
                 self.module_address
                 + self.config['GraphicSettingsAddress']['graphic_settings']
             )
-            graphic_settings = GraphicSettings(
-                GraphicSettingsStruct(
-                    self.get_block_data(
-                        process_handle,
-                        graphic_setting_address,
-                        SIZE_OF(GraphicSettingsStruct)
-                    )
+            graphic_settings = GraphicSettingsWrapper(
+                self.get_block_data(
+                    process_handle,
+                    graphic_setting_address,
+                    SIZE_OF(GraphicSettingsStruct)
                 )
             )
             if(
@@ -185,6 +189,19 @@ class TekkenGameReader(ProcessIO):
                     and graphic_settings.resolution[0]
                     != graphic_settings.resolution[1]
             ):
+                stable_resolution_address = (
+                    self.module_address
+                    + self.config['GraphicSettingsAddress']['window_resolution']
+                )
+                graphic_settings.resolution = (
+                    ResolutionWrapper(
+                        self.get_block_data(
+                            process_handle,
+                            stable_resolution_address,
+                            SIZE_OF(ResolutionStruct)
+                        )
+                    ).resolution
+                )
                 graphic_settings.position = self.get_tekken_window_position()
             else:
                 graphic_settings = None
@@ -446,6 +463,7 @@ class TekkenGameReader(ProcessIO):
                         self.is_player_player_one
                     )
             except (OSError, struct.error, TypeError):
+                traceback.print_exc()
                 self.reacquire_everything()
                 raise OSError
             finally:
