@@ -79,10 +79,9 @@ class GraphicSettingsWrapper():
     def __eq__(self, graphic_settings):
         if isinstance(graphic_settings, GraphicSettingsWrapper):
             return (
-                self.resolution_wrapper.equal_resolution(
-                    graphic_settings.resolution
-                )
+                self.resolution_wrapper.equal_resolution(graphic_settings)
                 and self.screen_mode_wrapper.equal_screen_mode(graphic_settings)
+                and self.position == graphic_settings.position
             )
         return NotImplemented
 
@@ -90,6 +89,6 @@ class GraphicSettingsWrapper():
         return not self == graphic_settings
 
     def __repr__(self):
-        return '{}, {}'.format(
-            self.resolution_wrapper, self.screen_mode_wrapper
+        return '{}, {}, position {}'.format(
+            self.resolution_wrapper, self.screen_mode_wrapper, self.position
         )
