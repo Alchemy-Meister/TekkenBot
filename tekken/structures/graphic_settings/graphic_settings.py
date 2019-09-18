@@ -27,65 +27,69 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from constants.graphic_settings import ScreenMode
+from .resolution import ResolutionWrapper
+from .screen_mode import ScreenModeWrapper
 
-class GraphicSettings():
+class GraphicSettingsWrapper():
     """
     """
-    def __init__(self, struct=None):
-        self.horizontal_resolution = 0
-        self.vertial_resolution = 0
-        self.screen_mode = ScreenMode.FULLSCREEN
+    def __init__(self, block_bytes=None):
+        self.resolution_wrapper = ResolutionWrapper(block_bytes)
+        if block_bytes:
+            self.screen_mode_wrapper = ScreenModeWrapper(
+                block_bytes[self.resolution_wrapper.get_structure_size():]
+            )
+        else:
+            self.screen_mode_wrapper = ScreenModeWrapper()
         self.position = (0, 0)
 
-        if struct:
-            self.horizontal_resolution = struct.horizontal_resolution
-            self.vertial_resolution = struct.vertial_resolution
-            self.screen_mode = ScreenMode(struct.screen_mode)
-
     def __get_resolution(self):
-        return (self.horizontal_resolution, self.vertial_resolution)
+        return self.resolution_wrapper.resolution
 
-    def __set_resolution(self, horizontal_lines, vertial_lines):
-        self.horizontal_resolution = horizontal_lines
-        self.vertial_resolution = vertial_lines
+    def __set_resolution(self, resolution_tuple):
+        self.resolution_wrapper.resolution = resolution_tuple
 
     resolution = property(__get_resolution, __set_resolution)
 
+    def __get_screen_mode(self):
+        return getattr(self.screen_mode_wrapper, 'screen_mode')
+
+    def __set_screen_mode(self, screen_mode):
+        setattr(self.screen_mode_wrapper, 'screen_mode', screen_mode)
+
+    screen_mode = property(__get_screen_mode, __set_screen_mode)
 
     def equal_resolution(self, graphic_settings):
-        if not isinstance(graphic_settings, GraphicSettings):
-            return False
-        return (
-            self.horizontal_resolution == graphic_settings.horizontal_resolution
-            and self.vertial_resolution == graphic_settings.vertial_resolution
-        )
+        if isinstance(graphic_settings, GraphicSettingsWrapper):
+            return (
+                self.resolution_wrapper.equal_resolution(graphic_settings)
+            )
+        return False
 
     def equal_screen_mode(self, graphic_settings):
-        if not isinstance(graphic_settings, GraphicSettings):
-            return False
-        return self.screen_mode == graphic_settings.screen_mode
+        if isinstance(graphic_settings, GraphicSettingsWrapper):
+            return self.screen_mode_wrapper.equal_screen_mode(graphic_settings)
+        return False
 
     def equal_position(self, graphic_settings):
-        if not isinstance(graphic_settings, GraphicSettings):
-            return False
-        return self.position == graphic_settings.position
+        if isinstance(graphic_settings, GraphicSettingsWrapper):
+            return self.position == graphic_settings.position
+        return False
 
     def __eq__(self, graphic_settings):
-        if not isinstance(graphic_settings, GraphicSettings):
-            return NotImplemented
-        return (
-            self.horizontal_resolution == graphic_settings.horizontal_resolution
-            and self.vertial_resolution == graphic_settings.vertial_resolution
-            and self.screen_mode == graphic_settings.screen_mode
-        )
+        if isinstance(graphic_settings, GraphicSettingsWrapper):
+            return (
+                self.resolution_wrapper.equal_resolution(
+                    graphic_settings.resolution
+                )
+                and self.screen_mode_wrapper.equal_screen_mode(graphic_settings)
+            )
+        return NotImplemented
 
     def __ne__(self, graphic_settings):
         return not self == graphic_settings
 
     def __repr__(self):
-        return 'resolution: ({}, {}), screen_mode: {}'.format(
-            self.horizontal_resolution,
-            self.vertial_resolution,
-            self.screen_mode.name
+        return '{}, {}'.format(
+            self.resolution_wrapper, self.screen_mode_wrapper
         )

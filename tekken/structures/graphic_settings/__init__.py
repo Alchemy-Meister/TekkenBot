@@ -27,5 +27,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from .graphic_settings import GraphicSettingsWrapper
 from .graphic_settings_struct import GraphicSettingsStruct
-from .graphic_settings import GraphicSettings
+from .resolution import ResolutionWrapper
+from .resolution_struct import ResolutionStruct
+from .screen_mode_struct import ScreenModeStruct
+from .screen_mode import ScreenModeWrapper
