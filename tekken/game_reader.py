@@ -184,24 +184,24 @@ class TekkenGameReader(ProcessIO):
                     SIZE_OF(GraphicSettingsStruct)
                 )
             )
+            startup_stable_resolution_address = (
+                self.module_address
+                + self.config['GraphicSettingsAddress']['window_resolution']
+            )
+            graphic_settings.resolution = (
+                ResolutionWrapper(
+                    self.get_block_data(
+                        process_handle,
+                        startup_stable_resolution_address,
+                        SIZE_OF(ResolutionStruct)
+                    )
+                ).resolution
+            )
             if(
                     graphic_settings.resolution != (0, 0)
                     and graphic_settings.resolution[0]
                     != graphic_settings.resolution[1]
             ):
-                stable_resolution_address = (
-                    self.module_address
-                    + self.config['GraphicSettingsAddress']['window_resolution']
-                )
-                graphic_settings.resolution = (
-                    ResolutionWrapper(
-                        self.get_block_data(
-                            process_handle,
-                            stable_resolution_address,
-                            SIZE_OF(ResolutionStruct)
-                        )
-                    ).resolution
-                )
                 graphic_settings.position = self.get_tekken_window_position()
             else:
                 graphic_settings = None
