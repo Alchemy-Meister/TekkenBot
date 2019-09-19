@@ -165,10 +165,8 @@ class TekkenBotPrimeView():
         root.grid_rowconfigure(1, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
-    def adapt_overlay_menu_to_overlay_number(
-            self, overlay_number, refresh=False
-    ):
-        if overlay_number != self.overlay_number or refresh:
+    def adapt_overlay_menu_to_overlay_number(self, overlay_number):
+        if overlay_number != self.overlay_number:
             self.overlay_number = overlay_number
 
             del_end_index = None
