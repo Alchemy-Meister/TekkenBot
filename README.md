@@ -56,7 +56,7 @@ Created by roguelike2d. Maintained by the community.
 - [ ] Complete this list :P
 
 ## Disclaimer
-**Tekken's process memory overwrite has only been tested in offline mode, it probably won't work in online mode, nor I intend to make it work. Its only purpose is for debugging or for training with specific character/stages. No piracy is intended. Use at your own risk, please support BANDAI NAMCO Entertainment and buy the DLC content**
+**Tekken's process memory overwrite has only been tested in offline mode, it probably won't work in online mode, nor I intend to make it work. Its only purpose is for debugging specific characters/stages. No piracy is intended. Use at your own risk, please support BANDAI NAMCO Entertainment and buy the DLC content**
 
 ## Screenshot
 ![Memory Overwrite](Screenshots/memory_overwrite.png?raw=true)
