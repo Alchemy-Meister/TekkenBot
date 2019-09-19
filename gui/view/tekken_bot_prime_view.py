@@ -88,7 +88,7 @@ class TekkenBotPrimeView():
         is_memory_overwrite_panel_visible = tk.BooleanVar()
         view = tk.Menu(self.menu_bar, tearoff=0)
         view.add_checkbutton(
-            label='Toggle Memory Overwrite',
+            label='Memory Overwrite',
             variable=is_memory_overwrite_panel_visible,
             command=lambda: self.controller.show_memory_override(
                 is_memory_overwrite_panel_visible.get()
@@ -292,6 +292,7 @@ class TekkenBotPrimeView():
                 self.memory_overwride_panel.grid_remove()
 
     def __create_overlay_menu(self, overlay_index):
+        self.logger.debug('creating menu for overlay %d', overlay_index + 1)
         variables = self.__initialize_overlay_menu_variables(overlay_index)
 
         overlay_mode_submenu = self.__create_populated_integrity_menu(
@@ -332,6 +333,12 @@ class TekkenBotPrimeView():
         for overlay_setting, menu in zip(enums, menus):
             self.__overlays_settings[overlay_index][overlay_setting]['menu'] = (
                 menu
+            )
+            self.logger.debug(
+                "%s menu stored in overlay %s's %s dictionary",
+                TekkenBotPrimeView.__print_menu(menu),
+                overlay_index + 1,
+                overlay_setting.name
             )
 
         return ((enum, menu) for (enum, menu) in zip(enums, menus))
@@ -398,7 +405,7 @@ class TekkenBotPrimeView():
                     'variable': var
                 }
                 self.logger.debug(
-                    'creating new dictionary to store overlay %s '
+                    'created new dictionary to store overlay %s '
                     "in slot %d: {'variable': '%s', 'previous_value': '%s'}",
                     enum.name,
                     overlay_index + 1,
@@ -544,36 +551,55 @@ class TekkenBotPrimeView():
                 previous_index + 1,
                 TekkenBotPrimeView.__print_menu(previous_theme_menu)
             )
-
             swap_index_menus = (
                 [overlay_index, previous_theme_menu],
                 [previous_index, theme_menu]
             )
             for index, (swap_index, menu) in enumerate(swap_index_menus):
                 if index < self.overlay_number:
+                    self.logger.debug(
+                        "deleting overlay %d's themes from the gui",
+                        swap_index + 1
+                    )
                     self.__overlays_settings[swap_index]['parent'].delete(
                         tk.END
                     )
                     last_index = menu.index(tk.END)
                     last_index = last_index + 1 if last_index is not None else 0
+                    if last_index:
+                        self.logger.debug(
+                            'updating the command of all swapped theme menu '
+                            'entries of overlay %d with new overlay_index',
+                            overlay_index + 1
+                        )
                     for menu_entry_index in range(last_index):
                         menu.entryconfig(
                             menu_entry_index,
                             command=(
-                                lambda i=swap_index:
+                                lambda new_index=swap_index:
                                 self.controller.overlay_theme_change(
-                                    self.__overlays_settings[i][
+                                    self.__overlays_settings[new_index][
                                         OverlaySettings.THEME
                                     ]['variable'].get(),
-                                    i
+                                    new_index
                                 )
                             )
                         )
 
+                    self.logger.debug(
+                        'adding updated swapped theme menu to overlay %d in '
+                        'the gui',
+                        swap_index + 1
+                    )
                     self.__overlays_settings[swap_index]['parent'].add_cascade(
                         label=getattr(OverlaySettings.THEME, 'printable_name'),
                         menu=menu
                     )
+            self.logger.debug(
+                "swapping overlay %d and %d's theme menus in the dictionary",
+                overlay_index + 1,
+                previous_index + 1
+            )
             (
                 self.__overlays_settings[overlay_index][OverlaySettings.THEME],
                 self.__overlays_settings[previous_index][OverlaySettings.THEME]
@@ -582,6 +608,7 @@ class TekkenBotPrimeView():
                 self.__overlays_settings[overlay_index][OverlaySettings.THEME]
             )
 
+        self.logger.debug('exit')
 
         self.controller.overlay_mode_change(
             overlay_mode_name, overlay_index, bool(repeated_variable)
