@@ -360,6 +360,11 @@ class TekkenBotPrimeView():
     def __initialize_overlay_menu_state(
             self, overlay_index, overlay_setting, menu
     ):
+        self.logger.debug(
+            'arguments: overlay slot: %d setting key: %s',
+            overlay_index + 1,
+            overlay_setting.name
+        )
         settings_dict = (
             self.__overlays_settings[overlay_index][overlay_setting]
         )
@@ -367,13 +372,26 @@ class TekkenBotPrimeView():
         last_entry = menu.index(tk.END)
         last_entry = last_entry + 1 if last_entry else 0
         if previous_menu_state is not None:
+            self.logger.debug(
+                "found menu_state in overlay %d's %s, loading into the gui: %s",
+                overlay_index + 1,
+                overlay_setting.name,
+                previous_menu_state
+            )
             for label, state in previous_menu_state.items():
                 menu.entryconfig(label, state=state)
-        settings_dict['menu_state'] = {
-            menu.entryconfig(index)['label'][4]:
-            menu.entryconfig(index)['state'][4]
-            for index in range(last_entry)
-        }
+        else:
+            self.logger.debug(
+                "stored menu_state into overlay %d's %s's dictionary",
+                overlay_index + 1,
+                overlay_setting.name
+            )
+            settings_dict['menu_state'] = {
+                menu.entryconfig(index)['label'][4]:
+                menu.entryconfig(index)['state'][4]
+                for index in range(last_entry)
+            }
+        self.logger.debug('exit')
         return menu
 
     def __initialize_overlay_menu_variables(self, overlay_index):
@@ -552,6 +570,9 @@ class TekkenBotPrimeView():
             swap_index_menus = (
                 [overlay_index, previous_theme_menu],
                 [previous_index, theme_menu]
+            )
+            self.logger.debug(
+                'overlay layout: %s', OverlayLayout(self.overlay_number).name
             )
             for index, (swap_index, menu) in enumerate(swap_index_menus):
                 if index < self.overlay_number:
