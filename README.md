@@ -16,7 +16,7 @@ Created by roguelike2d. Maintained by the community.
 
 ### GUI
 - [x] Menu-bar has been re-organized to make its usage more intuituve.
-- [x] New custom themes can be added by placing new theme files under *./data/themes/overlay/*
+- [x] New custom themes can be added by placing new theme files under *./data/themes/overlay/name_of_overlay*
 - [x] Changes in themes and overlay settings can be dynamically reloaded by restarting the app *Tekken Bot > restart*. (No need to close the App)
 - [x] Automatic scrolling can be now disabled to read previous log files with ease *Tekken Bot > Preferences > Scroll on Output*
 - [x] A tekkenbotprime.log file is created/overwritten every time the app is run.
@@ -35,6 +35,7 @@ Created by roguelike2d. Maintained by the community.
 - [x] Custom column ordering. Configurable in *./data/settings.ini*
 
 #### Command input overlay
+- [x] Customizable themes, new themes can be added in *./data/themes/overlay/command_input*
 - [x] Input arrows and buttons mimic Tekken GUI's style. (Credits to: [mspkvp](https://github.com/mspkvp/tk7movespretty))
 - [x] Support for Rage button.
 - [x] SVG icon scaling.
