@@ -166,6 +166,8 @@ class TekkenBotPrimeView():
         root.grid_columnconfigure(0, weight=1)
 
     def adapt_overlay_menu_to_overlay_number(self, overlay_number):
+        self.logger.debug('arguments: overlay number: %d', overlay_number)
+        self.logger.debug('current overlay number: %d', self.overlay_number)
         if overlay_number != self.overlay_number:
             self.overlay_number = overlay_number
 
@@ -182,6 +184,7 @@ class TekkenBotPrimeView():
                     pass
 
             if del_end_index is not None:
+                self.logger.debug('deleting overlays settings menus to the gui')
                 del_start_index = self.overlay_menu.index(tk.END)
                 for del_index in range(del_start_index, del_end_index, -1):
                     try:
@@ -191,26 +194,53 @@ class TekkenBotPrimeView():
 
             for index in range(list(OverlayLayout).pop().value):
                 if self.overlay_number == 1:
+                    self.logger.debug(
+                        "setting overlay menu as overlay %d's parent in "
+                        "dictionary",
+                        index + 1
+                    )
                     target_overlay_menu = self.overlay_menu
                 else:
+                    self.logger.debug(
+                        "setting overlay submenu as overlay %d's parent in "
+                        "dictionary",
+                        index + 1
+                    )
                     target_overlay_menu = tk.Menu(tearoff=0)
                 for (enum, menu) in self.__create_overlay_menu(index):
                     self.__overlays_settings[index]['parent'] = (
                         target_overlay_menu
                     )
                     if index < self.overlay_number:
+                        self.logger.debug(
+                            "adding %s menu to overlay %d's parent gui",
+                            enum.name,
+                            index + 1
+                        )
                         target_overlay_menu.add_cascade(
                             label=getattr(enum, 'printable_name'),
                             menu=menu
                         )
                 if self.overlay_number != 1 and index < self.overlay_number:
+                    self.logger.debug(
+                        'adding overlay %d submenu to overlay menu gui',
+                        index + 1
+                    )
                     self.overlay_menu.add_cascade(
                         label='Overlay {}'.format(index + 1),
                         menu=target_overlay_menu
                     )
+        self.logger.debug('exit')
 
     def enable_overlay_position(self, str_position, enable):
-        for overlay_settings in self.__overlays_settings:
+        for index, overlay_settings in enumerate(self.__overlays_settings):
+            self.logger.debug(
+                "%s overlay %d's %s position on the gui and store menu_state "
+                "to the dictionary",
+                'enabling' if enable else 'disabling',
+                index + 1,
+                str_position
+            )
             settings_dict = overlay_settings[OverlaySettings.POSITION]
             settings_dict['menu'].entryconfig(
                 str_position, state='normal' if enable else 'disabled'
@@ -239,20 +269,52 @@ class TekkenBotPrimeView():
             overlay_settings[OverlaySettings.THEME]['menu'] = (
                 overlay_theme_submenu
             )
+            self.logger.debug(
+                "created overlay %d's theme menu and stored it into the "
+                "dictionary: %s",
+                overlay_index + 1,
+                self.__print_menu(overlay_theme_submenu)
+            )
             if overlay_index < self.overlay_number:
+                self.logger.debug(
+                    "deleting overlay %d's themes to the gui",
+                    overlay_index + 1
+                )
                 overlay_settings['parent'].delete(tk.END)
-
+                self.logger.debug(
+                    'adding updated theme menu to overlay %d in '
+                    'the gui',
+                    overlay_index + 1
+                )
                 overlay_settings['parent'].add_cascade(
                     label=getattr(OverlaySettings.THEME, 'printable_name'),
                     menu=overlay_theme_submenu
                 )
+        self.logger.debug('exit')
 
     def restore_previous_overlays_settings(self, setting_key):
         for overlay_index in range(len(self.__overlays_settings)):
-            setting_variable = (
+            settings_dict = (
                 self.__overlays_settings[overlay_index][setting_key]
             )
-            setting_variable['variable'].set(setting_variable['previous_value'])
+            self.logger.debug(
+                "overlay %d's %s before previous_value restoration: "
+                "{'variable': '%s', 'previous_value': '%s'}",
+                overlay_index + 1,
+                setting_key.name,
+                settings_dict['variable'].get(),
+                settings_dict['previous_value']
+            )
+            settings_dict['variable'].set(settings_dict['previous_value'])
+            self.logger.debug(
+                "overlay %d's %s after previous_value restoration: "
+                "{'variable': '%s', 'previous_value': '%s'}",
+                overlay_index + 1,
+                setting_key.name,
+                settings_dict['variable'].get(),
+                settings_dict['previous_value']
+            )
+            self.logger.debug('exit')
 
     def set_logging_handler(self, handler):
         self.logger.removeHandler(self.__file_handler)
@@ -261,20 +323,60 @@ class TekkenBotPrimeView():
     def set_overlay_setting(
             self, overlay_index, setting_key, setting_value, set_previous=True
     ):
-        setting_variable = (
+        self.logger.debug(
+            'arguments: overlay slot: %d, settings key: %s, value: %s, '
+            'set_previous: %s',
+            overlay_index + 1,
+            setting_key.name,
+            setting_value,
+            set_previous
+        )
+        settings_dict = (
             self.__overlays_settings[overlay_index][setting_key]
         )
         repeated_variable = self.__repeat_value_checker(
             overlay_index, setting_key, setting_value
         )
         if repeated_variable:
-            repeated_variable['variable'].set(
-                setting_variable['variable'].get()
+            self.logger.debug(
+                "found duplicated dict: {'variable': '%s', "
+                "'previous_value': '%s'",
+                repeated_variable['variable'].get(),
+                repeated_variable['previous_value']
             )
-
-        setting_variable['variable'].set(setting_value)
+            repeated_variable['variable'].set(
+                settings_dict['variable'].get()
+            )
+            if set_previous:
+                repeated_variable['previous_value'] = (
+                    repeated_variable['variable']
+                )
+            self.logger.debug(
+                "swapped duplicated variable: {'variable': '%s', "
+                "'previous_value': '%s'}",
+                repeated_variable['variable'].get(),
+                repeated_variable['previous_value']
+            )
+        self.logger.debug(
+            "overlay %d's %s's dict before set: {'variable': '%s', "
+            "'previous_value': '%s'}",
+            overlay_index + 1,
+            setting_key.name,
+            settings_dict['variable'].get(),
+            settings_dict['previous_value']
+        )
+        settings_dict['variable'].set(setting_value)
         if set_previous:
-            setting_variable['previous_value'] = setting_value
+            settings_dict['previous_value'] = setting_value
+        self.logger.debug(
+            "overlay %d's %s's dict after set: {'variable': '%s', "
+            "'previous_value': '%s'}",
+            overlay_index + 1,
+            setting_key.name,
+            settings_dict['variable'].get(),
+            settings_dict['previous_value']
+        )
+        self.logger.debug('exit')
 
     def set_in_all_overlay_settings(self, setting_key, setting_enum):
         for overlay_index in range(len(self.__overlays_settings)):
@@ -577,7 +679,7 @@ class TekkenBotPrimeView():
             for index, (swap_index, menu) in enumerate(swap_index_menus):
                 if index < self.overlay_number:
                     self.logger.debug(
-                        "deleting overlay %d's themes from the gui",
+                        "deleting overlay %d's themes to the gui",
                         swap_index + 1
                     )
                     self.__overlays_settings[swap_index]['parent'].delete(
