@@ -35,10 +35,10 @@ from constants.complex_enum import ComplexEnum, ComplexEnumMember
 class InputDirection(ComplexEnum):
     """
     """
-    NULL = ComplexEnumMember(0, abbreviation='', symbol='!')
-    DOWN_BACK = ComplexEnumMember(2, abbreviation='d/b', symbol='↙')
-    DOWN = ComplexEnumMember(4, abbreviation='d', symbol='↓')
-    DOWN_FORWARD = ComplexEnumMember(8, abbreviation='d/f', symbol='↘')
+    NULL = ComplexEnumMember(0x0, abbreviation='', symbol='!')
+    DOWN_BACK = ComplexEnumMember(0x2, abbreviation='d/b', symbol='↙')
+    DOWN = ComplexEnumMember(0x4, abbreviation='d', symbol='↓')
+    DOWN_FORWARD = ComplexEnumMember(0x8, abbreviation='d/f', symbol='↘')
     BACK = ComplexEnumMember(0x10, abbreviation='b', symbol='←')
     NEUTRAL = ComplexEnumMember(0x20, abbreviation='N', symbol='★')
     FORWARD = ComplexEnumMember(0x40, abbreviation='f', symbol='→')
