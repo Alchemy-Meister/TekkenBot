@@ -30,6 +30,10 @@
 """
 """
 import enum
+import logging
+import sys
+
+from log import Formatter
 from patterns.observer import Publisher
 from tekken_game_state import TekkenGameState
 from TekkenEncyclopedia import TekkenEncyclopedia
@@ -49,6 +53,12 @@ class Launcher:
     def __init__(self, view, extended_print=False):
         self.view = view
         self.extended_print = extended_print
+
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(Formatter())
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(stdout_handler)
+
         self.initialized = False
         self.publisher = Publisher(Launcher.Event)
         self.game_state = TekkenGameState()
