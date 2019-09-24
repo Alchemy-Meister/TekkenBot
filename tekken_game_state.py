@@ -778,8 +778,7 @@ class TekkenGameState:
 
     def get_opp_move_string(self, move_id, previous_move_id):
         return self.state_log[-1].opp.movelist_parser.input_for_move(
-            move_id,
-            previous_move_id
+            move_id, previous_move_id
         )
 
     def has_opp_returned_to_neutral_from_move_id(self, move_id):
