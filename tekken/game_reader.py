@@ -33,7 +33,6 @@
 import traceback
 import sys
 import struct
-from MovelistParser import MovelistParser
 
 # pylint: disable=unused-wildcard-import,wildcard-import
 from win32.defines import *  #NOQA
@@ -49,7 +48,7 @@ from .data.wrappers.graphic_settings import (
 )
 from .bot_snapshot import BotSnapshot
 from .game_snapshot import GameSnapshot
-# from .parsers import MovelistParser
+from .parsers import MovelistParser
 from .process_identifier import ProcessIO
 
 class TekkenGameReader(ProcessIO):
