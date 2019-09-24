@@ -27,14 +27,32 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""
-"""
-from win32.defines import Structure, DWORD
+from constants.graphic_settings import ScreenMode
+from tekken.data.structures.graphic_settings import ScreenModeStruct
+from tekken.data.wrappers import StructWrapper
 
-class ResolutionStruct(Structure):
+class ScreenModeWrapper(StructWrapper):
     """
     """
-    _fields_ = [
-        ('horizontal_resolution', DWORD),
-        ('vertical_resolution', DWORD),
-    ]
+    def __init__(self, block_bytes=None):
+        super().__init__(ScreenModeStruct, block_bytes)
+        setattr(self, 'screen_mode', ScreenMode(getattr(self, 'screen_mode')))
+
+    def equal_screen_mode(self, screen_mode):
+        try:
+            return getattr(self, 'screen_mode') == screen_mode.screen_mode
+        except AttributeError:
+            return False
+
+    def __eq__(self, screen_mode):
+        if isinstance(screen_mode, ScreenModeWrapper):
+            return getattr(self, 'screen_mode') == screen_mode.screen_mode
+        return NotImplementedError
+
+    def __ne__(self, screen_mode):
+        return not self == screen_mode
+
+    def __repr__(self):
+        return 'screen_mode: {}'.format(
+            getattr(self, 'screen_mode').name
+        )

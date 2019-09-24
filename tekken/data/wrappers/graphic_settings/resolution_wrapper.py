@@ -27,9 +27,50 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .graphic_settings import GraphicSettingsWrapper
-from .graphic_settings_struct import GraphicSettingsStruct
-from .resolution import ResolutionWrapper
-from .resolution_struct import ResolutionStruct
-from .screen_mode_struct import ScreenModeStruct
-from .screen_mode import ScreenModeWrapper
+from tekken.data.structures.graphic_settings import ResolutionStruct
+from tekken.data.wrappers import StructWrapper
+
+class ResolutionWrapper(StructWrapper):
+    """
+    """
+    def __init__(self, block_bytes=None):
+        super().__init__(ResolutionStruct, block_bytes)
+
+    def __get_resolution(self):
+        return (
+            getattr(self, 'horizontal_resolution'),
+            getattr(self, 'vertical_resolution')
+        )
+
+    def __set_resolution(self, resolution_tuple):
+        setattr(self, 'horizontal_resolution', resolution_tuple[0])
+        setattr(self, 'vertical_resolution', resolution_tuple[1])
+
+    resolution = property(__get_resolution, __set_resolution)
+
+    def equal_resolution(self, resolution):
+        try:
+            return (
+                self.resolution == resolution.resolution
+            )
+        except AttributeError:
+            return False
+
+    def __eq__(self, resolution):
+        if isinstance(resolution, ResolutionWrapper):
+            return (
+                getattr(self, 'horizontal_resolution')
+                == resolution.horizontal_resolution
+                and getattr(self, 'vertical_resolution')
+                == resolution.vertical_resolution
+            )
+        return NotImplementedError
+
+    def __ne__(self, resolution):
+        return not self == resolution
+
+    def __repr__(self):
+        return 'resolution: ({}, {})'.format(
+            getattr(self, 'horizontal_resolution'),
+            getattr(self, 'vertical_resolution')
+        )

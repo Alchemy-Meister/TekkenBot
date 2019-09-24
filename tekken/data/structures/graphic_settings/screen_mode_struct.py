@@ -27,50 +27,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from tekken.structures import StructWrapper
-from .graphic_settings_struct import ResolutionStruct
+"""
+"""
+from win32.defines import Structure, DWORD
 
-class ResolutionWrapper(StructWrapper):
+class ScreenModeStruct(Structure):
     """
     """
-    def __init__(self, block_bytes=None):
-        super().__init__(ResolutionStruct, block_bytes)
-
-    def __get_resolution(self):
-        return (
-            getattr(self, 'horizontal_resolution'),
-            getattr(self, 'vertical_resolution')
-        )
-
-    def __set_resolution(self, resolution_tuple):
-        setattr(self, 'horizontal_resolution', resolution_tuple[0])
-        setattr(self, 'vertical_resolution', resolution_tuple[1])
-
-    resolution = property(__get_resolution, __set_resolution)
-
-    def equal_resolution(self, resolution):
-        try:
-            return (
-                self.resolution == resolution.resolution
-            )
-        except AttributeError:
-            return False
-
-    def __eq__(self, resolution):
-        if isinstance(resolution, ResolutionWrapper):
-            return (
-                getattr(self, 'horizontal_resolution')
-                == resolution.horizontal_resolution
-                and getattr(self, 'vertical_resolution')
-                == resolution.vertical_resolution
-            )
-        return NotImplementedError
-
-    def __ne__(self, resolution):
-        return not self == resolution
+    _fields_ = [
+        ('screen_mode', DWORD),
+    ]
 
     def __repr__(self):
-        return 'resolution: ({}, {})'.format(
-            getattr(self, 'horizontal_resolution'),
-            getattr(self, 'vertical_resolution')
-        )
+        return 'screen_mode: {}'.format(self.screen_mode)

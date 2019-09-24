@@ -27,8 +27,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .resolution import ResolutionWrapper
-from .screen_mode import ScreenModeWrapper
+from .resolution_wrapper import ResolutionWrapper
+from .screen_mode_wrapper import ScreenModeWrapper
 
 class GraphicSettingsWrapper():
     """

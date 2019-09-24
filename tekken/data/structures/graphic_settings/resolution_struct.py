@@ -31,9 +31,16 @@
 """
 from win32.defines import Structure, DWORD
 
-class ScreenModeStruct(Structure):
+class ResolutionStruct(Structure):
     """
     """
     _fields_ = [
-        ('screen_mode', DWORD),
+        ('horizontal_resolution', DWORD),
+        ('vertical_resolution', DWORD),
     ]
+
+    def __repr__(self):
+        return 'resolution: ({}, {})'.format(
+            self.horizontal_resolution,
+            self.vertical_resolution
+        )

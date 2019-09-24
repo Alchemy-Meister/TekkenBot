@@ -29,6 +29,7 @@
 
 """
 """
+from enum import Enum
 import struct
 from win32.defines import SIZE_OF, Structure, Union
 from win32.utils import type_limits
@@ -37,7 +38,7 @@ class StructWrapper():
     """
     """
     def __init__(self, structure, block_bytes=None):
-        self.structure = structure
+        self.__structure = structure
         if block_bytes:
             offset = 0
             for field in StructWrapper.__flatten(
@@ -60,8 +61,24 @@ class StructWrapper():
                 structure()
             )
 
+    def __repr__(self):
+        return '{}({})'.format(
+            self.__class__.__name__,
+            ', '.join(
+                [
+                    '{}: {}'.format(
+                        attribute,
+                        getattr(self, attribute).name
+                        if isinstance(getattr(self, attribute), Enum)
+                        else getattr(self, attribute)
+                    )
+                    for attribute in vars(self) if not attribute.startswith('_')
+                ]
+            )
+        )
+
     def get_structure_size(self):
-        return SIZE_OF(self.structure)
+        return SIZE_OF(self.__structure)
 
     def __default_attributes_initialization(self, dictionary, structure=None):
         for key, value in dictionary.items():

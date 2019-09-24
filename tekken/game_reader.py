@@ -33,7 +33,7 @@
 import traceback
 import sys
 import struct
-import MovelistParser
+from MovelistParser import MovelistParser
 
 # pylint: disable=unused-wildcard-import,wildcard-import
 from win32.defines import *  #NOQA
@@ -41,14 +41,15 @@ import win32.kernel32 as kernel32
 import win32.user32 as user32
 import win32.utils.actual_rect as actual_rect
 
-from .structures.graphic_settings import (
-    GraphicSettingsStruct,
-    GraphicSettingsWrapper,
-    ResolutionStruct,
-    ResolutionWrapper
+from .data.structures.graphic_settings import (
+    GraphicSettingsStruct, ResolutionStruct
+)
+from .data.wrappers.graphic_settings import (
+    GraphicSettingsWrapper, ResolutionWrapper
 )
 from .bot_snapshot import BotSnapshot
 from .game_snapshot import GameSnapshot
+# from .parsers import MovelistParser
 from .process_identifier import ProcessIO
 
 class TekkenGameReader(ProcessIO):
@@ -429,12 +430,12 @@ class TekkenGameReader(ProcessIO):
                             )
 
                             self.p1_movelist_parser = (
-                                MovelistParser.MovelistParser(
+                                MovelistParser(
                                     p1_movelist_block, p1_movelist_address
                                 )
                             )
                             self.p2_movelist_parser = (
-                                MovelistParser.MovelistParser(
+                                MovelistParser(
                                     p2_movelist_block, p2_movelist_address
                                 )
                             )
