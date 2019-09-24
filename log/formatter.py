@@ -31,7 +31,7 @@ import logging
 
 class Formatter(logging.Formatter):
     FORMATS = {
-        logging.INFO: '%(msg)s',
+        logging.INFO: '%(message)s',
         'DEFAULT': (
             '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s '
             '- %(message)s'
