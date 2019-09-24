@@ -133,8 +133,9 @@ class TekkenGameState:
         if not graphic_settings.equal_screen_mode(self.graphic_settings):
             self.logger.debug(
                 'TEKKEN7 screen mode changed from %s to %s',
-                getattr(self.graphic_settings, 'screen_mode', None),
-                graphic_settings.screen_mode
+                self.graphic_settings.screen_mode.name
+                if self.graphic_settings else None,
+                graphic_settings.screen_mode.name
             )
             graphic_settings_changed = True
             self.graphic_settings_publisher.dispatch(
@@ -638,8 +639,7 @@ class TekkenGameState:
                 return True
             if current_move_timer < state.opp.move_timer:
                 return False
-            else:
-                current_move_timer = state.opp.move_timer
+            current_move_timer = state.opp.move_timer
         return False
 
     def did_bot_timer_interrupt_x_moves_ago(self, frames_ago):
@@ -778,7 +778,8 @@ class TekkenGameState:
 
     def get_opp_move_string(self, move_id, previous_move_id):
         return self.state_log[-1].opp.movelist_parser.input_for_move(
-            move_id, previous_move_id
+            move_id,
+            previous_move_id
         )
 
     def has_opp_returned_to_neutral_from_move_id(self, move_id):
