@@ -75,7 +75,7 @@ class BotSnapshot:
         )
         self.rage_button_flag = (
             data_dict['PlayerDataAddress.input_attack']
-            >= InputAttack.RAGE.value
+            >= InputAttack.B_RAGE.value
         )
         self.stun_state = StunStates(data_dict['PlayerDataAddress.stun_type'])
         self.is_power_crush = data_dict['PlayerDataAddress.power_crush'] > 0
