@@ -83,6 +83,7 @@ PAGE_EXECUTE_WRITECOPY = 0x80
 PAGE_GUARD = 0x100
 MEM_COMMIT = 0x1000
 MEM_RESERVE = 0x2000
+MEM_RELEASE = 0x8000
 MEM_FREE = 0x10000
 MEM_PRIVATE = 0x20000
 MEM_MAPPED = 0x40000
@@ -345,6 +346,46 @@ class ProcessHandle(Handle):
         """
         return get_process_id(self.value)
 
+class ThreadHandle(Handle):
+    """
+    Win32 thread handle.
+    @type dwAccess: int
+    @ivar dwAccess: Current access flags to this handle.
+            This is the same value passed to L{OpenThread}.
+            Can only be C{None} if C{aHandle} is also C{None}.
+            Defaults to L{THREAD_ALL_ACCESS}.
+    @see: L{Handle}
+    """
+
+    def __init__(
+            self, a_handle=None, b_ownership=True, dw_access=THREAD_ALL_ACCESS
+    ):
+        """
+        @type  a_handle: int
+        @param a_handle: Win32 handle value.
+        @type  b_ownership: bool
+        @param b_ownership:
+           C{True} if we own the handle and we need to close it.
+           C{False} if someone else will be calling L{CloseHandle}.
+        @type  dw_access: int
+        @param dw_access: Current access flags to this handle.
+            This is the same value passed to L{OpenThread}.
+            Can only be C{None} if C{a_handle} is also C{None}.
+            Defaults to L{THREAD_ALL_ACCESS}.
+        """
+        super(ThreadHandle, self).__init__(a_handle, b_ownership)
+        self.dw_access = dw_access
+        if a_handle is not None and dw_access is None:
+            msg = "Missing access flags for thread handle: %x" % a_handle
+            raise TypeError(msg)
+
+    def get_tid(self):
+        """
+        @rtype:  int
+        @return: Thread global ID.
+        """
+        return get_thread_id(self.value)
+
 # XXX maybe add functions related to the toolhelp snapshots here?
 class SnapshotHandle(Handle):
     """
@@ -523,6 +564,23 @@ class MemoryBasicInformation:
             and bool(self.protect & self.EXECUTABLE_AND_WRITEABLE)
         )
 
+#--- SECURITY_ATTRIBUTES structure --------------------------------------------
+
+class SECURITY_ATTRIBUTES(Structure):
+    """
+    typedef struct _SECURITY_ATTRIBUTES {
+        DWORD nLength;
+        LPVOID lpSecurityDescriptor;
+        BOOL bInheritHandle;
+    } SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES, *LPSECURITY_ATTRIBUTES;
+    """
+    _fields_ = [
+        ('n_length', DWORD),
+        ('lp_security_descriptor', LPVOID),
+        ('b_inherit_handle', BOOL),
+    ]
+LPSECURITY_ATTRIBUTES = POINTER(SECURITY_ATTRIBUTES)
+
 # --- MEMORY_BASIC_INFORMATION structure --------------------------------------
 
 # pylint: disable=too-few-public-methods
@@ -684,6 +742,113 @@ def duplicate_handle(
         return handle_class(lp_target_handle.value)
 
 # -----------------------------------------------------------------------------
+# DLL API
+
+# HMODULE WINAPI LoadLibrary(
+#   __in  LPCTSTR lpFileName
+# );
+def __load_library_function(function, lp_file_name):
+    h_module = function(lp_file_name)
+    if h_module == NULL:
+        raise ctypes.WinError()
+    return h_module
+
+def load_library_a(lp_file_name):
+    _load_library_a = WINDLL.kernel32.LoadLibraryA
+    _load_library_a.argtypes = [LPSTR]
+    _load_library_a.restype = HMODULE
+
+    return __load_library_function(_load_library_a, lp_file_name)
+
+def load_library_w(lp_file_name):
+    _load_library_w = WINDLL.kernel32.LoadLibraryW
+    _load_library_w.argtypes = [LPWSTR]
+    _load_library_w.restype = HMODULE
+
+    return __load_library_function(_load_library_w, lp_file_name)
+
+def load_library(lp_file_name):
+    return GuessStringType(load_library_a, load_library_w)(lp_file_name)
+
+def __get_module_handle__function(function, lp_module_name):
+    h_module = function(lp_module_name)
+    if h_module == NULL:
+        raise ctypes.WinError()
+    return h_module
+
+def get_module_handle_a(lp_module_name):
+    """
+    HMODULE WINAPI GetModuleHandleA(
+        __in_opt  LPCSTR lpModuleName
+    );
+    """
+    _get_module_handle_a = WINDLL.kernel32.GetModuleHandleA
+    _get_module_handle_a.argtypes = [LPSTR]
+    _get_module_handle_a.restype = HMODULE
+
+    return __get_module_handle__function(_get_module_handle_a, lp_module_name)
+
+def get_module_handle_w(lp_module_name):
+    """
+    HMODULE WINAPI GetModuleHandleW(
+        __in_opt  LPCWSTR lpModuleName
+    );
+    """
+    _get_module_handle_w = WINDLL.kernel32.GetModuleHandleW
+    _get_module_handle_w.argtypes = [LPWSTR]
+    _get_module_handle_w.restype = HMODULE
+
+    return __get_module_handle__function(_get_module_handle_w, lp_module_name)
+
+def get_module_handle(lp_module_name):
+    return GuessStringType(get_module_handle_a, get_module_handle_w)(
+        lp_module_name
+    )
+
+def get_proc_address_a(h_module, lp_proc_name):
+    """
+    FARPROC WINAPI GetProcAddressA(
+        __in  HMODULE hModule,
+        __in  LPSTR lpProcName
+    );
+    """
+    _get_proc_address = WINDLL.kernel32.GetProcAddress
+    _get_proc_address.argtypes = [HMODULE, LPVOID]
+    _get_proc_address.restype = LPVOID
+
+    if isinstance(lp_proc_name, int):
+        lp_proc_name = LPVOID(lp_proc_name)
+        if lp_proc_name.value & (~0xFFFF):
+            raise ValueError(
+                'ordinal number too large: %d' % lp_proc_name.value
+            )
+    elif isinstance(lp_proc_name, bytes):
+        lp_proc_name = ctypes.c_char_p(lp_proc_name)
+    else:
+        raise TypeError(str(type(lp_proc_name)))
+    return _get_proc_address(h_module, lp_proc_name)
+
+def get_proc_address_w(h_module, lp_proc_name):
+    return make_wide_version(get_proc_address_a)(h_module, lp_proc_name)
+
+def get_proc_address(h_module, lp_proc_name):
+    return GuessStringType(get_proc_address_a, get_proc_address_w)(
+        h_module, lp_proc_name
+    )
+
+def free_library(h_module):
+    """
+    BOOL WINAPI FreeLibrary(
+        __in  HMODULE hModule
+    );
+    """
+    _free_library = WINDLL.kernel32.FreeLibrary
+    _free_library.argtypes = [HMODULE]
+    _free_library.restype = bool
+    _free_library.errcheck = raise_if_zero
+    _free_library(h_module)
+
+# -----------------------------------------------------------------------------
 # Debug API
 
 def read_process_memory(h_process, lp_base_address, n_size):
@@ -741,6 +906,33 @@ def write_process_memory(h_process, lp_base_address, lp_buffer, n_size=None):
         raise ctypes.WinError()
     return lp_number_of_bytes_written.value
 
+def virtual_alloc_ex(
+        h_process,
+        lp_address=0,
+        dw_size=0x1000,
+        fl_allocation_type=MEM_COMMIT | MEM_RESERVE,
+        fl_protect=PAGE_EXECUTE_READWRITE
+):
+    """
+    LPVOID WINAPI VirtualAllocEx(
+        __in      HANDLE hProcess,
+        __in_opt  LPVOID lpAddress,
+        __in      SIZE_T dwSize,
+        __in      DWORD flAllocationType,
+        __in      DWORD flProtect
+    );
+    """
+    _virtual_alloc_ex = WINDLL.kernel32.VirtualAllocEx
+    _virtual_alloc_ex.argtypes = [HANDLE, LPVOID, SIZE_T, DWORD, DWORD]
+    _virtual_alloc_ex.restype = LPVOID
+
+    lp_address = _virtual_alloc_ex(
+        h_process, lp_address, dw_size, fl_allocation_type, fl_protect
+    )
+    if lp_address == NULL:
+        raise ctypes.WinError()
+    return lp_address
+
 def virtual_query_ex(h_process, lp_address):
     """
     SIZE_T WINAPI VirtualQueryEx(
@@ -788,6 +980,64 @@ def virtual_protect_ex(
     )
     return fl_old_protect.value
 
+def virtual_free_ex(h_process, lp_address, dw_size=0, dw_free_type=MEM_RELEASE):
+    """
+    BOOL WINAPI VirtualFreeEx(
+        __in  HANDLE hProcess,
+        __in  LPVOID lpAddress,
+        __in  SIZE_T dwSize,
+        __in  DWORD dwFreeType
+    );
+    """
+    _virtual_free_ex = WINDLL.kernel32.VirtualFreeEx
+    _virtual_free_ex.argtypes = [HANDLE, LPVOID, SIZE_T, DWORD]
+    _virtual_free_ex.restype = bool
+    _virtual_free_ex.errcheck = raise_if_zero
+    _virtual_free_ex(h_process, lp_address, dw_size, dw_free_type)
+
+def create_remote_thread(
+        h_process,
+        lp_thread_attributes,
+        dw_stack_size,
+        lp_start_address,
+        lp_parameter,
+        dw_creation_flags
+):
+    """
+    HANDLE WINAPI CreateRemoteThread(
+        __in   HANDLE hProcess,
+        __in   LPSECURITY_ATTRIBUTES lpThreadAttributes,
+        __in   SIZE_T dwStackSize,
+        __in   LPTHREAD_START_ROUTINE lpStartAddress,
+        __in   LPVOID lpParameter,
+        __in   DWORD dwCreationFlags,
+        __out  LPDWORD lpThreadId
+    );
+    """
+    _create_remote_thread = WINDLL.kernel32.CreateRemoteThread
+    _create_remote_thread.argtypes = [
+        HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPVOID, LPVOID, DWORD, LPDWORD
+    ]
+    _create_remote_thread.restype = HANDLE
+
+    if not lp_thread_attributes:
+        lp_thread_attributes = None
+    else:
+        lp_thread_attributes = BY_REF(lp_thread_attributes)
+    dw_thread_id = DWORD(0)
+    h_thread = _create_remote_thread(
+        h_process,
+        lp_thread_attributes,
+        dw_stack_size,
+        lp_start_address,
+        lp_parameter,
+        dw_creation_flags,
+        BY_REF(dw_thread_id)
+    )
+    if not h_thread:
+        raise ctypes.WinError()
+    return ThreadHandle(h_thread), dw_thread_id.value
+
 # -----------------------------------------------------------------------------
 # Process API
 
@@ -821,6 +1071,37 @@ def open_process(dw_desired_access, b_inherit_handle, dw_process_id):
     if h_process is NULL:
         raise ctypes.WinError()
     return ProcessHandle(h_process, dw_access=dw_desired_access)
+
+def get_thread_id(h_thread):
+    """
+    DWORD WINAPI GetThreadId(
+        __in  HANDLE hThread
+    );
+    """
+    _get_thread_id = WINDLL.kernel32.GetThreadId
+    _get_thread_id.argtypes = [HANDLE]
+    _get_thread_id.restype = DWORD
+
+    dw_thread_id = _get_thread_id(h_thread)
+    if dw_thread_id == 0:
+        raise ctypes.WinError()
+    return dw_thread_id
+
+def get_exit_code_thread(hThread):
+    """
+    # BOOL WINAPI GetExitCodeThread(
+        __in   HANDLE hThread,
+        __out  LPDWORD lpExitCode
+    );
+    """
+    _get_exit_code_thread = WINDLL.kernel32.GetExitCodeThread
+    _get_exit_code_thread.argtypes = [HANDLE, PDWORD]
+    _get_exit_code_thread.restype = bool
+    _get_exit_code_thread.errcheck = raise_if_zero
+
+    lp_exit_code = DWORD(0)
+    _get_exit_code_thread(hThread, BY_REF(lp_exit_code))
+    return lp_exit_code.value
 
 # -----------------------------------------------------------------------------
 # File API and related

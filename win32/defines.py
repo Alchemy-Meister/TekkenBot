@@ -32,6 +32,7 @@ Common definitions.
 """
 
 import ctypes
+import functools
 
 # =============================================================================
 # This is used later on to calculate the list of exported symbols.
@@ -206,6 +207,29 @@ class DefaultStringType():
 
         # Call the function and return the result
         return function(*argv, **argd)
+
+def make_wide_version(function):
+    """
+    Decorator that generates a Unicode (wide) version of an ANSI only API call.
+    @type  function: callable
+    @param function: ANSI version of the API function to call.
+    """
+    @functools.wraps(function)
+    def wrapper(*argv, **argd):
+        t_ansi = GuessStringType.t_ansi
+        t_unicode = GuessStringType.t_unicode
+        v_types = [type(item) for item in argv]
+        v_types.extend([type(value) for (key, value) in argd.items()])
+        if t_unicode in v_types:
+            argv = list(argv)
+            for index in enumerate(argv):
+                if isinstance(v_types[index], t_unicode):
+                    argv[index] = t_ansi(argv[index])
+            for key, value in argd.items():
+                if isinstance(value, t_unicode):
+                    argd[key] = t_ansi(value)
+        return function(*argv, **argd)
+    return wrapper
 
 # --- Types -------------------------------------------------------------------
 # http://msdn.microsoft.com/en-us/library/aa383751(v=vs.85).aspx
