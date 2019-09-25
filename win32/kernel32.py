@@ -713,7 +713,7 @@ def read_process_memory(h_process, lp_base_address, n_size):
         raise ctypes.WinError()
     return bytes(lp_buffer.raw)[:lp_number_of_bytes_read.value]
 
-def write_process_memory(h_process, lp_base_address, lp_buffer):
+def write_process_memory(h_process, lp_base_address, lp_buffer, n_size=None):
     """
     BOOL WINAPI WriteProcessMemory(
         __in   HANDLE hProcess,
@@ -729,7 +729,8 @@ def write_process_memory(h_process, lp_base_address, lp_buffer):
     ]
     _write_process_memory.restype = bool
 
-    n_size = len(lp_buffer)
+    if n_size is None:
+        n_size = len(lp_buffer)
     lp_buffer = ctypes.create_string_buffer(lp_buffer)
     lp_number_of_bytes_written = SIZE_T(0)
     success = _write_process_memory(
@@ -763,6 +764,29 @@ def virtual_query_ex(h_process, lp_address):
     if success == 0:
         raise ctypes.WinError()
     return MemoryBasicInformation(lp_buffer)
+
+def virtual_protect_ex(
+        h_process, lp_address, dw_size, fl_new_protect=PAGE_EXECUTE_READWRITE
+):
+    """
+    BOOL WINAPI VirtualProtectEx(
+        __in   HANDLE hProcess,
+        __in   LPVOID lpAddress,
+        __in   SIZE_T dwSize,
+        __in   DWORD flNewProtect,
+        __out  PDWORD lpflOldProtect
+    );
+    """
+    _virtual_protect_ex = WINDLL.kernel32.VirtualProtectEx
+    _virtual_protect_ex.argtypes = [HANDLE, LPVOID, SIZE_T, DWORD, PDWORD]
+    _virtual_protect_ex.restype = bool
+    _virtual_protect_ex.errcheck = raise_if_zero
+
+    fl_old_protect = DWORD(0)
+    _virtual_protect_ex(
+        h_process, lp_address, dw_size, fl_new_protect, BY_REF(fl_old_protect)
+    )
+    return fl_old_protect.value
 
 # -----------------------------------------------------------------------------
 # Process API
