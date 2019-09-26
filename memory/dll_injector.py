@@ -27,5 +27,34 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .dll_injector import DLLInjector
-from .memory import Memory
+import win32.kernel32 as kernel32
+
+class DLLInjector():
+    def __init__(self, pid):
+        self.h_process = kernel32.open_process(
+            kernel32.PROCESS_ALL_ACCESS, False, pid
+        )
+
+    def inject(self, absolute_path):
+        if not isinstance(absolute_path, str):
+            absolute_path = str(absolute_path)
+        load_library_address = kernel32.get_proc_address(
+            kernel32.get_module_handle('kernel32.dll'),
+            'LoadLibraryA'
+        )
+        return self.__create_remote_thread(
+            load_library_address, absolute_path.encode('ascii')
+        )
+
+    def __create_remote_thread(self, function_address, args):
+        args_size = len(args)
+        args_address = kernel32.virtual_alloc_ex(
+            self.h_process, dw_size=args_size
+        )
+        kernel32.write_process_memory(self.h_process, args_address, args)
+        h_thread, _ = kernel32.create_remote_thread(
+            self.h_process, function_address, args_address
+        )
+        h_thread.wait()
+        kernel32.virtual_free_ex(self.h_process, args_address)
+        return args_address
