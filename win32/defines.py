@@ -222,12 +222,12 @@ def make_wide_version(function):
         v_types.extend([type(value) for (key, value) in argd.items()])
         if t_unicode in v_types:
             argv = list(argv)
-            for index in enumerate(argv):
-                if isinstance(v_types[index], t_unicode):
-                    argv[index] = t_ansi(argv[index])
+            for index, _ in enumerate(argv):
+                if issubclass(v_types[index], t_unicode):
+                    argv[index] = t_ansi(argv[index], 'utf-8')
             for key, value in argd.items():
-                if isinstance(value, t_unicode):
-                    argd[key] = t_ansi(value)
+                if issubclass(value, t_unicode):
+                    argd[key] = t_ansi(value, 'utf-8')
         return function(*argv, **argd)
     return wrapper
 
