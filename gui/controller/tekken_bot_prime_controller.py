@@ -62,12 +62,12 @@ class TekkenBotPrimeController():
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
 
-        self.stdout_handler = logging.StreamHandler(sys.stdout)
-        self.stdout_handler.setFormatter(Formatter())
+        self.file_handler = logging.FileHandler('tekkenbotprime.log', 'a')
+        self.file_handler.setFormatter(Formatter())
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        self.logger.addHandler(self.stdout_handler)
+        self.logger.addHandler(self.file_handler)
 
         self.root = tk.Tk()
         self.config_manager = ReloadableConfigManager()
@@ -312,13 +312,13 @@ class TekkenBotPrimeController():
             callback=self.original_stderr.write
         )
 
-        self.logger.removeHandler(self.stdout_handler)
+        self.logger.removeHandler(self.file_handler)
 
-        self.stdout_handler = logging.StreamHandler(sys.stdout)
-        self.stdout_handler.setFormatter(Formatter())
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(Formatter())
 
-        self.logger.addHandler(self.stdout_handler)
-        self.view.set_logging_handler(self.stdout_handler)
+        self.logger.addHandler(stdout_handler)
+        self.view.set_logging_handler(stdout_handler)
 
     def __update_alarm_gui_settings(self):
         self.view.enable_punish_alarm.set(
