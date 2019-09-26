@@ -997,11 +997,11 @@ def virtual_free_ex(h_process, lp_address, dw_size=0, dw_free_type=MEM_RELEASE):
 
 def create_remote_thread(
         h_process,
-        lp_thread_attributes,
-        dw_stack_size,
         lp_start_address,
         lp_parameter,
-        dw_creation_flags
+        lp_thread_attributes=None,
+        dw_stack_size=0,
+        dw_creation_flags=0,
 ):
     """
     HANDLE WINAPI CreateRemoteThread(
@@ -1020,9 +1020,7 @@ def create_remote_thread(
     ]
     _create_remote_thread.restype = HANDLE
 
-    if not lp_thread_attributes:
-        lp_thread_attributes = None
-    else:
+    if lp_thread_attributes:
         lp_thread_attributes = BY_REF(lp_thread_attributes)
     dw_thread_id = DWORD(0)
     h_thread = _create_remote_thread(
