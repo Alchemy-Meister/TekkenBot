@@ -1085,7 +1085,7 @@ def get_thread_id(h_thread):
         raise ctypes.WinError()
     return dw_thread_id
 
-def get_exit_code_thread(hThread):
+def get_exit_code_thread(h_thread):
     """
     # BOOL WINAPI GetExitCodeThread(
         __in   HANDLE hThread,
@@ -1098,7 +1098,7 @@ def get_exit_code_thread(hThread):
     _get_exit_code_thread.errcheck = raise_if_zero
 
     lp_exit_code = DWORD(0)
-    _get_exit_code_thread(hThread, BY_REF(lp_exit_code))
+    _get_exit_code_thread(h_thread, BY_REF(lp_exit_code))
     return lp_exit_code.value
 
 # -----------------------------------------------------------------------------
