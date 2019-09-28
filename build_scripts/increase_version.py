@@ -35,6 +35,7 @@ import sys
 
 def version_updater(argv):
     is_release = False
+    version_increased = False
 
     try:
         opts, _ = getopt.getopt(argv, 'r', ['release'])
@@ -67,23 +68,29 @@ def version_updater(argv):
         version_part for version_part in version_parts if version_part
     ]
 
-    if is_release:
+    if is_release or not pre_release:
         version_parts = version_parts[0:2]
-    elif not pre_release:
-        version_parts.insert(2, 'b0')
-    last_version_part = version_parts.pop(-1)
-    try:
-        last_version_part = str(int(last_version_part) + 1)
-    except ValueError:
-        last_version_part = [
-            version_part
-            for version_part in re.split(r'(\d+)', last_version_part)
-            if version_part
-        ]
-        last_version_part[-1] = str(int(last_version_part[-1]) + 1)
-        last_version_part = ''.join(last_version_part)
+        if pre_release:
+            version_increased = True
 
-    version_parts.append(last_version_part)
+    if not version_increased:
+        last_version_part = version_parts.pop(-1)
+        try:
+            last_version_part = str(int(last_version_part) + 1)
+        except ValueError:
+            last_version_part = [
+                version_part
+                for version_part in re.split(r'(\d+)', last_version_part)
+                if version_part
+            ]
+            last_version_part[-1] = str(int(last_version_part[-1]) + 1)
+            last_version_part = ''.join(last_version_part)
+
+        version_parts.append(last_version_part)
+
+    if not pre_release:
+        version_parts.insert(2, 'b0')
+
     version = ''.join(version_parts)
     update_config['DEFAULT']['CURRENT_VERSION'] = version
     with open(update_config_path, 'w') as update_config_file:
