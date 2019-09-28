@@ -88,7 +88,7 @@ def version_updater(argv):
 
         version_parts.append(last_version_part)
 
-    if not pre_release:
+    if not is_release and not pre_release:
         version_parts.insert(2, 'b0')
 
     version = ''.join(version_parts)
