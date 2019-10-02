@@ -54,7 +54,7 @@ class SoundPlayer():
             )
         open_media_command = 'open "{}" alias media'.format(media_path)
         SoundPlayer.__logger.debug(
-            'sending command to CMI: %s', open_media_command
+            'sending command to MCI: %s', open_media_command
         )
         winmm.mci_send_string(open_media_command)
         winmm.mci_send_string('play media')
