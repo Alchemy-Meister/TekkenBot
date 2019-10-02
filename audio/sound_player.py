@@ -29,8 +29,11 @@
 
 """
 """
+import logging
 from pathlib import Path
+import sys
 
+from log import Formatter
 import win32.winmm as winmm
 
 class SoundPlayer():
@@ -49,11 +52,21 @@ class SoundPlayer():
                     if media_path.name == media_file.stem
                 ), None
             )
-        winmm.mci_send_string(
-            'open {} alias media'.format(media_path)
+        open_media_command = 'open "{}" alias media'.format(media_path)
+        SoundPlayer.__logger.debug(
+            'sending command to CMI: %s', open_media_command
         )
+        winmm.mci_send_string(open_media_command)
         winmm.mci_send_string('play media')
 
     @staticmethod
     def close():
         winmm.mci_send_string('close all')
+
+    @classmethod
+    def initialize_class_logger(cls):
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(Formatter())
+        cls.__logger = logging.getLogger(__name__)
+        cls.__logger.setLevel(logging.DEBUG)
+        cls.__logger.addHandler(stdout_handler)

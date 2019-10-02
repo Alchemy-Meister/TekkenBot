@@ -33,11 +33,12 @@ from config import DefaultSettings
 from constants.battle import PunishResult
 from constants.event import PunishWindowEvent
 from patterns.observer import Subscriber
+from patterns.singleton import Singleton
 from tekken.coach import PunishCoach
 
 from .sound_player import SoundPlayer
 
-class PunishCoachAlarm():
+class PunishCoachAlarm(metaclass=Singleton):
     """
     """
     def __init__(self, punish_coach: PunishCoach, initial_settings):
@@ -50,6 +51,8 @@ class PunishCoachAlarm():
         self.reloadable_settings = initial_settings
         if self.reloadable_settings:
             self.reload()
+
+        SoundPlayer.initialize_class_logger()
 
         subscriber = Subscriber()
         punish_coach.publisher.register(
