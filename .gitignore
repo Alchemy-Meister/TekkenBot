@@ -22,3 +22,6 @@ __pycache__/
 
 # Dynamic created settings files
 /data/settings.ini
+
+# SDK folder
+/sdk
