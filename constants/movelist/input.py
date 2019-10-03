@@ -30,21 +30,16 @@
 from constants.complex_enum import ComplexEnum, ComplexEnumMember
 
 class MovelistInput(ComplexEnum):
-    NULL = ComplexEnumMember(0)
-
-    NEUTRAL = ComplexEnumMember(0x20)
-
-    UP = ComplexEnumMember(0x100, printable_name='u')
-    UP_BACK = ComplexEnumMember(0x80, printable_name='u/b')
-    UP_FORWARD = ComplexEnumMember(0x200, printable_name='u/f')
-
-    FORWARD = ComplexEnumMember(0x40, printable_name='f')
+    NULL = ComplexEnumMember(0x0)
+    DOWN_BACK = ComplexEnumMember(0x2, printable_name='d/b')
+    DOWN = ComplexEnumMember(0x4, printable_name='d')
+    DOWN_FORWARD = ComplexEnumMember(0x8, printable_name='d/f')
     BACK = ComplexEnumMember(0x10, printable_name='b')
-
-    DOWN = ComplexEnumMember(4, printable_name='d')
-    DOWN_FORWARD = ComplexEnumMember(8, printable_name='d/f')
-    DOWN_BACK = ComplexEnumMember(2, printable_name='d/b')
-
+    NEUTRAL = ComplexEnumMember(0x20)
+    FORWARD = ComplexEnumMember(0x40, printable_name='f')
+    UP_BACK = ComplexEnumMember(0x80, printable_name='u/b')
+    UP = ComplexEnumMember(0x100, printable_name='u')
+    UP_FORWARD = ComplexEnumMember(0x200, printable_name='u/f')
 
     #the following codes exist only in the movelist, not in player data
     FULL_CROUCH = ComplexEnumMember(6, printable_name='FC')
@@ -75,27 +70,53 @@ class MovelistInput(ComplexEnum):
     UNK_408 = ComplexEnumMember(0x408, printable_name='')
     UNK_40e = ComplexEnumMember(0x40e, printable_name='')
 
-
-
-    _Q = ComplexEnumMember(0x8000, printable_name='') #??? lots of these
+    END = ComplexEnumMember(0x8000, printable_name='')
     DOUBLE_FORWARD = ComplexEnumMember(0x8001, printable_name='ff')
     DOUBLE_BACK = ComplexEnumMember(0x8002, printable_name='bb')
-    UNK_8003 = ComplexEnumMember(0x8003, printable_name='') #sidesteps?
-    UNK_8004 = ComplexEnumMember(0x8004, printable_name='')  # sidesteps?
+    SIDE_STEP_UP = ComplexEnumMember(0x8003, printable_name='SS')
+    SIDE_STEP_DOWN = ComplexEnumMember(0x8004, printable_name='SS')
     UNK_800b = ComplexEnumMember(0x800b, printable_name='') #hit standing? block standing?
     UNK_800c = ComplexEnumMember(0x800c, printable_name='') #only exists on move_id=0?
 
-    db_f_34 = ComplexEnumMember(0x8018, printable_name='')  #guard #King's tombstone
+    ART_OF_PHOENIX_DOWN = ComplexEnumMember(0x8012, printable_name='')
+
+    CLOTHESLINE_PRESS = ComplexEnumMember(0x8016, printable_name='d/b,b,d/b1+2')
+
+    TOMBSTONE_PILE_DRIVER = ComplexEnumMember(0x8018, printable_name='d/b,f2+4')
     UNK_8019 = ComplexEnumMember(0x8019, printable_name='')  # guard
     UNK_801a = ComplexEnumMember(0x801a, printable_name='')  # guard
     UNK_801b = ComplexEnumMember(0x801b, printable_name='')  # guard
 
+    CANNONBALL_BUSTER = ComplexEnumMember(0x801E, printable_name='2,2,1+2')
+    POWER_BOMB = ComplexEnumMember(0x801F, printable_name='1,2,3+4')
+
+    MANHATTAN_DROP = ComplexEnumMember(0x8020, printable_name='3+4,1+2,1+2+3')
+    VICTORY_BOMB = ComplexEnumMember(0x8021, printable_name='1,2,3+4,1+2')
+    MUSCLE_BUSTER_COMBO = ComplexEnumMember(
+        0x8022, printable_name='3,1,2,3+4,1+2'
+    )
+
     UNK_803a = ComplexEnumMember(0x803a, printable_name='')  # standing
+
+    GIANT_SWING = ComplexEnumMember(0x804e, printable_name='f,b,d/b,d,d/f,f1')
+    TIJUANA_TWISTER = ComplexEnumMember(
+        0x804f, printable_name='f,b,d/b,d,d/f,f2'
+    )
+
+    BOSTON_CRAB = ComplexEnumMember(0x8064, printable_name='1+2,3,4,1+2')
+    DOUBLE_ARM_FACE_BUSTER = ComplexEnumMember(0x8065, printable_name='')
+
+    BACKDROP = ComplexEnumMember(0x8077, printable_name='2,1,1+2')
+
+    GIANT_SWING_COMBO = ComplexEnumMember(0x807A, printable_name='2,1,3,4')
+    FLAPJACK = ComplexEnumMember(0x807B, printable_name='1+2,1+2')
+
+    MUSCLE_BUSTER = ComplexEnumMember(0x8090, printable_name='b,d/b,b1+2')
 
     RUN_CHOP = ComplexEnumMember(0x80ac, printable_name='')  # run chop
     RUN_KICK = ComplexEnumMember(0x80ae, printable_name='')  # run chop
 
-    UNK_80af = ComplexEnumMember(0x80af, printable_name='')  # guard
+    TOMAHAWK = ComplexEnumMember(0x80AF, printable_name='fff2+4')
 
     RUN_1 = ComplexEnumMember(0x80b0, printable_name='')  # run lp?
     RUN_2 = ComplexEnumMember(0x80b1, printable_name='')  # run rp?
@@ -104,9 +125,14 @@ class MovelistInput(ComplexEnum):
 
     #qcf states for eliza, all the ways to make a qcf, maybe storing the input
     qcf_fb = ComplexEnumMember(0x80fb, printable_name='') #qcf+1 # this b-f for Kazumi
-    qcf_fc = ComplexEnumMember(0x80fc, printable_name='') #qcf+2
+    # TODO input can also be 1+2,1,2,1+2+4
+    REVERSE_SPECIAL_STRECH_BOMB = ComplexEnumMember(
+        0x80fc, printable_name='1+2,1,2,1+2+3'
+    )
+    #qcf_fc = ComplexEnumMember(0x80fc, printable_name='') #qcf+2
     qcf_fd = ComplexEnumMember(0x80fd, printable_name='') #qcf+1
-    qcf_fe = ComplexEnumMember(0x80fe, printable_name='') #qcf+2
+    BACKDROP_RSSB = ComplexEnumMember(0x80fe, printable_name='3+4,1+2')
+    # qcf_fe = ComplexEnumMember(0x80fe, printable_name='') #qcf+2
     qcf_ff = ComplexEnumMember(0x80ff, printable_name='')  #EX only
     qcf_100 = ComplexEnumMember(0x8100, printable_name='')  # EX only
     qcf_101 = ComplexEnumMember(0x8101, printable_name='')  # No fireball?
@@ -124,11 +150,11 @@ class MovelistInput(ComplexEnum):
 
     #qcb states
     qcb_11 = ComplexEnumMember(0x8011, printable_name='')
-    qcb_12 = ComplexEnumMember(0x8012, printable_name='')
+    # qcb_12 = ComplexEnumMember(0x8012, printable_name='')
     qcb_13 = ComplexEnumMember(0x8013, printable_name='')
     qcb_14 = ComplexEnumMember(0x8014, printable_name='')
     qcb_15 = ComplexEnumMember(0x8015, printable_name='')
-    qcb_16 = ComplexEnumMember(0x8016, printable_name='')
+    # qcb_16 = ComplexEnumMember(0x8016, printable_name='')
     qcb_17 = ComplexEnumMember(0x8017, printable_name='')
     # qcb_18 = ComplexEnumMember(0x8018, printable_name='')
     # qcb_19 = ComplexEnumMember(0x8019, printable_name='')
