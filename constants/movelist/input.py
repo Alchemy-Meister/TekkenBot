@@ -131,6 +131,7 @@ class MovelistInput(ComplexEnum):
     )
     #qcf_fc = ComplexEnumMember(0x80fc, printable_name='') #qcf+2
     qcf_fd = ComplexEnumMember(0x80fd, printable_name='') #qcf+1
+    # TODO Also Geese's Hishou Nichirin Zan f,d,d/f2
     BACKDROP_RSSB = ComplexEnumMember(0x80fe, printable_name='3+4,1+2')
     # qcf_fe = ComplexEnumMember(0x80fe, printable_name='') #qcf+2
     qcf_ff = ComplexEnumMember(0x80ff, printable_name='')  #EX only
