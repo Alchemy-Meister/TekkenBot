@@ -61,6 +61,17 @@ class StructWrapper():
                 structure()
             )
 
+    def __eq__(self, wrapper):
+        if isinstance(wrapper, self.__class__):
+            return all(
+                getattr(wrapper, attr_name) == attr_value
+                for attr_name, attr_value in vars(self).items()
+            )
+        return NotImplemented
+
+    def __ne__(self, wrapper):
+        return not self == wrapper
+
     def __repr__(self):
         return '{}({})'.format(
             self.__class__.__name__,
