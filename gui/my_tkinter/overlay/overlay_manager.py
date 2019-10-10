@@ -108,16 +108,9 @@ class OverlayManager(metaclass=Singleton):
             )
 
     def change_overlay_layout(self, layout):
-        if self.active_slots < layout.value:
-            self.logger.debug('layout value increased')
-            min_value = self.active_slots
-            max_value = layout.value
-            enable = True
-        else:
-            self.logger.debug('layout value decreased')
-            min_value = layout.value
-            max_value = self.active_slots
-            enable = False
+        min_value = min(self.active_slots, layout.value)
+        max_value = max(self.active_slots, layout.value)
+        enable = self.active_slots < layout.value
         for turn_id in self.overlay_slots[min_value:max_value]:
             self.logger.debug(
                 'turning %s overlay %s',
