@@ -56,19 +56,6 @@ class ResolutionWrapper(StructWrapper):
         except AttributeError:
             return False
 
-    def __eq__(self, resolution):
-        if isinstance(resolution, ResolutionWrapper):
-            return (
-                getattr(self, 'horizontal_resolution')
-                == resolution.horizontal_resolution
-                and getattr(self, 'vertical_resolution')
-                == resolution.vertical_resolution
-            )
-        return NotImplementedError
-
-    def __ne__(self, resolution):
-        return not self == resolution
-
     def __repr__(self):
         return 'resolution: ({}, {})'.format(
             getattr(self, 'horizontal_resolution'),

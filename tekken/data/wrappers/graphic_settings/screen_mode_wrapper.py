@@ -44,14 +44,6 @@ class ScreenModeWrapper(StructWrapper):
         except AttributeError:
             return False
 
-    def __eq__(self, screen_mode):
-        if isinstance(screen_mode, ScreenModeWrapper):
-            return getattr(self, 'screen_mode') == screen_mode.screen_mode
-        return NotImplementedError
-
-    def __ne__(self, screen_mode):
-        return not self == screen_mode
-
     def __repr__(self):
         return 'screen_mode: {}'.format(
             getattr(self, 'screen_mode').name
