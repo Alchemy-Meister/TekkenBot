@@ -27,7 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from win32.defines import CHAR, DWORD, Structure
+from win32.defines import CHAR, DWORD, Structure, QWORD
 
 class PlayersDataStruct(Structure):
     """
@@ -53,9 +53,15 @@ class PlayersDataStruct(Structure):
         ('p1_jump_flags', DWORD),  # 0x05B4
         ('__pad_05B8', CHAR * 32),  # 0x05B8
         ('p1_cancel_window', DWORD),  # 0x05D8
-        ('__pad_05DC', CHAR * 400),  # 0x05DC
+        ('__pad_05DC', CHAR * 340),  # 0x05DC
+        ('p1_dword_cycling_frame_count', DWORD),  # 0x0730
+        ('__pad_0734', CHAR * 56),  # 0x0734
         ('p1_damage_taken', DWORD),  # 0x076C
-        ('__pad_0770', CHAR * 2790),  # 0x0770
+        ('__pad_0770', CHAR * 28),  # 0x0770
+        ('p1_dword_frame_count', DWORD),  # 0x078C
+        ('__pad_0790', CHAR * 272),  # 0x0790
+        ('p1_qword_frame_count', QWORD),  # 0x08A0
+        ('__pad_08A8', CHAR * 2478),  # 0x08A8
         ('p1_health', DWORD),  # 0x1256
         ('__pad_125A', CHAR * 1282),  # 0x125A
         ('p1_input_attack', DWORD),  # 0x175C
@@ -81,9 +87,15 @@ class PlayersDataStruct(Structure):
         ('p2_jump_flags', DWORD),  # 0x7444
         ('__pad_7448', CHAR * 32),  # 0x7448
         ('p2_cancel_window', DWORD),  # 0x7468
-        ('__pad_746C', CHAR * 400),  # 0x746C
+        ('__pad_746C', CHAR * 340),  # 0x746C
+        ('p1_dword_cycling_frame_count', DWORD),  # 0x75C0
+        ('__pad_75C4', CHAR * 56),  # 0x75C4
         ('p2_damage_taken', DWORD),  # 0x75FC
-        ('__pad_7600', CHAR * 2790),  # 0x7600
+        ('__pad_7600', CHAR * 28),  # 0x7600
+        ('p1_dword_frame_count', DWORD),  # 0x761C
+        ('__pad_7620', CHAR * 272),  # 0x7620
+        ('p1_qword_frame_count', QWORD),  # 0x7730
+        ('__pad_7738', CHAR * 2478),  # 0x7738
         ('p2_health', DWORD),  # 0x80E6
         ('__pad_80EA', CHAR * 1282),  # 0x80EA
         ('p2_input_attack', DWORD),  # 0x85EC
@@ -95,8 +107,8 @@ class PlayersDataStruct(Structure):
         ('p1_rounds_win', DWORD),  # 0x1BA6C
         ('__pad_1BA70', CHAR * 220),  # 0x1BA70
         ('p2_rounds_win', DWORD),  # 0x1BB4C
-        ('__pad_1BB50', CHAR * 8648)  # 0x1BB50
-    ]   # Size: 0x1DD18
+        ('__pad_1BB50', CHAR * 1232)  # 0x1BB50
+    ]  # Size: 0x1C020
 
     def __repr__(self):
         return (
