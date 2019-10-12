@@ -47,13 +47,14 @@ class StructWrapper():
                     )
             ):
                 size = offset + SIZE_OF(field[1])
-                t_bytes = block_bytes[offset:size]
-                struct_format = type_limits.C_ALL_TYPES_FORMAT[field[1]]
-                setattr(
-                    self,
-                    field[0],
-                    struct.unpack(struct_format, t_bytes)[0]
-                )
+                if not field[0].startswith('_'):
+                    t_bytes = block_bytes[offset:size]
+                    struct_format = type_limits.C_ALL_TYPES_FORMAT[field[1]]
+                    setattr(
+                        self,
+                        field[0],
+                        struct.unpack(struct_format, t_bytes)[0]
+                    )
                 offset = size
         else:
             self.__default_attributes_initialization(
