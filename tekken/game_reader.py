@@ -447,10 +447,13 @@ class TekkenGameReader(ProcessIO):
                                     'opponent_name', True
                                 )
                             )
-                            self.is_player_player_one = BattleSide(
-                                self.get_value_at_end_of_pointer_trail(
-                                    'player_side', False
+                            self.is_player_player_one = (
+                                BattleSide(
+                                    self.get_value_at_end_of_pointer_trail(
+                                        'player_side', False
+                                    )
                                 )
+                                == BattleSide.LEFT
                             )
                             # sys.stdout.write(self.opponent_char_id)
                             # sys.stdout.write(self.is_player_player_one)
