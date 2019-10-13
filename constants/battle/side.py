@@ -27,11 +27,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .frame_advantage import FrameAdvantage
-from .health import BattleHealth
-from .move_cancel import MoveProperty
-from .punish_result import PunishResult
-from .rounds import BattleRounds
-from .side import BattleSide
-from .stages import BattleStages
-from .timer import BattleTime
+"""
+"""
+
+import enum
+
+class BattleSide(enum.IntEnum):
+    LEFT = 0
+    RIGHT = 1
