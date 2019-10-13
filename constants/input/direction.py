@@ -36,12 +36,24 @@ class InputDirection(ComplexEnum):
     """
     """
     NULL = ComplexEnumMember(0x0, abbreviation='', symbol='!')
-    DOWN_BACK = ComplexEnumMember(0x2, abbreviation='d/b', symbol='↙')
+    DOWN_BACK = ComplexEnumMember(
+        0x2, abbreviation='d/b', symbol='↙', flipped_symbol='↘'
+    )
     DOWN = ComplexEnumMember(0x4, abbreviation='d', symbol='↓')
-    DOWN_FORWARD = ComplexEnumMember(0x8, abbreviation='d/f', symbol='↘')
-    BACK = ComplexEnumMember(0x10, abbreviation='b', symbol='←')
+    DOWN_FORWARD = ComplexEnumMember(
+        0x8, abbreviation='d/f', symbol='↘', flipped_symbol='↙'
+    )
+    BACK = ComplexEnumMember(
+        0x10, abbreviation='b', symbol='←', flipped_symbol='→'
+    )
     NEUTRAL = ComplexEnumMember(0x20, abbreviation='N', symbol='★')
-    FORWARD = ComplexEnumMember(0x40, abbreviation='f', symbol='→')
-    UP_BACK = ComplexEnumMember(0x80, abbreviation='u/b', symbol='↖')
+    FORWARD = ComplexEnumMember(
+        0x40, abbreviation='f', symbol='→', flipped_symbol='←'
+    )
+    UP_BACK = ComplexEnumMember(
+        0x80, abbreviation='u/b', symbol='↖', flipped_symbol='↗'
+    )
     UP = ComplexEnumMember(0x100, abbreviation='u', symbol='↑')
-    UP_FORWARD = ComplexEnumMember(0x200, abbreviation='u/f', symbol='↗')
+    UP_FORWARD = ComplexEnumMember(
+        0x200, abbreviation='u/f', symbol='↗', flipped_symbol='↖'
+    )
