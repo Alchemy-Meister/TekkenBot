@@ -61,7 +61,9 @@ class PlayersDataStruct(Structure):
         ('p1_dword_frame_count', DWORD),  # 0x078C
         ('__pad_0790', CHAR * 272),  # 0x0790
         ('p1_qword_frame_count', QWORD),  # 0x08A0
-        ('__pad_08A8', CHAR * 2478),  # 0x08A8
+        ('__pad_08A8', CHAR * 2452),  # 0x08A8
+        ('p1_current_side', DWORD),  # 0x123C
+        ('__pad_1240', CHAR * 22),  # 0x1240
         ('p1_health', DWORD),  # 0x1256
         ('__pad_125A', CHAR * 1282),  # 0x125A
         ('p1_input_attack', DWORD),  # 0x175C
@@ -88,14 +90,16 @@ class PlayersDataStruct(Structure):
         ('__pad_7448', CHAR * 32),  # 0x7448
         ('p2_cancel_window', DWORD),  # 0x7468
         ('__pad_746C', CHAR * 340),  # 0x746C
-        ('p1_dword_cycling_frame_count', DWORD),  # 0x75C0
+        ('p2_dword_cycling_frame_count', DWORD),  # 0x75C0
         ('__pad_75C4', CHAR * 56),  # 0x75C4
         ('p2_damage_taken', DWORD),  # 0x75FC
         ('__pad_7600', CHAR * 28),  # 0x7600
-        ('p1_dword_frame_count', DWORD),  # 0x761C
+        ('p2_dword_frame_count', DWORD),  # 0x761C
         ('__pad_7620', CHAR * 272),  # 0x7620
-        ('p1_qword_frame_count', QWORD),  # 0x7730
-        ('__pad_7738', CHAR * 2478),  # 0x7738
+        ('p2_qword_frame_count', QWORD),  # 0x7730
+        ('__pad_7738', CHAR * 2452),  # 0x7738
+        ('p2_current_side', DWORD),  # 0x80CC
+        ('__pad_80D0', CHAR * 22),  # 0x80D0
         ('p2_health', DWORD),  # 0x80E6
         ('__pad_80EA', CHAR * 1282),  # 0x80EA
         ('p2_input_attack', DWORD),  # 0x85EC
