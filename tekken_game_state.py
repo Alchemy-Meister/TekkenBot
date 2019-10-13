@@ -200,7 +200,7 @@ class TekkenGameState:
     def is_tekken_visible(self):
         try:
             return user32.is_window(
-                self.game_io_manager.process_reader.window_handler
+                self.game_io_manager.process_reader.window_handle
             )
         except OSError:
             return False

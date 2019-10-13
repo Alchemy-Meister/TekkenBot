@@ -38,7 +38,7 @@ from PIL import Image, ImageTk
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 
-from constants.battle import MoveProperty
+from constants.battle import BattleSide, MoveProperty
 from constants.input import InputAttack, InputDirection
 from constants.overlay import OverlayMode
 
@@ -332,8 +332,6 @@ class CommandInputOverlay(Overlay):
         else:
             player = last_game_state_log.opp
 
-        input_state = player.get_input_state()
-
         move_properties = [
             [MoveProperty.PARRY_1, player.is_parry1],
             [MoveProperty.PARRY_2, player.is_parry2],
@@ -353,7 +351,7 @@ class CommandInputOverlay(Overlay):
         if move_color is None:
             move_color = CommandInputOverlay.__CANCEL_PROPERTY_COLORS['other']
 
-        self._update_input(input_state, move_color)
+        self._update_input(player.get_input_state(), move_color)
 
     def _update_visible_state(self):
         previous_visible_state = self.visible
@@ -465,7 +463,9 @@ class CommandInputOverlay(Overlay):
             frame_inputs = self.frame_inputs
             frame_cancels = self.frame_move_property
 
-        for index, (direction_code, input_code, _) in enumerate(frame_inputs):
+        for index, (direction_code, side, input_code, _) in enumerate(
+                frame_inputs
+        ):
             coordinate_x = (
                 (
                     index
@@ -475,16 +475,23 @@ class CommandInputOverlay(Overlay):
                     / 2
                 )
             )
-            direction_code = InputDirection(direction_code)
             if(
                     InputDirection.NEUTRAL
                     != direction_code
                     != InputDirection.NULL
             ):
+                if side == BattleSide.LEFT:
+                    arrow_symbol = direction_code.symbol
+                else:
+                    try:
+                        arrow_symbol = direction_code.flipped_symbol
+                    except AttributeError:
+                        arrow_symbol = direction_code.symbol
+
                 self.command_input_canvas.create_image(
                     coordinate_x,
                     self.arrow_image_coordinate_y0,
-                    image=self.arrow_images[direction_code.symbol],
+                    image=self.arrow_images[arrow_symbol],
                     tag=self.input_tag
                 )
 

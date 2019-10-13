@@ -30,10 +30,12 @@
 """
 """
 
+from constants.battle import BattleSide
 from constants.character_ids import CharacterIDs
+from constants.input import InputAttack, InputDirection
+
 # pylint: disable=unused-wildcard-import,wildcard-import
 from MoveInfoEnums import *  # NOQA
-from constants.input import InputAttack, InputDirection
 
 class BotSnapshot:
     """
@@ -138,6 +140,10 @@ class BotSnapshot:
 
         #self.movelist_to_use = data_dict['PlayerDataAddress.movelist_to_use']
 
+        self.current_side = BattleSide(
+            data_dict['PlayerDataAddress.current_side']
+        )
+
         self.wins = data_dict['EndBlockPlayerDataAddress.round_wins']
         self.combo_counter = (
             data_dict['EndBlockPlayerDataAddress.display_combo_counter']
@@ -175,7 +181,12 @@ class BotSnapshot:
         """
 
         """
-        return (self.input_direction, self.input_button, self.rage_button_flag)
+        return (
+            self.input_direction,
+            self.current_side,
+            self.input_button,
+            self.rage_button_flag
+        )
 
     def get_traicking_type(self):
         """
