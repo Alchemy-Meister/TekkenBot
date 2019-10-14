@@ -29,6 +29,7 @@
 
 from collections import Counter, defaultdict, OrderedDict
 import logging
+from pprint import pformat
 import struct
 import sys
 
@@ -97,7 +98,7 @@ class MovelistParser:
                 0, len(move_nodes_raw), MovelistParser.MOVE_NODE_SIZE
             )
         ]
-        # self.logger.debug('movelist nodes: %s', pformat(self.move_nodes))
+        self.__logger.debug('movelist nodes: %s', pformat(self.move_nodes))
 
         self.linked_nodes_raw = self.bytes[
             unknown_regions[46]:unknown_regions[48]
@@ -232,12 +233,18 @@ class MovelistParser:
                     except AttributeError:
                         str_input += str(move_tuple[0])
 
-            if MovelistButtonState.RELEASE.name in move_tuple[2].name:
+            if(
+                    isinstance(move_tuple[2], MovelistButtonState)
+                    and MovelistButtonState.RELEASE.name in move_tuple[2].name
+            ):
                 str_input += '*'
             #input += move_tuple[2]
 
             if not move_tuple[1] in (MovelistButtonInput.NULL,):
-                str_input += move_tuple[1].printable_name
+                try:
+                    str_input += move_tuple[1].printable_name
+                except AttributeError:
+                    pass
 
             if(
                     -1 < previous_move_id < len(self.names)
