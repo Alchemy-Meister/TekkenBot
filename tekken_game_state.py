@@ -170,9 +170,9 @@ class TekkenGameState:
             self.graphic_settings = graphic_settings
 
     def flip_mirror(self):
-        temp_log = self.mirrored_state_log
-        self.mirrored_state_log = self.state_log
-        self.state_log = temp_log
+        self.state_log, self.mirrored_state_log = (
+            self.mirrored_state_log, self.state_log
+        )
         self.is_mirrored = not self.is_mirrored
 
     def back_to_the_future(self, frames):
