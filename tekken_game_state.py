@@ -15,9 +15,12 @@ emerges from block), or multiple game states over time (did player 1 just begin
 to block this frame?, what was the last move player 2 did?).
 """
 
+from __future__ import annotations
+
 from collections import Counter
 import logging
 import math
+import typing
 import sys
 
 # pylint: disable=wildcard-import
@@ -37,7 +40,10 @@ from patterns.observer import Publisher
 import win32.kernel32 as kernel32
 import win32.user32 as user32
 
-from tekken.process_io_manager import ProcessIOManager
+from tekken import ProcessIOManager
+
+if typing.TYPE_CHECKING:
+    from tekken import GameSnapshot
 
 class TekkenGameState:
     """
@@ -116,7 +122,7 @@ class TekkenGameState:
             self.compare_graphic_settings(game_graphic_settings)
         return False
 
-    def append_game_data(self, game_data):
+    def append_game_data(self, game_data: GameSnapshot):
         if not self.is_mirrored:
             self.state_log.append(game_data)
             self.mirrored_state_log.append(game_data.from_mirrored())

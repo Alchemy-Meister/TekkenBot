@@ -27,6 +27,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from tekken.launcher import Launcher
-from tekken.process_identifier import ProcessIO
-from tekken.process_memory import ProcessMemory
+from .game_snapshot import GameSnapshot
+from .process_identifier import ProcessIO
+from .process_io_manager import ProcessIOManager
+from .process_memory import ProcessMemory
+# FIXME Prevents circular dependency with TekkenGameState
+from .launcher import Launcher

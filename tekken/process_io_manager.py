@@ -28,10 +28,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+
 import module_enumerator
 import pid_searcher
-import win32.kernel32 as kernel32
 from config.reloadable_config_manager import ReloadableConfigManager
+import win32.kernel32 as kernel32
+
 from .game_reader import TekkenGameReader
 from .process_writer import TekkenGameWritter
 
