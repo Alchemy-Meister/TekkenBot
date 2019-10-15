@@ -28,15 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from collections import Counter, defaultdict, OrderedDict
-import logging
 from pprint import pformat
 import struct
-import sys
 
 from constants.movelist import (
     MovelistButtonInput, MovelistButtonState, MovelistInput
 )
-from log import Formatter
+from log import LogUtils
 from tekken.data.structures.movelist import MoveNodeStruct
 from tekken.data.wrappers.movelist import MoveNodeWrapper
 from win32.defines import SIZE_OF
@@ -51,8 +49,10 @@ class MovelistParser:
         self.bytes = movelist_bytes
         self.pointer = movelist_pointer
 
-        if not self.__logger:
-            MovelistParser.__initialize_class_logger()
+        if MovelistParser.__logger is None:
+            MovelistParser.__logger = LogUtils.initialize_module_logger(
+                __name__
+            )
 
         self.parse_header()
 
@@ -269,11 +269,3 @@ class MovelistParser:
         for node in self.move_nodes:
             if node_id == node.move_id:
                 print(node)
-
-    @classmethod
-    def __initialize_class_logger(cls):
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setFormatter(Formatter())
-        cls.__logger = logging.getLogger(__name__)
-        cls.__logger.setLevel(logging.DEBUG)
-        cls.__logger.addHandler(stdout_handler)

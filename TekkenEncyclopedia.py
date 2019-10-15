@@ -8,12 +8,16 @@ import sys
 import time
 
 from constants.battle import PunishResult
+from log import LogUtils
 from MoveInfoEnums import AttackType
 from MoveInfoEnums import ThrowTechs
 from MoveInfoEnums import ComplexMoveStates
 from tekken_game_state import TekkenGameState
 
 class TekkenEncyclopedia:
+
+    __logger = None
+
     def __init__(self, is_player_one=False, print_extended_frame_data=False):
         self.frame_data = {}
         self.game_events = []
@@ -35,6 +39,11 @@ class TekkenEncyclopedia:
         self.punish_windows = []
         self.current_frame_data_entry = None
         self.previous_frame_data_entry = None
+
+        if TekkenEncyclopedia.__logger is None:
+            TekkenEncyclopedia.__logger = LogUtils.initialize_module_logger(
+                __name__
+            )
 
     def load_stats(self):
         self.stat_dict = {}
@@ -94,11 +103,11 @@ class TekkenEncyclopedia:
 
     def get_player_string(self, reverse=False):
         if (
-                (self.is_player_one and not reverse)
-                or (not self.is_player_one and reverse)
+                self.is_player_one and not reverse
+                or not self.is_player_one and reverse
         ):
-            return "p1: "
-        return "p2: "
+            return 'p1: '
+        return 'p2: '
 
     def get_frame_advantage(self, move_id, is_on_block=True):
         if move_id in self.frame_data:

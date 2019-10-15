@@ -29,11 +29,9 @@
 
 """
 """
-import logging
 from pathlib import Path
-import sys
 
-from log import Formatter
+from log import LogUtils
 import win32.winmm as winmm
 
 class SoundPlayer():
@@ -65,8 +63,4 @@ class SoundPlayer():
 
     @classmethod
     def initialize_class_logger(cls):
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setFormatter(Formatter())
-        cls.__logger = logging.getLogger(__name__)
-        cls.__logger.setLevel(logging.DEBUG)
-        cls.__logger.addHandler(stdout_handler)
+        cls.__logger = LogUtils.initialize_module_logger(__name__)

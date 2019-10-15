@@ -44,7 +44,7 @@ from gui.model import OverlayModel
 from gui.my_tkinter import StdStreamRedirector
 from gui.my_tkinter.overlay import OverlayManager
 from gui.view import TekkenBotPrimeView
-from log import Formatter
+from log import Formatter, LogUtils
 from network import NoInternetConnectionError
 from patterns.observer import Subscriber
 from tekken.coach import PunishCoach
@@ -311,6 +311,8 @@ class TekkenBotPrimeController():
             },
             callback=self.original_stderr.write
         )
+
+        LogUtils(sys.stdout)
 
         self.logger.removeHandler(self.file_handler)
 
