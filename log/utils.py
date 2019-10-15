@@ -27,5 +27,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import logging
+
+from patterns.singleton import Singleton
+
 from .formatter import Formatter
-from .utils import LogUtils
+
+class LogUtils(metaclass=Singleton):
+    """
+    """
+    def __new__(cls, stream=None):
+        cls.__STDOUT_HANDLER = logging.StreamHandler(stream)
+        cls.__STDOUT_HANDLER.setFormatter(Formatter())
+
+    @staticmethod
+    def initialize_module_logger(module_name):
+        logger = logging.getLogger(module_name)
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(LogUtils.__STDOUT_HANDLER)
+        return logger
