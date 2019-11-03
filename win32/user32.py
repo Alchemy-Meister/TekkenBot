@@ -812,9 +812,10 @@ else:
 
     def set_window_long_ptr_a(h_wnd, dw_new_long, n_index=0):
         """
-        LONG_PTR GetWindowLongPtrA(
+        LONG_PTR SetWindowLongPtrA(
             HWND hWnd,
-            int  nIndex
+            int  nIndex,
+            LONG_PTR dwNewLong
         );
         """
         _set_window_long_ptr_a = WINDLL.user32.SetWindowLongPtrA
@@ -825,9 +826,10 @@ else:
 
     def set_window_long_ptr_w(h_wnd, dw_new_long, n_index=0):
         """
-        LONG_PTR GetWindowLongPtrW(
+        LONG_PTR SetWindowLongPtrW(
             HWND hWnd,
-            int  nIndex
+            int  nIndex,
+            LONG_PTR dwNewLong
         );
         """
         _set_window_long_ptr_w = WINDLL.user32.SetWindowLongPtrW
