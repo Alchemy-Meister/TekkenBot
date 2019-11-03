@@ -52,9 +52,14 @@ SM_CXSIZEFRAME = 32
 SM_CYFRAME = 33
 SM_CXPADDEDBORDER = 92
 
-# GetWindowLong
-GWL_STYLE = -16
-GWL_EXSTYLE = -20
+# GetWindowLong / SetWindowLong / GetWindowLongPtr / SetWindowLongPtr
+GWL_WNDPROC = GWLP_WNDPROC = -4
+GWL_HINSTANCE = GWLP_HINSTANCE = -6
+GWL_HWNDPARENT = GWLP_HWNDPARENT = -8
+GWL_ID = GWLP_ID = -12
+GWL_STYLE = GWLP_STYLE = -16
+GWL_EXSTYLE = GWLP_EXSTYLE = -20
+GWL_USERDATA = GWLP_USERDATA = -21
 
 # Styles
 WS_OVERLAPPED = 0x00000000
@@ -646,6 +651,18 @@ def get_window_text_w(h_wnd):
 
 GET_WINDOW_TEXT = GuessStringType(get_window_text_a, get_window_text_w)
 
+def __get_window_long_function(function, h_wnd, n_index):
+    function.argtypes = [HWND, ctypes.c_int]
+    function.restype = DWORD
+
+    set_last_error(ERROR_SUCCESS)
+    retval = function(h_wnd, n_index)
+    if retval == 0:
+        errcode = get_last_error()
+        if errcode != ERROR_SUCCESS:
+            raise ctypes.WinError(errcode)
+    return retval
+
 def get_window_long_a(h_wnd, n_index=0):
     """
     LONG GetWindowLongA(
@@ -654,29 +671,19 @@ def get_window_long_a(h_wnd, n_index=0):
     );
     """
     _get_window_long_a = WINDLL.user32.GetWindowLongA
-    _get_window_long_a.argtypes = [HWND, ctypes.c_int]
-    _get_window_long_a.restype = DWORD
 
-    set_last_error(ERROR_SUCCESS)
-    retval = _get_window_long_a(h_wnd, n_index)
-    if retval == 0:
-        errcode = get_last_error()
-        if errcode != ERROR_SUCCESS:
-            raise ctypes.WinError(errcode)
-    return retval
+    return __get_window_long_function(_get_window_long_a, h_wnd, n_index)
 
 def get_window_long_w(h_wnd, n_index=0):
+    """
+    LONG GetWindowLongW(
+        HWND hWnd,
+        int  nIndex
+    );
+    """
     _get_window_long_w = WINDLL.user32.GetWindowLongW
-    _get_window_long_w.argtypes = [HWND, ctypes.c_int]
-    _get_window_long_w.restype = DWORD
 
-    set_last_error(ERROR_SUCCESS)
-    retval = _get_window_long_w(h_wnd, n_index)
-    if retval == 0:
-        errcode = get_last_error()
-        if errcode != ERROR_SUCCESS:
-            raise ctypes.WinError(errcode)
-    return retval
+    return __get_window_long_function(_get_window_long_w, h_wnd, n_index)
 
 def get_window_long(h_wnd, n_index=0):
     return DefaultStringType(get_window_long_a, get_window_long_w)(
@@ -693,35 +700,145 @@ if BITS == 32:
     def get_window_long_ptr(h_wnd, n_index=0):
         get_window_long(h_wnd, n_index)
 else:
-    def get_window_long_ptr_a(h_wnd, n_index=0):
-        _get_window_long_ptr_a = WINDLL.user32.GetWindowLongPtrA
-        _get_window_long_ptr_a.argtypes = [HWND, ctypes.c_int]
-        _get_window_long_ptr_a.restype = SIZE_T
+    def __get_window_long_ptr_function(function, h_wnd, n_index=0):
+        function.argtypes = [HWND, ctypes.c_int]
+        function.restype = SIZE_T
 
         set_last_error(ERROR_SUCCESS)
-        retval = _get_window_long_ptr_a(h_wnd, n_index)
+        retval = function(h_wnd, n_index)
         if retval == 0:
             errcode = get_last_error()
             if errcode != ERROR_SUCCESS:
                 raise ctypes.WinError(errcode)
         return retval
+
+    def get_window_long_ptr_a(h_wnd, n_index=0):
+        """
+        LONG_PTR GetWindowLongPtrA(
+            HWND hWnd,
+            int  nIndex
+        );
+        """
+        _get_window_long_ptr_a = WINDLL.user32.GetWindowLongPtrA
+
+        return __get_window_long_ptr_function(
+            _get_window_long_ptr_a, h_wnd, n_index
+        )
 
     def get_window_long_ptr_w(h_wnd, n_index=0):
+        """
+        LONG_PTR GetWindowLongPtrW(
+            HWND hWnd,
+            int  nIndex
+        );
+        """
         _get_window_long_ptr_w = WINDLL.user32.GetWindowLongPtrW
-        _get_window_long_ptr_w.argtypes = [HWND, ctypes.c_int]
-        _get_window_long_ptr_w.restype = DWORD
 
-        set_last_error(ERROR_SUCCESS)
-        retval = _get_window_long_ptr_w(h_wnd, n_index)
-        if retval == 0:
-            errcode = get_last_error()
-            if errcode != ERROR_SUCCESS:
-                raise ctypes.WinError(errcode)
-        return retval
+        return __get_window_long_ptr_function(
+            _get_window_long_ptr_w, h_wnd, n_index
+        )
 
     def get_window_long_ptr(h_wnd, n_index=0):
         return DefaultStringType(get_window_long_ptr_a, get_window_long_ptr_w)(
             h_wnd, n_index
+        )
+
+def __set_window_long_function(function, h_wnd, n_index, dw_new_long):
+    function.argtypes = [HWND, ctypes.c_int, DWORD]
+    function.restype = DWORD
+
+    set_last_error(ERROR_SUCCESS)
+    retval = function(h_wnd, n_index, dw_new_long)
+    if retval == 0:
+        errcode = get_last_error()
+        if errcode != ERROR_SUCCESS:
+            raise ctypes.WinError(errcode)
+    return retval
+
+def set_window_long_a(h_wnd, dw_new_long, n_index=0):
+    """
+    LONG SetWindowLongA(
+        HWND hWnd,
+        int nIndex,
+        LONG dwNewLong
+    );
+    """
+    _set_window_long_a = WINDLL.user32.SetWindowLongA
+
+    return __set_window_long_function(
+        _set_window_long_a, h_wnd, n_index, dw_new_long
+    )
+
+def set_window_long_w(h_wnd, dw_new_long, n_index=0):
+    """
+    LONG SetWindowLongW(
+        HWND hWnd,
+        int  nIndex,
+        LONG dwNewLong
+    );
+    """
+    _set_window_long_w = WINDLL.user32.SetWindowLongW
+
+    return __set_window_long_function(
+        _set_window_long_w, h_wnd, n_index, dw_new_long
+    )
+
+def set_window_long(h_wnd, dw_new_long, n_index=0):
+    return DefaultStringType(set_window_long_a, set_window_long_w)(
+        h_wnd, dw_new_long, n_index
+    )
+
+if BITS == 32:
+    def set_window_long_ptr_a(h_wnd, dw_new_long, n_index=0):
+        set_window_long_a(h_wnd, dw_new_long, n_index)
+
+    def set_window_long_ptr_w(h_wnd, dw_new_long, n_index=0):
+        set_window_long_w(h_wnd, dw_new_long, n_index)
+
+    def set_window_long_ptr(h_wnd, dw_new_long, n_index=0):
+        set_window_long(h_wnd, dw_new_long, n_index)
+else:
+    def __set_window_long_ptr_function(function, h_wnd, dw_new_long, n_index=0):
+        function.argtypes = [HWND, ctypes.c_int, SIZE_T]
+        function.restype = SIZE_T
+
+        set_last_error(ERROR_SUCCESS)
+        retval = function(h_wnd, n_index, dw_new_long)
+        if retval == 0:
+            errcode = get_last_error()
+            if errcode != ERROR_SUCCESS:
+                raise ctypes.WinError(errcode)
+        return retval
+
+    def set_window_long_ptr_a(h_wnd, dw_new_long, n_index=0):
+        """
+        LONG_PTR GetWindowLongPtrA(
+            HWND hWnd,
+            int  nIndex
+        );
+        """
+        _set_window_long_ptr_a = WINDLL.user32.SetWindowLongPtrA
+
+        return __set_window_long_ptr_function(
+            _set_window_long_ptr_a, h_wnd, dw_new_long, n_index
+        )
+
+    def set_window_long_ptr_w(h_wnd, dw_new_long, n_index=0):
+        """
+        LONG_PTR GetWindowLongPtrW(
+            HWND hWnd,
+            int  nIndex
+        );
+        """
+        _set_window_long_ptr_w = WINDLL.user32.SetWindowLongPtrW
+
+        return __set_window_long_ptr_function(
+            _set_window_long_ptr_w, h_wnd, dw_new_long, n_index
+        )
+
+    def set_window_long_ptr(h_wnd, dw_new_long, n_index=0):
+        return DefaultStringType(set_window_long_ptr_a, set_window_long_ptr_w)(
+            h_wnd, dw_new_long, n_index
         )
 
 def is_iconic(h_wnd):
