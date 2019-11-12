@@ -34,18 +34,23 @@ from constants.battle import BattleSide
 from constants.character_ids import CharacterIDs
 from constants.input import InputAttack, InputDirection
 
+from log import LogUtils
+
 # pylint: disable=unused-wildcard-import,wildcard-import
 from MoveInfoEnums import *  # NOQA
 
 class BotSnapshot:
     """
-
     """
+
+    __logger = None
 
     def __init__(self, data_dict):
         """
-
         """
+        if not BotSnapshot.__logger:
+            BotSnapshot.__logger = LogUtils.initialize_module_logger(__name__)
+
         # self.xyz = (
         #    data_dict['PlayerDataAddress.x'], data_dict['PlayerDataAddress.y'],
         #    data_dict['PlayerDataAddress.z']
@@ -71,10 +76,17 @@ class BotSnapshot:
         self.input_direction = InputDirection(
             data_dict['PlayerDataAddress.input_direction']
         )
-        self.input_button = InputAttack(
-            data_dict['PlayerDataAddress.input_attack']
-            # % InputAttackCodes.xRAGE.value
-        )
+        try:
+            self.input_button = InputAttack(
+                data_dict['PlayerDataAddress.input_attack']
+                # % InputAttackCodes.xRAGE.value
+            )
+        except ValueError:
+            self.__logger.debug(
+                'unknown input attack: %d',
+                data_dict['PlayerDataAddress.input_attack']
+            )
+            self.input_button = InputAttack.NULL
         self.rage_button_flag = (
             data_dict['PlayerDataAddress.input_attack']
             >= InputAttack.B_RAGE.value
