@@ -35,6 +35,7 @@ import sys
 import struct
 
 from constants.battle.side import BattleSide
+from constants.battle.main_menus import MainMenus
 
 # pylint: disable=unused-wildcard-import,wildcard-import
 from win32.defines import *  #NOQA
@@ -81,7 +82,9 @@ class TekkenGameReader(ProcessIO):
         self.p1_movelist_names = None
         self.p2_movelist_names = None
 
+        self.game_mode = None
         self.is_in_battle = False
+        self.side_menu_selection = None
 
         self.window_handle = 0
         self.__process_handle = 0
@@ -124,13 +127,15 @@ class TekkenGameReader(ProcessIO):
             else:
                 return int.from_bytes(data, byteorder='little')
         except Exception:
-            sys.stdout.write(
-                'Read process memory. Error: Code {}'.format(
-                    kernel32.get_last_error()
+            if not is_64bit:
+                sys.stdout.write(
+                    'Read process memory. Error: Code {}'.format(
+                        kernel32.get_last_error()
+                    )
                 )
-            )
-            self.reacquire_everything()
-            raise
+                self.reacquire_everything()
+                raise
+            return None
 
     def __get_address_of_multilevel_pointer(self, addresses):
         address = self.module_address
@@ -185,6 +190,8 @@ class TekkenGameReader(ProcessIO):
                 value = self.get_value_from_address(
                     value + offset, is_64bit=True
                 )
+                if not value:
+                    return None
             else:
                 value = self.get_value_from_address(
                     value + offset, is_string=is_string
@@ -373,6 +380,16 @@ class TekkenGameReader(ProcessIO):
                         self.is_in_battle = False
                     self.reacquire_game_state = True
                     self.reacquire_names = True
+                    try:
+                        self.side_menu_selection = BattleSide(
+                            # self.get_value_at_end_of_pointer_trail(
+                            #     'side_menu_selection', False
+                            # )
+                            0
+                        )
+                        # print('SIDE: %s' % self.side_menu_selection)
+                    except ValueError:
+                        pass
                 else:
                     # controllers = self.get_players_pad_controller_input()
                     # print('p1 controller: {}'.format(controllers[0]))
@@ -436,6 +453,14 @@ class TekkenGameReader(ProcessIO):
                         self.reacquire_game_state = False
                         sys.stdout.write('Fight detected. Updating gamestate.')
                         self.is_in_battle = True
+                        self.game_mode = MainMenus(
+                            self.get_value_from_address(
+                                self.module_address
+                                + self.config['NonPlayerDataAddresses'][
+                                    'main_menu_selection'
+                                ]
+                            )
+                        )
 
                     if self.reacquire_names:
                         if(
@@ -504,7 +529,9 @@ class TekkenGameReader(ProcessIO):
                     game_state[1] = GameSnapshot(
                         p1_bot, p2_bot, best_frame_count, timer_in_frames,
                         bot_facing, self.opponent_name,
-                        self.is_player_player_one
+                        self.is_player_player_one,
+                        # self.side_menu_selection,
+                        self.game_mode,
                     )
             except (OSError, struct.error, TypeError):
                 traceback.print_exc()

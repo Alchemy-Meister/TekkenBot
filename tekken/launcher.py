@@ -31,13 +31,15 @@
 """
 import enum
 import logging
+import traceback
 import sys
 
 from log import Formatter
 from patterns.observer import Publisher
-from tekken_game_state import TekkenGameState
-from TekkenEncyclopedia import TekkenEncyclopedia
 from win32.utils import os_time
+
+from .encyclopedia import TekkenEncyclopedia
+from .game_state import TekkenGameState
 
 class Launcher:
     """
@@ -76,8 +78,11 @@ class Launcher:
         start = os_time.now(resolution=os_time.Resolution.MILLI)
         sucessful = self.game_state.update()
         if sucessful:
-            self.cyclopedia_p1.update(self.game_state)
-            self.cyclopedia_p2.update(self.game_state)
+            try:
+                self.cyclopedia_p1.update(self.game_state)
+                self.cyclopedia_p2.update(self.game_state)
+            except:
+                traceback.print_exc()
         end = os_time.now(resolution=os_time.Resolution.MILLI)
         elapsed_time = (end - start)
         if self.game_state.is_pid_valid():

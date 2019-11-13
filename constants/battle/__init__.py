@@ -29,6 +29,7 @@
 
 from .frame_advantage import FrameAdvantage
 from .health import BattleHealth
+from .main_menus import MainMenus
 from .move_cancel import MoveProperty
 from .punish_result import PunishResult
 from .rounds import BattleRounds

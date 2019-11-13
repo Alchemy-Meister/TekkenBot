@@ -40,10 +40,10 @@ from patterns.observer import Publisher
 import win32.kernel32 as kernel32
 import win32.user32 as user32
 
-from tekken import ProcessIOManager
+from .process_io_manager import ProcessIOManager
 
 if typing.TYPE_CHECKING:
-    from tekken import GameSnapshot
+    from .game_snapshot import GameSnapshot
 
 class TekkenGameState:
     """
@@ -823,6 +823,12 @@ class TekkenGameState:
         char_id = self.state_log[-1].bot.char_id
         print("Character: " + str(char_id))
         return char_id
+
+    def get_game_mode(self):
+        return self.state_log[-1].game_mode
+
+    def get_last_state(self):
+        return self.state_log[-1]
 
     def is_fulfill_jump_fallback_conditions(self):
         if len(self.state_log) > 10:
