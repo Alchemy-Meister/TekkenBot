@@ -29,7 +29,6 @@
 
 """
 """
-import copy
 
 from constants.controllers import PadController
 
