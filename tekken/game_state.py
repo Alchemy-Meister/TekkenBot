@@ -260,14 +260,12 @@ class TekkenGameState:
     def did_bot_start_getting_punished_x_frames_ago(self, frames_ago):
         if len(self.state_log) > frames_ago:
             return self.state_log[0 - frames_ago].bot.is_punish()
-        else:
-            return False
+        return False
 
     def did_opp_start_getting_punished_x_frames_ago(self, frames_ago):
         if len(self.state_log) > frames_ago:
             return self.state_log[0 - frames_ago].opp.is_punish()
-        else:
-            return False
+        return False
 
     def bot_frames_until_recovery_x_frames_ago(self, frames_ago):
         if len(self.state_log) > frames_ago:
@@ -275,8 +273,7 @@ class TekkenGameState:
                 self.state_log[0 - frames_ago].bot.recovery
                 - self.state_log[0 - frames_ago].bot.move_timer
             )
-        else:
-            return 99
+        return 99
 
     def opp_frames_until_recovery_x_frames_ago(self, frames_ago):
         if len(self.state_log) > frames_ago:
@@ -284,8 +281,7 @@ class TekkenGameState:
                 self.state_log[0 - frames_ago].opp.recovery
                 - self.state_log[0 - frames_ago].opp.move_timer
             )
-        else:
-            return 99
+        return 99
 
     def is_bot_blocking(self):
         return self.state_log[-1].bot.is_blocking()
@@ -448,8 +444,7 @@ class TekkenGameState:
     def is_opp_whiffing_x_frames_ago(self, frames_ago):
         if len(self.state_log) > frames_ago:
             return self.state_log[0 - frames_ago].opp.is_attack_whiffing()
-        else:
-            return False
+        return False
 
     def is_opp_whiffing(self):
         return self.state_log[-1].opp.is_attack_whiffing()
