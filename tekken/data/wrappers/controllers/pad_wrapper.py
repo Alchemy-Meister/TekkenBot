@@ -66,9 +66,27 @@ class PadControllerWrapper(StructWrapper):
     right_stick = property(__get_right_stick, __set_right_stick)
 
     def difference(self, pad_controller):
-        diff_buttons = (
-            getattr(self, 'pressed_buttons') ^ pad_controller.pressed_buttons
-        )
+        diff_buttons = 0
+
+        if pad_controller:
+            diff_buttons = (
+                getattr(self, 'pressed_buttons')
+                ^ pad_controller.pressed_buttons
+            )
+            left_stick = PadControllerWrapper.__tuple_difference(
+                self.left_stick, pad_controller.left_stick
+            )
+
+            right_stick = PadControllerWrapper.__tuple_difference(
+                self.right_stick, pad_controller.right_stick
+            )
+        else:
+            diff_buttons = (
+                getattr(self, 'pressed_buttons')
+            )
+            left_stick = self.left_stick
+            right_stick = self.right_stick
+
         diff_buttons = [
             button for button in PadController if button & diff_buttons
         ]
@@ -80,12 +98,8 @@ class PadControllerWrapper(StructWrapper):
 
         return {
             'buttons': diff_buttons,
-            'left_stick': PadControllerWrapper.__tuple_difference(
-                self.left_stick, pad_controller.left_stick
-            ),
-            'right_stick': PadControllerWrapper.__tuple_difference(
-                self.right_stick, pad_controller.right_stick
-            )
+            'left_stick': left_stick,
+            'right_stick': right_stick
         }
 
     def is_pressed(self, pad_button: PadController):
