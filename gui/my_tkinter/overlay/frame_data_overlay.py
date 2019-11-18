@@ -40,10 +40,11 @@ from constants.battle import FrameAdvantage
 from constants.overlay import OverlayMode
 from constants.overlay.frame_data import Columns
 
-from .writable_overlay import WritableOverlay
 from .frame_data_widgets import AttackTextbox, FrameAdvantagePanel
+from .interfaces import Writable
+from .overlay import Overlay
 
-class FrameDataOverlay(WritableOverlay):
+class FrameDataOverlay(Overlay, Writable):
     """
     """
     CLASS_ID = OverlayMode.FRAMEDATA.value
@@ -174,7 +175,7 @@ class FrameDataOverlay(WritableOverlay):
         scaled_frame_panel_width, _ = self.p1_frame_panel.resize_to_scale(scale)
         self.p2_frame_panel.resize_to_scale(scale)
 
-        scaled_textbot_font, font_width, _ = WritableOverlay._get_fitting_font(
+        scaled_textbot_font, font_width, _ = Overlay._get_fitting_font(
             scale,
             self.initial_textbox_font,
             self.longest_log_line,
@@ -212,7 +213,9 @@ class FrameDataOverlay(WritableOverlay):
 
     def _update_state(self):
         game_state = self.launcher.game_state
-        if len(game_state.state_log) > 1:
+        if game_state.was_fight_reset():
+            self.__clear()
+        elif len(game_state.state_log) > 1:
             p1_frames = game_state.get_opp_frames_till_next_move()
             p2_frames = game_state.get_bot_frames_till_next_move()
 
@@ -370,7 +373,7 @@ class FrameDataOverlay(WritableOverlay):
                 tag
             )
         self.longest_log_font_size = (
-            WritableOverlay._get_font_text_dimensions(
+            Overlay._get_font_text_dimensions(
                 tkfont.Font(
                     family=self.initial_textbox_font[0],
                     size=self.initial_textbox_font[1]

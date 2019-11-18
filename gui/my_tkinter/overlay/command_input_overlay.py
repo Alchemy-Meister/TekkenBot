@@ -31,6 +31,7 @@
 """
 import math
 import io
+import itertools
 from pathlib import Path
 import tkinter as tk
 
@@ -325,41 +326,47 @@ class CommandInputOverlay(Overlay):
         self.dimensions_initialized = True
 
     def _update_state(self):
-        last_game_state_log = self.launcher.game_state.state_log[-1]
+        game_state = self.launcher.game_state
+        last_game_state_log = game_state.state_log[-1]
         player = None
         if last_game_state_log.is_player_player_one:
             player = last_game_state_log.bot
         else:
             player = last_game_state_log.opp
 
-        move_properties = [
-            [MoveProperty.PARRY_1, player.is_parry1],
-            [MoveProperty.PARRY_2, player.is_parry2],
-            [MoveProperty.BUFFERABLE, player.is_bufferable],
-            [MoveProperty.CANCELABLE, player.is_cancelable],
-            [MoveProperty.STARTING, player.is_starting],
-            [MoveProperty.RECOVERING, player.is_recovering]
-        ]
+        if game_state.was_fight_reset():
+            self.__clear(player)
+        else:
+            
 
-        move_color = None
-        for cancel_property in move_properties:
-            if cancel_property[1]:
-                move_color = CommandInputOverlay.__CANCEL_PROPERTY_COLORS[
-                    cancel_property[0]
-                ]
-                break
-        if move_color is None:
-            move_color = CommandInputOverlay.__CANCEL_PROPERTY_COLORS['other']
+            move_properties = [
+                [MoveProperty.PARRY_1, player.is_parry1],
+                [MoveProperty.PARRY_2, player.is_parry2],
+                [MoveProperty.BUFFERABLE, player.is_bufferable],
+                [MoveProperty.CANCELABLE, player.is_cancelable],
+                [MoveProperty.STARTING, player.is_starting],
+                [MoveProperty.RECOVERING, player.is_recovering]
+            ]
 
-        self._update_input(player.get_input_state(), move_color)
+            move_color = None
+            for cancel_property in move_properties:
+                if cancel_property[1]:
+                    move_color = CommandInputOverlay.__CANCEL_PROPERTY_COLORS[
+                        cancel_property[0]
+                    ]
+                    break
+            if move_color is None:
+                move_color = (
+                    CommandInputOverlay.__CANCEL_PROPERTY_COLORS['other']
+                )
+
+            self._update_input(player.get_input_state(), move_color)
 
     def _update_visible_state(self):
         previous_visible_state = self.visible
         self.visible = self.launcher.game_state.is_in_battle()
         if previous_visible_state != self.visible and not self.visible:
-            self.command_input_canvas.delete(self.input_tag)
-            self.frame_inputs.clear()
-            self.frame_move_property.clear()
+            self.__clear(empty_lists=True)
         if not self.automatic_hide:
             self.visible = True
 
@@ -513,6 +520,20 @@ class CommandInputOverlay(Overlay):
                 fill=frame_cancels[index],
                 tag=self.input_tag
             )
+
+    def __clear(self, player=None, empty_lists=False):
+        self.command_input_canvas.delete(self.input_tag)
+        if player:
+            for _ in itertools.repeat(None, (self.canvas_step_number)):
+                self.frame_inputs.append(player.get_input_state())
+                self.frame_move_property.append(
+                    CommandInputOverlay.__CANCEL_PROPERTY_COLORS[
+                        MoveProperty.CANCELABLE
+                    ]
+                )
+        if empty_lists:
+            self.frame_inputs.clear()
+            self.frame_move_property.clear()
 
     def __tkcolor_to_int(self, tk_color):
         return int(

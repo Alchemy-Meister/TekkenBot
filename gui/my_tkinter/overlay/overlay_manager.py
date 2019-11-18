@@ -42,7 +42,7 @@ from patterns.observer import Subscriber
 from patterns.singleton import Singleton
 
 from .overlay import Overlay
-from .writable_overlay import WritableOverlay
+from .interfaces import Writable
 
 class OverlayManager(metaclass=Singleton):
     """
@@ -332,7 +332,7 @@ class OverlayManager(metaclass=Singleton):
         for overlay_id in self.overlay_slots:
             overlay = self.overlays.get(overlay_id)
             if(
-                    isinstance(overlay, WritableOverlay)
+                    isinstance(overlay, Writable)
                     and overlay.enabled
             ):
                 overlay.write(string)

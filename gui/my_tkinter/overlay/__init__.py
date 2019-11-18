@@ -30,6 +30,5 @@
 from .frame_data_overlay import FrameDataOverlay
 from .command_input_overlay import CommandInputOverlay
 from .overlay import Overlay
-from .writable_overlay import WritableOverlay
 from .overlay_manager import OverlayManager
 from .punish_alarm_overlay import PunishAlarmOverlay
