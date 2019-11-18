@@ -199,26 +199,31 @@ class TekkenGameReader(ProcessIO):
         return value
 
     def get_players_pad_controller_input(self):
+        p1_controller = None
+        p2_controller = None
+
         p1_controller_address = self.__get_address_of_multilevel_pointer(
             self.config['NonPlayerDataAddresses']['p1_controller']
         )
-        p1_controller = PadControllerWrapper(
-            self.get_block_data(
-                p1_controller_address,
-                SIZE_OF(PadControllerStruct)
+        if p1_controller_address:
+            p1_controller = PadControllerWrapper(
+                self.get_block_data(
+                    p1_controller_address,
+                    SIZE_OF(PadControllerStruct)
+                )
             )
-        )
-        p2_controller_address = (
-            p1_controller_address
-            + self.config['NonPlayerDataAddresses']['p2_controller_offset']
-        )
-        p2_controller = PadControllerWrapper(
-            self.get_block_data(
-                p2_controller_address,
-                SIZE_OF(PadControllerStruct)
+            p2_controller_address = (
+                p1_controller_address
+                + self.config['NonPlayerDataAddresses']['p2_controller_offset']
             )
-        )
-        return p1_controller, p2_controller
+            p2_controller = PadControllerWrapper(
+                self.get_block_data(
+                    p2_controller_address,
+                    SIZE_OF(PadControllerStruct)
+                )
+            )
+
+        return {'p1': p1_controller, 'p2': p2_controller}
 
     def get_graphic_settings(self):
         graphic_settings = None
@@ -348,7 +353,7 @@ class TekkenGameReader(ProcessIO):
         """
         """
         if self.is_pid_valid() and self.module_address is not None:
-            game_state = [None, None]
+            game_state = {'battle': None, 'controllers': None, 'graphics': None}
             self.__process_handle = kernel32.open_process(
                 kernel32.PROCESS_VM_READ, False, self.pid
             )
@@ -362,7 +367,10 @@ class TekkenGameReader(ProcessIO):
                     except OSError:
                         pass
                 else:
-                    game_state[0] = self.get_graphic_settings()
+                    game_state['graphics'] = self.get_graphic_settings()
+                    game_state['controllers'] = (
+                        self.get_players_pad_controller_input()
+                    )
 
                 player_data_base_address = self.module_address
                 for i, offset in enumerate(self.player_data_pointer_offset):
@@ -391,9 +399,6 @@ class TekkenGameReader(ProcessIO):
                     except ValueError:
                         pass
                 else:
-                    # controllers = self.get_players_pad_controller_input()
-                    # print('p1 controller: {}'.format(controllers[0]))
-                    # print('p2 controller: {}'.format(controllers[1]))
                     last_eight_frames = []
                     second_address_base = self.get_value_from_address(
                         player_data_base_address, is_64bit=True
@@ -526,7 +531,7 @@ class TekkenGameReader(ProcessIO):
 
                             self.reacquire_names = False
 
-                    game_state[1] = GameSnapshot(
+                    game_state['battle'] = GameSnapshot(
                         p1_bot, p2_bot, best_frame_count, timer_in_frames,
                         bot_facing, self.opponent_name,
                         self.is_player_player_one,

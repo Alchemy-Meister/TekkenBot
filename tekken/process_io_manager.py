@@ -27,6 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from collections import defaultdict
 import sys
 
 import module_enumerator
@@ -93,7 +94,7 @@ class ProcessIOManager():
             )
         except OSError:
             self.__process_info_update_required = True
-            return [None, None]
+            return defaultdict(lambda: None)
 
     def read_update(self, rollback_frame=0):
         try:

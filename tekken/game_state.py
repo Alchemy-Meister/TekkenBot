@@ -17,7 +17,7 @@ to block this frame?, what was the last move player 2 did?).
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
 import logging
 import math
 import typing
@@ -53,6 +53,7 @@ class TekkenGameState:
         self.duplicate_frame_obtained = 0
         self.state_log = []
         self.graphic_settings = None
+        self.pad_controllers = defaultdict(lambda: None)
         self.mirrored_state_log = []
         self.is_mirrored = False
         self.futurestate_log = None
@@ -77,103 +78,7 @@ class TekkenGameState:
     def update(self, buffer=0):
         """
         """
-        game_state = self.game_io_manager.update(buffer)
-
-        game_graphic_settings = game_state[0]
-        game_battle_state = game_state[1]
-
-        if game_battle_state is not None:
-            # we don't run perfectly in sync, if we get back the same frame,
-            # throw it away
-            if(
-                    not self.state_log
-                    or game_battle_state.frame_count
-                    != self.state_log[-1].frame_count
-            ):
-                self.duplicate_frame_obtained = 0
-
-                frames_lost = 0
-                if self.state_log:
-                    frames_lost = (
-                        game_battle_state.frame_count
-                        - self.state_log[-1].frame_count - 1
-                    )
-
-                for i in range(min(7 - buffer, frames_lost)):
-                    dropped_game_state = self.game_io_manager.read_update(
-                        min(7, frames_lost + buffer) - i
-                    )
-                    dropped_game_graphic_settings = dropped_game_state[0]
-                    dropped_game_battle_state = dropped_game_state[1]
-
-                    if dropped_game_graphic_settings is not None:
-                        self.compare_graphic_settings(
-                            dropped_game_graphic_settings
-                        )
-
-                    if dropped_game_battle_state is not None:
-                        self.append_game_data(dropped_game_battle_state)
-
-                self.append_game_data(game_battle_state)
-                return True
-            if game_battle_state.frame_count == self.state_log[-1].frame_count:
-                self.duplicate_frame_obtained += 1
-        if game_graphic_settings is not None:
-            self.compare_graphic_settings(game_graphic_settings)
-        return False
-
-    def append_game_data(self, game_data: GameSnapshot):
-        if not self.is_mirrored:
-            self.state_log.append(game_data)
-            self.mirrored_state_log.append(game_data.from_mirrored())
-        else:
-            self.state_log.append(game_data.from_mirrored())
-            self.mirrored_state_log.append(game_data)
-
-        if len(self.state_log) > 300:
-            self.state_log.pop(0)
-            self.mirrored_state_log.pop(0)
-
-    def compare_graphic_settings(self, graphic_settings):
-        graphic_settings_changed = False
-        if not graphic_settings.equal_screen_mode(self.graphic_settings):
-            self.logger.debug(
-                'TEKKEN7 screen mode changed from %s to %s',
-                self.graphic_settings.screen_mode.name
-                if self.graphic_settings else None,
-                graphic_settings.screen_mode.name
-            )
-            graphic_settings_changed = True
-            self.graphic_settings_publisher.dispatch(
-                GraphicSettingsChangeEvent.SCREEN_MODE,
-                graphic_settings.screen_mode
-            )
-        if(
-                not graphic_settings.equal_resolution(self.graphic_settings)
-        ):
-            self.logger.debug(
-                'TEKKEN7 resolution changed from %s to %s',
-                getattr(self.graphic_settings, 'resolution', None),
-                graphic_settings.resolution
-            )
-            graphic_settings_changed = True
-            self.graphic_settings_publisher.dispatch(
-                GraphicSettingsChangeEvent.RESOLUTION,
-                graphic_settings.resolution
-            )
-        if not graphic_settings.equal_position(self.graphic_settings):
-            self.logger.debug(
-                'TEKKEN7 position changed from %s to %s',
-                getattr(self.graphic_settings, 'position', None),
-                graphic_settings.position
-            )
-            graphic_settings_changed = True
-            self.graphic_settings_publisher.dispatch(
-                GraphicSettingsChangeEvent.POSITION,
-                graphic_settings.position
-            )
-        if graphic_settings_changed:
-            self.graphic_settings = graphic_settings
+        return self.__update_game_state(self.game_io_manager.update(buffer))
 
     def flip_mirror(self):
         self.state_log, self.mirrored_state_log = (
@@ -1084,3 +989,114 @@ class TekkenGameState:
 
     def is_in_battle(self):
         return self.game_io_manager.process_reader.is_in_battle
+
+    def __append_game_data(self, game_data: GameSnapshot):
+        if not self.is_mirrored:
+            self.state_log.append(game_data)
+            self.mirrored_state_log.append(game_data.from_mirrored())
+        else:
+            self.state_log.append(game_data.from_mirrored())
+            self.mirrored_state_log.append(game_data)
+
+        if len(self.state_log) > 300:
+            self.state_log.pop(0)
+            self.mirrored_state_log.pop(0)
+
+    def __compare_controllers(self, controllers):
+        if(
+                controllers['p1']
+                and controllers['p1'] != self.pad_controllers['p1']
+        ):
+
+            p1_controller_difference = controllers['p1'].difference(
+                self.pad_controllers['p1']
+            )
+            self.pad_controllers = controllers
+            # print(self.pad_controllers['p1'])
+            # print(p1_controller_difference)
+
+    def __compare_graphic_settings(self, graphic_settings):
+        graphic_settings_changed = False
+        if not graphic_settings.equal_screen_mode(self.graphic_settings):
+            self.logger.debug(
+                'TEKKEN7 screen mode changed from %s to %s',
+                self.graphic_settings.screen_mode.name
+                if self.graphic_settings else None,
+                graphic_settings.screen_mode.name
+            )
+            graphic_settings_changed = True
+            self.graphic_settings_publisher.dispatch(
+                GraphicSettingsChangeEvent.SCREEN_MODE,
+                graphic_settings.screen_mode
+            )
+        if(
+                not graphic_settings.equal_resolution(self.graphic_settings)
+        ):
+            self.logger.debug(
+                'TEKKEN7 resolution changed from %s to %s',
+                getattr(self.graphic_settings, 'resolution', None),
+                graphic_settings.resolution
+            )
+            graphic_settings_changed = True
+            self.graphic_settings_publisher.dispatch(
+                GraphicSettingsChangeEvent.RESOLUTION,
+                graphic_settings.resolution
+            )
+        if not graphic_settings.equal_position(self.graphic_settings):
+            self.logger.debug(
+                'TEKKEN7 position changed from %s to %s',
+                getattr(self.graphic_settings, 'position', None),
+                graphic_settings.position
+            )
+            graphic_settings_changed = True
+            self.graphic_settings_publisher.dispatch(
+                GraphicSettingsChangeEvent.POSITION,
+                graphic_settings.position
+            )
+        if graphic_settings_changed:
+            self.graphic_settings = graphic_settings
+
+    def __update_game_state(self, game_state, buffer=0, frame_lost_check=True):
+        if game_state['controllers']:
+            self.__compare_controllers(game_state['controllers'])
+
+        if game_state['graphics']:
+            self.__compare_graphic_settings(game_state['graphics'])
+
+        if game_state['battle']:
+            # we don't run perfectly in sync, if we get back the same frame,
+            # throw it away
+            if(
+                    not self.state_log
+                    or game_state['battle'].frame_count
+                    != self.state_log[-1].frame_count
+            ):
+                self.duplicate_frame_obtained = 0
+
+                if frame_lost_check:
+                    frames_lost = 0
+                    if self.state_log:
+                        frames_lost = (
+                            game_state['battle'].frame_count
+                            - self.state_log[-1].frame_count - 1
+                        )
+
+                    for index in range(min(7 - buffer, frames_lost)):
+                        dropped_game_state = self.game_io_manager.read_update(
+                            min(7, frames_lost + buffer) - index
+                        )
+
+                        self.__update_game_state(
+                            dropped_game_state, frame_lost_check=False
+                        )
+
+                self.__append_game_data(game_state['battle'])
+
+                return True
+            if(
+                    game_state['battle'].frame_count
+                    == self.state_log[-1].frame_count
+            ):
+                self.duplicate_frame_obtained += 1
+
+        return False
