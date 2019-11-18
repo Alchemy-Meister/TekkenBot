@@ -98,7 +98,7 @@ class MovelistParser:
                 0, len(move_nodes_raw), MovelistParser.MOVE_NODE_SIZE
             )
         ]
-        self.__logger.debug('movelist nodes: %s', pformat(self.move_nodes))
+        # self.__logger.debug('movelist nodes: %s', pformat(self.move_nodes))
 
         self.linked_nodes_raw = self.bytes[
             unknown_regions[46]:unknown_regions[48]
