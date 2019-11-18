@@ -30,6 +30,7 @@
 import enum
 
 class MainMenus(enum.IntEnum):
+    NULL = 0
     STORY = 1
     ONLINE = 2
     ARCADE = 3
