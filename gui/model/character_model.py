@@ -30,7 +30,7 @@
 """
 """
 
-from constants.character_ids import CharacterIDs
+from constants.battle import CharacterIDs
 from .printable_enum_model import PrintableEnumModel
 
 class CharacterModel(PrintableEnumModel):

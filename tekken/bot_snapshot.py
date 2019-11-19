@@ -30,8 +30,7 @@
 """
 """
 
-from constants.battle import BattleSide
-from constants.character_ids import CharacterIDs
+from constants.battle import BattleSide, CharacterIDs
 from constants.input import InputAttack, InputDirection
 
 from log import LogUtils
