@@ -28,6 +28,7 @@ Created by roguelike2d. Maintained by the community.
 - [x] Overlays scale to different resolutions.
 - [x] Resizable overlay windows on draggable mode.
 - [x] Simultaneous overlays. Up to 2 overlays can be enabled at the same time.
+- [x] Overlays clearing on practice mode reset/new round start.
 
 #### Frame data overlay
 - [x] Up to 4 frame data lines.
@@ -39,6 +40,7 @@ Created by roguelike2d. Maintained by the community.
 - [x] Input arrows and buttons mimic Tekken GUI's style. (Credits to: [mspkvp](https://github.com/mspkvp/tk7movespretty))
 - [x] Support for Rage button.
 - [x] SVG icon scaling.
+- [x] Direction icon flip based on character side.
 
 ### Audio
 - [x] Overlay independent Punish Coach Alarm.
