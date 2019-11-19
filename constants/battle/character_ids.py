@@ -75,7 +75,7 @@ class CharacterIDs(ComplexEnum):
     EDDY = ComplexEnumMember(35, printable_name='Eddy')
     # --- DLC character -------------------------------------------------------
     ELIZA = ComplexEnumMember(36, printable_name='Eliza')
-     # -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     MIGUEL = ComplexEnumMember(37, printable_name='Miguel')
     # --- Not selectable characters -------------------------------------------
     TEKKEN_FORCE = ComplexEnumMember(38, printable_name='Tekken Force')
