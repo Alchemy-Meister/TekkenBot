@@ -238,18 +238,18 @@ class TekkenGameReader(ProcessIO):
                     SIZE_OF(GraphicSettingsStruct)
                 )
             )
-            startup_stable_resolution_address = (
-                self.module_address
-                + self.config['GraphicSettingsAddress']['window_resolution']
-            )
-            graphic_settings.resolution = (
-                ResolutionWrapper(
-                    self.get_block_data(
-                        startup_stable_resolution_address,
-                        SIZE_OF(ResolutionStruct)
-                    )
-                ).resolution
-            )
+            # startup_stable_resolution_address = (
+            #     self.module_address
+            #     + self.config['GraphicSettingsAddress']['window_resolution']
+            # )
+            # graphic_settings.resolution = (
+            #     ResolutionWrapper(
+            #         self.get_block_data(
+            #             startup_stable_resolution_address,
+            #             SIZE_OF(ResolutionStruct)
+            #         )
+            #     ).resolution
+            # )
             if(
                     graphic_settings.resolution != (0, 0)
                     and graphic_settings.resolution[0]
@@ -368,9 +368,9 @@ class TekkenGameReader(ProcessIO):
                         pass
                 else:
                     game_state['graphics'] = self.get_graphic_settings()
-                    game_state['controllers'] = (
-                        self.get_players_pad_controller_input()
-                    )
+                    # game_state['controllers'] = (
+                    #     self.get_players_pad_controller_input()
+                    # )
 
                 player_data_base_address = self.module_address
                 for i, offset in enumerate(self.player_data_pointer_offset):
@@ -415,7 +415,8 @@ class TekkenGameReader(ProcessIO):
                         )
                         potential_frame_count = self.get_value_from_address(
                             potential_second_address
-                            + self.config['GameDataAddress']['frame_count']
+                            + self.config['GameDataAddress']['frame_count'],
+                            is_64bit=True
                         )
                         last_eight_frames.append(
                             (potential_frame_count, potential_second_address))
