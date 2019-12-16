@@ -79,7 +79,7 @@ class FrameDataOverlay(Overlay, Writable):
             self.overlay, self.transparent_color
         )
 
-        self.initial_textbox_font = ['Consolas', -16]
+        self.initial_textbox_font = ['Consolas', -21]
         self.textbox = AttackTextbox(
             self.overlay,
             self.max_attack_log_length,

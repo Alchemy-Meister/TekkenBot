@@ -39,13 +39,13 @@ class FrameAdvantagePanel(tk.Frame):
     """
 
     __CANVAS_CONFIG = {
-        'width': 132,
-        'height': 82,
+        'width': 174,
+        'height': 102,
         'initial_frame_advantage': FrameAdvantage.SAFE_MINUS
     }
-    __FRAME_ADVANTAGE_CONFIG = {'font': ['Consolas', 44], 'initial_text': '?'}
+    __FRAME_ADVANTAGE_CONFIG = {'font': ['Consolas', 49], 'initial_text': '?'}
     __LIVE_RECOVERY_CONFIG = {
-        'font': ['Segoe UI', 12], 'x': 8, 'y': 4, 'initial_text': '??'
+        'font': ['Segoe UI', 17], 'x': 8, 'y': 4, 'initial_text': '??'
     }
     __PADDING_WIDTH = 10
 
