@@ -39,7 +39,7 @@ class GameSnapshot:
 
     """
     def __init__(
-            self, bot, opp, frame_count, timer_in_frames, facing_bool,
+            self, bot, opp, frame_count, timer_in_frames,
             opponent_name, is_player_player_one,
             # side_menu_selection,
             game_mode
@@ -47,7 +47,6 @@ class GameSnapshot:
         self.bot = bot
         self.opp = opp
         self.frame_count = frame_count
-        self.facing_bool = facing_bool
         self.timer_frames_remaining = timer_in_frames
         self.opponent_name = opponent_name
         self.is_player_player_one = is_player_player_one
@@ -59,7 +58,7 @@ class GameSnapshot:
         """
         return GameSnapshot(
             self.opp, self.bot, self.frame_count, self.timer_frames_remaining,
-            self.facing_bool, self.opponent_name, self.is_player_player_one,
+            self.opponent_name, self.is_player_player_one,
             # self.side_menu_selection,
             self.game_mode
         )

@@ -66,7 +66,6 @@ class TekkenGameReader(ProcessIO):
         super().__init__(config, pid, module_address)
         self.reacquire_game_state = True
         self.reacquire_names = True
-        self.original_facing = None
         self.opponent_name = None
         self.is_player_player_one = None
         # , #lambda x: int(x, 16))
@@ -443,30 +442,24 @@ class TekkenGameReader(ProcessIO):
                     # print(a.get_player_1())
                     # print(a.get_player_2())
 
-                    bot_facing = self.get_value_from_data_block(
-                        player_data_frame,
-                        self.config['GameDataAddress']['facing']
-                    )
                     timer_in_frames = self.get_value_from_data_block(
                         player_data_frame,
                         self.config['GameDataAddress']['timer_in_frames']
                     )
-                    p1_bot, p2_bot = self.initialize_bots(
-                        player_data_frame, bot_facing, best_frame_count
-                    )
+                    p1_bot, p2_bot = self.initialize_bots(player_data_frame)
 
                     if self.reacquire_game_state:
                         self.reacquire_game_state = False
                         sys.stdout.write('Fight detected. Updating gamestate.')
                         self.is_in_battle = True
-                        self.game_mode = MainMenus(
-                            self.get_value_from_address(
-                                self.module_address
-                                + self.config['NonPlayerDataAddresses'][
-                                    'main_menu_selection'
-                                ]
-                            )
-                        )
+                        # self.game_mode = MainMenus(
+                        #     self.get_value_from_address(
+                        #         self.module_address
+                        #         + self.config['NonPlayerDataAddresses'][
+                        #             'main_menu_selection'
+                        #         ]
+                        #     )
+                        # )
 
                     if self.reacquire_names:
                         if(
@@ -534,7 +527,7 @@ class TekkenGameReader(ProcessIO):
 
                     game_state['battle'] = GameSnapshot(
                         p1_bot, p2_bot, best_frame_count, timer_in_frames,
-                        bot_facing, self.opponent_name,
+                        self.opponent_name,
                         self.is_player_player_one,
                         # self.side_menu_selection,
                         self.game_mode,
@@ -548,7 +541,7 @@ class TekkenGameReader(ProcessIO):
             return game_state
         raise OSError('invalid PID or module address')
 
-    def initialize_bots(self, player_data_frame, bot_facing, best_frame_count):
+    def initialize_bots(self, player_data_frame):
         """
         """
         p1_bot_data_dict = {}
@@ -640,9 +633,6 @@ class TekkenGameReader(ProcessIO):
         p2_bot_data_dict['movelist_parser'] = (
             self.p2_movelist_parser
         )
-
-        if self.original_facing is None and best_frame_count > 0:
-            self.original_facing = bot_facing > 0
 
         p1_bot = BotSnapshot(p1_bot_data_dict)
         p2_bot = BotSnapshot(p2_bot_data_dict)

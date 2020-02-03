@@ -193,7 +193,7 @@ class HitOutcome(Enum):
 class JumpFlagBitmask(Enum):
     # GROUND = 0x800000
     # LANDING_OR_STANDING = 0x810000
-    JUMP = 0x820000
+    JUMP = 0x8
 
 class InputDirectionCodes(Enum):
     NULL = 0

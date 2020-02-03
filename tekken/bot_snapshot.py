@@ -69,7 +69,6 @@ class BotSnapshot:
         self.move_timer = data_dict['PlayerDataAddress.move_timer']
         self.recovery = data_dict['PlayerDataAddress.recovery']
         self.char_id = data_dict['PlayerDataAddress.char_id']
-        self.throw_flag = data_dict['PlayerDataAddress.throw_flag']
         self.rage_flag = data_dict['PlayerDataAddress.rage_flag']
         self.input_counter = data_dict['PlayerDataAddress.input_counter']
         self.input_direction = InputDirection(
@@ -293,7 +292,7 @@ class BotSnapshot:
         """
 
         """
-        return self.throw_flag == 1
+        return self.throw_tech.value > 0
 
     def is_attack_low(self):
         """

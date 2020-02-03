@@ -117,13 +117,9 @@ class TekkenGameState:
             return False
 
     def is_bot_on_left(self):
-        is_player_one_on_left = (
-            self.game_io_manager.process_reader
-            .original_facing == self.state_log[-1].facing_bool
-        )
         if not self.is_mirrored:
-            return is_player_one_on_left
-        return not is_player_one_on_left
+            return self.state_log[-1].facing_bool
+        return not self.state_log[-1].facing_bool
 
     def get_bot_health(self):
         return max(0, 170 - self.state_log[-1].bot.damage_taken)
