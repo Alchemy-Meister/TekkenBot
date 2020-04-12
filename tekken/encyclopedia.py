@@ -106,8 +106,7 @@ class TekkenEncyclopedia:
         last_game_state = game_state.get_last_state()
 
         self.__logger.debug(
-            'mode: %s, is_player_1: %s, camera_flip: %s, reverse: %s',
-            game_state.get_game_mode(),
+            'is_player_1: %s, camera_flip: %s, reverse: %s',
             self.is_player_one,
             last_game_state.is_camera_flipped(),
             reverse
@@ -128,15 +127,6 @@ class TekkenEncyclopedia:
         #         )
         #         and not reverse
         # ):
-        if game_state.get_game_mode() == MainMenus.ONLINE:
-            if(
-                    (self.is_player_one and reverse)
-                    != (last_game_state.is_camera_flipped() and reverse)
-                    != self.is_player_one
-                    != last_game_state.is_camera_flipped()
-            ):
-                return 'p1: '
-            return 'p2: '
 
         # if (
         #         self.is_player_one
