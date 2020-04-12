@@ -35,7 +35,6 @@ import sys
 import struct
 
 from constants.battle.side import BattleSide
-from constants.battle.main_menus import MainMenus
 
 # pylint: disable=unused-wildcard-import,wildcard-import
 from win32.defines import *  #NOQA
@@ -82,7 +81,6 @@ class TekkenGameReader(ProcessIO):
         self.p1_movelist_names = None
         self.p2_movelist_names = None
 
-        self.game_mode = None
         self.is_in_battle = False
         self.side_menu_selection = None
 
@@ -281,15 +279,18 @@ class TekkenGameReader(ProcessIO):
             return False
 
     def is_tekken_fullscreen(self):
-        monitor_info = user32.get_monitor_info(
-            user32.monitor_from_window(
-                self.window_handle, user32.MONITOR_DEFAULTTOPRIMARY
+        try:
+            monitor_info = user32.get_monitor_info(
+                user32.monitor_from_window(
+                    self.window_handle, user32.MONITOR_DEFAULTTOPRIMARY
+                )
             )
-        )
-        return (
-            user32.get_window_rect(self.window_handle)
-            == monitor_info.rc_monitor
-        )
+            return (
+                user32.get_window_rect(self.window_handle)
+                == monitor_info.rc_monitor
+            )
+        except OSError:
+            return False
 
     def is_tekken_borderless(self, h_wnd):
         style = user32.get_window_long_ptr(h_wnd, user32.GWL_STYLE)
@@ -346,7 +347,9 @@ class TekkenGameReader(ProcessIO):
         """
         """
         return data in (
-            'x', 'y', 'z', 'activebox_x', 'activebox_y', 'activebox_z'
+            'x', 'y', 'z',
+            'activebox_x', 'activebox_y', 'activebox_z',
+            'distance'
         )
 
     def get_updated_state(self, rollback_frame=0):
@@ -459,14 +462,6 @@ class TekkenGameReader(ProcessIO):
                         self.reacquire_game_state = False
                         sys.stdout.write('Fight detected. Updating gamestate.')
                         self.is_in_battle = True
-                        self.game_mode = MainMenus(
-                            self.get_value_from_address(
-                                self.module_address
-                                + self.config['NonPlayerDataAddresses'][
-                                    'main_menu_selection'
-                                ]
-                            )
-                        )
 
                     if self.reacquire_names:
                         if(
@@ -535,9 +530,8 @@ class TekkenGameReader(ProcessIO):
                     game_state['battle'] = GameSnapshot(
                         p1_bot, p2_bot, best_frame_count, timer_in_frames,
                         bot_facing, self.opponent_name,
-                        self.is_player_player_one,
+                        self.is_player_player_one
                         # self.side_menu_selection,
-                        self.game_mode,
                     )
             except (OSError, struct.error, TypeError):
                 traceback.print_exc()

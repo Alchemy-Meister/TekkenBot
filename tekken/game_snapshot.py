@@ -32,7 +32,6 @@
 """
 
 import math
-from constants.battle import BattleSide
 
 class GameSnapshot:
     """
@@ -40,9 +39,8 @@ class GameSnapshot:
     """
     def __init__(
             self, bot, opp, frame_count, timer_in_frames, facing_bool,
-            opponent_name, is_player_player_one,
+            opponent_name, is_player_player_one
             # side_menu_selection,
-            game_mode
     ):
         self.bot = bot
         self.opp = opp
@@ -52,7 +50,6 @@ class GameSnapshot:
         self.opponent_name = opponent_name
         self.is_player_player_one = is_player_player_one
         # self.side_menu_selection = side_menu_selection
-        self.game_mode = game_mode
 
     def from_mirrored(self):
         """
@@ -61,7 +58,6 @@ class GameSnapshot:
             self.opp, self.bot, self.frame_count, self.timer_frames_remaining,
             self.facing_bool, self.opponent_name, self.is_player_player_one,
             # self.side_menu_selection,
-            self.game_mode
         )
 
     def is_camera_flipped(self):

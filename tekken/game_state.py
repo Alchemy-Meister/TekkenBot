@@ -724,9 +724,6 @@ class TekkenGameState:
         print("Character: " + str(char_id))
         return char_id
 
-    def get_game_mode(self):
-        return self.state_log[-1].game_mode
-
     def get_last_state(self):
         return self.state_log[-1]
 
