@@ -107,3 +107,6 @@ class BattleStages(ComplexEnum):
     LAST_DAY_ON_EARTH = ComplexEnumMember(
         56, printable_name='Last Day on Earth'
     )
+    CAVE_OF_ENLIGHTENMENT = ComplexEnumMember(
+        57, printable_name='Cave of Enlightenment'
+    )

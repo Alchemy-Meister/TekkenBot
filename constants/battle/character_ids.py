@@ -95,6 +95,7 @@ class CharacterIDs(ComplexEnum):
     ZAFINA = ComplexEnumMember(51, printable_name='Zafina')
     GANRYU = ComplexEnumMember(52, printable_name='Ganryu')
     LEROY = ComplexEnumMember(53, printable_name='Leroy')
+    FAHKUMRAM = ComplexEnumMember(54, printable_name='Fahkumram')
     # -------------------------------------------------------------------------
     NOT_YET_LOADED = ComplexEnumMember(71, printable_name=None)
     # Value if cursor is not shown
