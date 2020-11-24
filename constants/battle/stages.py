@@ -110,3 +110,6 @@ class BattleStages(ComplexEnum):
     CAVE_OF_ENLIGHTENMENT = ComplexEnumMember(
         57, printable_name='Cave of Enlightenment'
     )
+    VERMILION_GATES = ComplexEnumMember(
+        58, printable_name='Vermilion Gates'
+    )
