@@ -65,7 +65,6 @@ class MultilevelPointerOverwriter(Overwriter):
                     )
             except OSError:
                 kernel32.close_handle(process_handle)
-                raise
 
     def __get_address_of_multilevel_pointer(self, process_handle, addresses):
         address = self.process_memory.module_address
